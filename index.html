@@ -404,8 +404,11 @@ async function dax(q){
     method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({queries:[{query:q}],serializerSettings:{includeNulls:true}})
   });
-  const d=await r.json();
-  if(d.error)throw new Error(d.error.message||JSON.stringify(d.error));
+  const text=await r.text();
+  let d;
+  try{d=JSON.parse(text);}catch(e){throw new Error('Worker response: '+text.slice(0,200));}
+  if(d.error)throw new Error(JSON.stringify(d.error));
+  if(!d.results)throw new Error('No results: '+text.slice(0,200));
   return d.results?.[0]?.tables?.[0]?.rows||[];
 }
 

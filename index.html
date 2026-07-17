@@ -387,26 +387,25 @@ function showError(msg){
   document.getElementById('err-msg').textContent=msg;
 }
 
+// ── CLOUDFLARE WORKER URL ──────────────────────────────────────────────
+const WORKER_URL='https://rpm-auth.aali-dfe.workers.dev';
+
 // ── AUTH ───────────────────────────────────────────────────────────────
 async function getToken(){
-  const r=await fetch(`https://login.microsoftonline.com/${CFG.tenantId}/oauth2/v2.0/token`,{
-    method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
-    body:new URLSearchParams({grant_type:'client_credentials',client_id:CFG.clientId,
-      client_secret:CFG.clientSecret,scope:'https://analysis.windows.net/powerbi/api/.default'})
-  });
+  const r=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'}});
   const d=await r.json();
-  if(!d.access_token)throw new Error(d.error_description||'Auth failed');
+  if(!d.access_token)throw new Error(d.error||'Auth failed');
   return d.access_token;
 }
 
 // ── DAX QUERY ──────────────────────────────────────────────────────────
 async function dax(q){
-  const r=await fetch(`https://api.powerbi.com/v1.0/myorg/groups/${CFG.workspaceId}/datasets/${CFG.datasetId}/executeQueries`,{
-    method:'POST',headers:{Authorization:`Bearer ${TOKEN}`,'Content-Type':'application/json'},
+  const r=await fetch(`${WORKER_URL}?groupId=${CFG.workspaceId}&datasetId=${CFG.datasetId}`,{
+    method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({queries:[{query:q}],serializerSettings:{includeNulls:true}})
   });
   const d=await r.json();
-  if(d.error)throw new Error(d.error.message);
+  if(d.error)throw new Error(d.error.message||JSON.stringify(d.error));
   return d.results?.[0]?.tables?.[0]?.rows||[];
 }
 

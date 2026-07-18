@@ -733,7 +733,7 @@ async function loadPage1(){
     // GA - split into separate queries to avoid any measure conflicts
     const f2=fs();
     // Section 1: Penetration
-    const STFILTER=",FILTER('DMS VIN','DMS VIN'[Sale Type Group]="Lease"||'DMS VIN'[Sale Type Group]="Cash/OSL"||'DMS VIN'[Sale Type Group]="Finance")";
+    const STFILTER=',FILTER(\'DMS VIN\',\'DMS VIN\'[Sale Type Group]="Lease"||\'DMS VIN\'[Sale Type Group]="Cash/OSL"||\'DMS VIN\'[Sale Type Group]="Finance")';
     const gaPen=await dax(`EVALUATE ROW("RDR",CALCULATE([RDR Total CY]${c}${STFILTER}),"CON",CALCULATE([Contracts CY BE]${c}${STFILTER}),"PEN",CALCULATE([Contract Pen CY BE]${c}${STFILTER}),"ND",CALCULATE([% No Deal CY]${c}${STFILTER}))`);
     const gp=gaPen[0]||{};
     document.getElementById('p1-ga-pen').innerHTML=`

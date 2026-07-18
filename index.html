@@ -194,15 +194,17 @@ tbody tr:hover td{background:var(--surface2)}
 
   <!-- FILTERS -->
   <div class="filter-panel">
-    <div class="fg"><label>Year → Month</label>
-      <select id="f-year" onchange="updateMonthFilter()"><option value="">All Years</option></select></div>
-    <div class="fg"><label>Month</label>
-      <select id="f-month"><option value="">All Months</option></select></div>
+    <div class="fg"><label>Period (Year → Month)</label>
+      <div style="display:flex;gap:6px">
+        <select id="f-year" onchange="updateMonthFilter()" style="min-width:90px"><option value="">All Years</option></select>
+        <select id="f-month" style="min-width:110px"><option value="">All Months</option></select>
+      </div></div>
     <div class="filter-divider"></div>
-    <div class="fg"><label>Brand Group → Brand</label>
-      <select id="f-brandgroup" onchange="updateBrandFilter()"><option value="">All Brand Groups</option></select></div>
-    <div class="fg"><label>Brand</label>
-      <select id="f-brand"><option value="">All Brands</option></select></div>
+    <div class="fg"><label>Brand (Group → Brand)</label>
+      <div style="display:flex;gap:6px">
+        <select id="f-brandgroup" onchange="updateBrandFilter()" style="min-width:130px"><option value="">All Groups</option></select>
+        <select id="f-brand" style="min-width:120px"><option value="">All Brands</option></select>
+      </div></div>
     <div class="filter-divider"></div>
     <div class="fg"><label>RPM</label>
       <select id="f-rpm"><option value="">All RPMs</option></select></div>
@@ -466,20 +468,33 @@ function clearFilters(){
   loadAllPages();
 }
 
-// Build DAX FILTER clause from active filters
-function buildFilters(){
-  const clauses=[];
-  if(ACTIVE_FILTERS.year) clauses.push(`'Business Dates Local'[Reporting Year]=${ACTIVE_FILTERS.year}`);
-  if(ACTIVE_FILTERS.month) clauses.push(`'Business Dates Local'[Reporting MonthYear]="${ACTIVE_FILTERS.month}"`);
-  if(ACTIVE_FILTERS.brandGroup) clauses.push(`'Dealers Local'[Brand Group]="${ACTIVE_FILTERS.brandGroup}"`);
-  if(ACTIVE_FILTERS.brand) clauses.push(`'Dealers Local'[Brand]="${ACTIVE_FILTERS.brand}"`);
-  if(ACTIVE_FILTERS.rpm) clauses.push(`'Dealers Local'[RPM]="${ACTIVE_FILTERS.rpm}"`);
-  if(ACTIVE_FILTERS.acctMgr) clauses.push(`'Dealers Local'[Account Manager]="${ACTIVE_FILTERS.acctMgr}"`);
-  if(ACTIVE_FILTERS.dealerCat) clauses.push(`'Dealers Local'[Dealer Category]="${ACTIVE_FILTERS.dealerCat}"`);
-  if(ACTIVE_FILTERS.dealerGroup) clauses.push(`'Dealers Local'[Dealer Group]="${ACTIVE_FILTERS.dealerGroup}"`);
-  if(ACTIVE_FILTERS.state) clauses.push(`'Dealers Local'[State]="${ACTIVE_FILTERS.state}"`);
-  if(ACTIVE_FILTERS.oemRegion) clauses.push(`'Dealers Local'[OEM Region]="${ACTIVE_FILTERS.oemRegion}"`);
-  return clauses.length?`CALCULATETABLE(SUMMARIZECOLUMNS(...), ${clauses.join(', ')})`:null;
+// Build DAX FILTER clauses from active filters
+function buildFilterClauses(){
+  const f=ACTIVE_FILTERS;
+  const c=[];
+  if(f.year) c.push(`FILTER(ALL('Business Dates Local'),'Business Dates Local'[Reporting Year]=${f.year})`);
+  if(f.month) c.push(`FILTER(ALL('Business Dates Local'),'Business Dates Local'[Reporting MonthYear]="${f.month}")`);
+  if(f.brandGroup) c.push(`FILTER(ALL('Dealers Local'),'Dealers Local'[Brand Group]="${f.brandGroup}")`);
+  if(f.brand) c.push(`FILTER(ALL('Dealers Local'),'Dealers Local'[Brand]="${f.brand}")`);
+  if(f.rpm) c.push(`FILTER(ALL('Dealers Local'),'Dealers Local'[RPM]="${f.rpm}")`);
+  if(f.acctMgr) c.push(`FILTER(ALL('Dealers Local'),'Dealers Local'[Account Manager]="${f.acctMgr}")`);
+  if(f.dealerCat) c.push(`FILTER(ALL('Dealers Local'),'Dealers Local'[Dealer Category]="${f.dealerCat}")`);
+  if(f.dealerGroup) c.push(`FILTER(ALL('Dealers Local'),'Dealers Local'[Dealer Group]="${f.dealerGroup}")`);
+  if(f.state) c.push(`FILTER(ALL('Dealers Local'),'Dealers Local'[State]="${f.state}")`);
+  if(f.oemRegion) c.push(`FILTER(ALL('Dealers Local'),'Dealers Local'[OEM Region]="${f.oemRegion}")`);
+  return c;
+}
+
+// Build filter string for SUMMARIZECOLUMNS
+function filterStr(){
+  const c=buildFilterClauses();
+  return c.length?','+c.join(','):'';
+}
+
+// Build filter string for ROW/CALCULATE
+function calcFilter(){
+  const c=buildFilterClauses();
+  return c.length?','+c.join(','):'';
 }
 
 // ── LOAD FILTER OPTIONS ────────────────────────────────────────────────
@@ -498,6 +513,12 @@ async function loadFilterOptions(){
     FILTER_DATA.years=[...yearSet];
     FILTER_DATA.months=monthMap;
     populateSelect('f-year',FILTER_DATA.years,'All Years');
+    // Pre-select 2026
+    if([...document.getElementById('f-year').options].some(o=>o.value==='2026')){
+      document.getElementById('f-year').value='2026';
+      ACTIVE_FILTERS.year='2026';
+      updateMonthFilter();
+    }
 
     // Brand Groups and Brands
     const brands=await dax(`EVALUATE SUMMARIZECOLUMNS('Dealers Local'[Brand Group],'Dealers Local'[Brand]) ORDER BY 'Dealers Local'[Brand Group] ASC,'Dealers Local'[Brand] ASC`);
@@ -540,7 +561,8 @@ async function loadFilterOptions(){
 async function loadPage1(){
   try{
     // KT KPIs
-    const kt=await dax(`EVALUATE ROW("TotalDealers",[Total Dealers],"PartDealers",[Participating dealers],"RDR",[RDR for Pen CY],"Products",[Products CY],"Pen",[Product Pen CY],"Target",[Target total],"ATG",[ATG %],"Visits",[Expense Visits CY],"Expenses",[Expense Total CY],"CostPerVisit",[Expense / visit])`);
+    const cf=calcFilter();
+    const kt=await dax(`EVALUATE ROW("TotalDealers",CALCULATE([Total Dealers]${cf}),"PartDealers",CALCULATE([Participating dealers]${cf}),"RDR",CALCULATE([RDR for Pen CY]${cf}),"Products",CALCULATE([Products CY]${cf}),"Pen",CALCULATE([Product Pen CY]${cf}),"Target",CALCULATE([Target total]${cf}),"ATG",CALCULATE([ATG %]${cf}),"Visits",CALCULATE([Expense Visits CY]${cf}),"Expenses",CALCULATE([Expense Total CY]${cf}),"CostPerVisit",CALCULATE([Expense / visit]${cf}))`);
     const k=kt[0]||{};
     document.getElementById('p1-kt-kpis').innerHTML=`
       <div class="kpi-card"><div class="kpi-lbl">Total Dealers</div><div class="kpi-val">${fmt(k['[TotalDealers]'])}</div></div>
@@ -555,7 +577,7 @@ async function loadPage1(){
       <div class="kpi-card"><div class="kpi-lbl">$ per Visit</div><div class="kpi-val">${fmt(k['[CostPerVisit]'],'cur2')}</div></div>`;
 
     // GA KPIs
-    const ga=await dax(`EVALUATE ROW("Rooftops",[Rooftops],"RDR",[RDR Total CY],"Contracts",[Contracts CY BE],"Pen",[Contract Pen CY],"PVR",[BE PVR Total CY],"NoDeal",[% No Deal CY],"Missed",[SG Contracts CY TAM Missed],"MissedAnn",[SG Contracts CY TAM Missed Annual],"AdminMissed",[SG Admin CY TAM Missed],"AdminMissedAnn",[SG Admin CY TAM Missed Annual])`);
+    const ga=await dax(`EVALUATE ROW("Rooftops",CALCULATE([Rooftops]${cf}),"RDR",CALCULATE([RDR Total CY]${cf}),"Contracts",CALCULATE([Contracts CY BE]${cf}),"Pen",CALCULATE([Contract Pen CY]${cf}),"PVR",CALCULATE([BE PVR Total CY]${cf}),"NoDeal",CALCULATE([% No Deal CY]${cf}),"Missed",CALCULATE([SG Contracts CY TAM Missed]${cf}),"MissedAnn",CALCULATE([SG Contracts CY TAM Missed Annual]${cf}),"AdminMissed",CALCULATE([SG Admin CY TAM Missed]${cf}),"AdminMissedAnn",CALCULATE([SG Admin CY TAM Missed Annual]${cf}))`);
     const g=ga[0]||{};
     document.getElementById('p1-ga-kpis').innerHTML=`
       <div class="kpi-card green"><div class="kpi-lbl">GA Dealers</div><div class="kpi-val">${fmt(g['[Rooftops]'])}</div></div>
@@ -569,17 +591,17 @@ async function loadPage1(){
       <div class="kpi-card red"><div class="kpi-lbl">Annualized Missed</div><div class="kpi-val">${fmt(g['[MissedAnn]'])}</div><div class="kpi-sub">Admin: ${fmt(g['[AdminMissedAnn]'],'cur')}</div></div>`;
 
     // GA Breakdowns
-    const cond=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[N/U],"RDR",[RDR Total CY],"Contracts",[Contracts CY BE],"Pen",[Contract Pen CY],"Missed",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY] DESC`);
+    const cond=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[N/U]${filterStr()},"RDR",[RDR Total CY],"Contracts",[Contracts CY BE],"Pen",[Contract Pen CY],"Missed",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY] DESC`);
     document.getElementById('p1-cond-tbl').innerHTML=buildBreakdownTable(cond,'DMS VIN[N/U]');
 
-    const st=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Sale Type Group],"RDR",[RDR Total CY],"Contracts",[Contracts CY BE],"Pen",[Contract Pen CY],"Missed",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY] DESC`);
+    const st=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Sale Type Group]${filterStr()},"RDR",[RDR Total CY],"Contracts",[Contracts CY BE],"Pen",[Contract Pen CY],"Missed",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY] DESC`);
     document.getElementById('p1-saletype-tbl').innerHTML=buildBreakdownTable(st,'DMS VIN[Sale Type Group]');
 
-    const mi=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Miles Group],"RDR",[RDR Total CY],"Contracts",[Contracts CY BE],"Pen",[Contract Pen CY],"Missed",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY] DESC`);
+    const mi=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Miles Group]${filterStr()},"RDR",[RDR Total CY],"Contracts",[Contracts CY BE],"Pen",[Contract Pen CY],"Missed",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY] DESC`);
     document.getElementById('p1-miles-tbl').innerHTML=buildBreakdownTable(mi,'DMS VIN[Miles Group]');
 
     // Top 10 F&I Managers
-    const fim=await dax(`EVALUATE TOPN(10,SUMMARIZECOLUMNS('DMS VIN'[Finance Manager Name],"RDR",[RDR Total CY],"Contracts",[Contracts CY BE],"Pen",[Contract Pen CY],"SOW",[SG Contracts CY % of TAM],"Missed",[SG Contracts CY TAM Missed]),[RDR Total CY],DESC)`);
+    const fim=await dax(`EVALUATE TOPN(10,SUMMARIZECOLUMNS('DMS VIN'[Finance Manager Name]${filterStr()},"RDR",[RDR Total CY],"Contracts",[Contracts CY BE],"Pen",[Contract Pen CY],"SOW",[SG Contracts CY % of TAM],"Missed",[SG Contracts CY TAM Missed]),[RDR Total CY],DESC)`);
     document.getElementById('p1-fim-tbl').innerHTML=buildFIMTable(fim);
 
   }catch(e){console.error('Page1 error:',e);}
@@ -620,7 +642,7 @@ function buildFIMTable(rows){
 // ── PAGE 2: DEALER OVERVIEW ───────────────────────────────────────────
 async function loadPage2(){
   try{
-    const rows=await dax(`EVALUATE SUMMARIZECOLUMNS('Dealers Local'[Dealer SG Code],'Dealers Local'[Dealer Name],'Dealers Local'[RPM],'Dealers Local'[Brand Group],'Dealers Local'[State],"PCY",[Products CY],"PLY",[Products LY],"PenCY",[Product Pen CY],"AdminCY",[SG Admin CY],"RDR",[RDR for Pen CY],"ATG",[ATG %],"Visits",[Expense Visits CY],"Missed",[SG Contracts CY TAM Missed],"SOW",[SG Contracts CY % of TAM],"MissedAnn",[SG Contracts CY TAM Missed Annual]) ORDER BY [Products CY] DESC`);
+    const rows=await dax(`EVALUATE SUMMARIZECOLUMNS('Dealers Local'[Dealer SG Code],'Dealers Local'[Dealer Name],'Dealers Local'[RPM],'Dealers Local'[Brand Group],'Dealers Local'[State]${filterStr()},"PCY",[Products CY],"PLY",[Products LY],"PenCY",[Product Pen CY],"AdminCY",[SG Admin CY],"RDR",[RDR for Pen CY],"ATG",[ATG %],"Visits",[Expense Visits CY],"Missed",[SG Contracts CY TAM Missed],"SOW",[SG Contracts CY % of TAM],"MissedAnn",[SG Contracts CY TAM Missed Annual]) ORDER BY [Products CY] DESC`);
     ALL_DEALER_DATA=rows;
     document.getElementById('p2-sub').textContent=`${rows.length} dealers`;
     const tbody=rows.map(r=>{
@@ -806,13 +828,6 @@ async function init(){
     TOKEN=await getToken();
     setLoad('Loading filter options...');
     await loadFilterOptions();
-    // Default to 2026
-    const yearSel=document.getElementById('f-year');
-    if([...yearSel.options].some(o=>o.value==='2026')){
-      yearSel.value='2026';
-      ACTIVE_FILTERS.year='2026';
-      updateMonthFilter();
-    }
     setLoad('Loading dashboard data...');
     await loadAllPages();
     document.getElementById('last-refresh').textContent='Updated '+new Date().toLocaleTimeString();

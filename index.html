@@ -406,9 +406,16 @@ async function dax(q){
   });
   const text=await r.text();
   let d;
-  try{d=JSON.parse(text);}catch(e){throw new Error('Worker response: '+text.slice(0,200));}
+  try{d=JSON.parse(text);}catch(e){throw new Error('Parse error: '+text.slice(0,300));}
+  // Handle wrapped response format {status, body}
+  if(d.status&&d.body!==undefined){
+    if(!d.body)return[];
+    let inner;
+    try{inner=JSON.parse(d.body);}catch(e){throw new Error('PBI parse error: '+d.body.slice(0,300));}
+    if(inner.error)throw new Error('PBI error: '+JSON.stringify(inner.error));
+    return inner.results?.[0]?.tables?.[0]?.rows||[];
+  }
   if(d.error)throw new Error(JSON.stringify(d.error));
-  if(!d.results)throw new Error('No results: '+text.slice(0,200));
   return d.results?.[0]?.tables?.[0]?.rows||[];
 }
 

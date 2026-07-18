@@ -194,30 +194,29 @@ tbody tr:hover td{background:var(--surface2)}
 
   <!-- FILTERS -->
   <div class="filter-panel">
-    <div class="fg"><label>Period (Year → Month)</label>
-      <div style="display:flex;gap:6px">
-        <select id="f-year" onchange="updateMonthFilter()" style="min-width:90px"><option value="">All Years</option></select>
-        <select id="f-month" style="min-width:110px"><option value="">All Months</option></select>
-      </div></div>
+    <div class="fg"><label>Period</label>
+      <select id="f-period" onchange="updatePeriodFilter()" style="min-width:160px"><option value="">All Periods</option></select></div>
     <div class="filter-divider"></div>
-    <div class="fg"><label>Brand (Group → Brand)</label>
-      <div style="display:flex;gap:6px">
-        <select id="f-brandgroup" onchange="updateBrandFilter()" style="min-width:130px"><option value="">All Groups</option></select>
-        <select id="f-brand" style="min-width:120px"><option value="">All Brands</option></select>
-      </div></div>
+    <div class="fg"><label>Brand</label>
+      <select id="f-brand-combined" onchange="updateBrandCombinedFilter()" style="min-width:180px"><option value="">All Brands</option></select></div>
+    <!-- hidden selects kept for compatibility -->
+    <select id="f-year" style="display:none"><option value="">All Years</option></select>
+    <select id="f-month" style="display:none"><option value="">All Months</option></select>
+    <select id="f-brandgroup" style="display:none"><option value="">All Brand Groups</option></select>
+    <select id="f-brand" style="display:none"><option value="">All Brands</option></select>
     <div class="filter-divider"></div>
     <div class="fg"><label>RPM</label>
-      <select id="f-rpm"><option value="">All RPMs</option></select></div>
+      <select id="f-rpm" onchange="applyFilters()"><option value="">All RPMs</option></select></div>
     <div class="fg"><label>Account Manager</label>
-      <select id="f-acctmgr"><option value="">All</option></select></div>
+      <select id="f-acctmgr" onchange="applyFilters()"><option value="">All</option></select></div>
     <div class="fg"><label>Dealer Category</label>
-      <select id="f-dealercat"><option value="">All</option></select></div>
+      <select id="f-dealercat" onchange="applyFilters()"><option value="">All</option></select></div>
     <div class="fg"><label>Dealer Group</label>
-      <select id="f-dealergroup"><option value="">All</option></select></div>
+      <select id="f-dealergroup" onchange="applyFilters()"><option value="">All</option></select></div>
     <div class="fg"><label>State</label>
-      <select id="f-state"><option value="">All</option></select></div>
+      <select id="f-state" onchange="applyFilters()"><option value="">All</option></select></div>
     <div class="fg"><label>OEM Region</label>
-      <select id="f-oemregion"><option value="">All</option></select></div>
+      <select id="f-oemregion" onchange="applyFilters()"><option value="">All</option></select></div>
     <button class="btn-apply" onclick="applyFilters()">Apply</button>
     <button class="btn-clear" onclick="clearFilters()">Clear</button>
   </div>
@@ -233,7 +232,7 @@ tbody tr:hover td{background:var(--surface2)}
   <!-- PAGE 1: RPM OVERVIEW -->
   <div class="page active" id="p1">
 
-    <div class="section-label">KPI Teams — Internal Performance</div>
+    <div class="section-label">KT — KPI Teams Internal Performance</div>
     <div class="kpi-row cols-6" id="p1-kt-kpis">
       <div class="kpi-card"><div class="kpi-lbl">Total Dealers</div><div class="kpi-val skeleton" style="width:60px;height:24px"></div></div>
       <div class="kpi-card"><div class="kpi-lbl">Participating</div><div class="kpi-val skeleton" style="width:60px;height:24px"></div></div>
@@ -249,7 +248,7 @@ tbody tr:hover td{background:var(--surface2)}
     </div>
 
     <hr class="page-divider">
-    <div class="section-label">Growth Accelerator — Market View</div>
+    <div class="section-label">GA — Growth Accelerator Market View</div>
     <div class="kpi-row cols-4" id="p1-ga-kpis">
       <div class="kpi-card green"><div class="kpi-lbl">GA Dealers</div><div class="kpi-val skeleton" style="width:60px;height:24px"></div></div>
       <div class="kpi-card green"><div class="kpi-lbl">GA RDRs</div><div class="kpi-val skeleton" style="width:80px;height:24px"></div></div>
@@ -264,7 +263,7 @@ tbody tr:hover td{background:var(--surface2)}
     </div>
 
     <hr class="page-divider">
-    <div class="section-label">Growth Accelerator — Breakdown</div>
+    <div class="section-label">GA — Growth Accelerator Breakdown</div>
     <div class="three-col">
       <div class="tbl-card">
         <div class="tbl-hdr"><div class="tbl-title">By Vehicle Condition</div></div>
@@ -434,35 +433,82 @@ function populateSelect(id,values,placeholder){
   const el=document.getElementById(id);
   el.innerHTML=`<option value="">${placeholder}</option>`+values.map(v=>`<option value="${v}">${v}</option>`).join('');
 }
-function updateMonthFilter(){
-  const yr=document.getElementById('f-year').value;
-  const months=yr?FILTER_DATA.months[yr]||[]:Object.values(FILTER_DATA.months).flat();
-  const unique=[...new Set(months)];
-  populateSelect('f-month',unique,'All Months');
+function updateMonthFilter(){}
+function updateBrandFilter(){}
+
+function populatePeriodFilter(){
+  const sel=document.getElementById('f-period');
+  sel.innerHTML='<option value="">All Periods</option>';
+  const years=FILTER_DATA.years.sort().reverse();
+  years.forEach(yr=>{
+    const grp=document.createElement('optgroup');
+    grp.label=yr;
+    const months=FILTER_DATA.months[yr]||[];
+    // Add year-level option
+    const yOpt=document.createElement('option');
+    yOpt.value='year:'+yr;
+    yOpt.textContent=yr+' (All)';
+    grp.appendChild(yOpt);
+    months.forEach(mo=>{
+      const opt=document.createElement('option');
+      opt.value='month:'+yr+':'+mo;
+      opt.textContent='  '+mo;
+      grp.appendChild(opt);
+    });
+    sel.appendChild(grp);
+  });
+  // Default to 2026
+  const defaultOpt=[...sel.options].find(o=>o.value==='year:2026');
+  if(defaultOpt){sel.value='year:2026';updatePeriodFilter();}
 }
-function updateBrandFilter(){
-  const bg=document.getElementById('f-brandgroup').value;
-  const brands=bg?FILTER_DATA.brands[bg]||[]:Object.values(FILTER_DATA.brands).flat();
-  const unique=[...new Set(brands)];
-  populateSelect('f-brand',unique,'All Brands');
+
+function updatePeriodFilter(){applyFilters();}
+
+function populateBrandFilter(){
+  const sel=document.getElementById('f-brand-combined');
+  sel.innerHTML='<option value="">All Brands</option>';
+  const groups=FILTER_DATA.brandGroups.sort();
+  groups.forEach(bg=>{
+    const grp=document.createElement('optgroup');
+    grp.label=bg;
+    // Add group-level option
+    const bgOpt=document.createElement('option');
+    bgOpt.value='group:'+bg;
+    bgOpt.textContent=bg+' (All)';
+    grp.appendChild(bgOpt);
+    const brands=FILTER_DATA.brands[bg]||[];
+    brands.sort().forEach(br=>{
+      const opt=document.createElement('option');
+      opt.value='brand:'+bg+':'+br;
+      opt.textContent='  '+br;
+      grp.appendChild(opt);
+    });
+    sel.appendChild(grp);
+  });
 }
+
+function updateBrandCombinedFilter(){applyFilters();}
 function applyFilters(){
-  ACTIVE_FILTERS={
-    year:document.getElementById('f-year').value,
-    month:document.getElementById('f-month').value,
-    brandGroup:document.getElementById('f-brandgroup').value,
-    brand:document.getElementById('f-brand').value,
-    rpm:document.getElementById('f-rpm').value,
-    acctMgr:document.getElementById('f-acctmgr').value,
-    dealerCat:document.getElementById('f-dealercat').value,
-    dealerGroup:document.getElementById('f-dealergroup').value,
-    state:document.getElementById('f-state').value,
-    oemRegion:document.getElementById('f-oemregion').value
-  };
+  const val=document.getElementById('f-period').value;
+  if(!val){ACTIVE_FILTERS.year='';ACTIVE_FILTERS.month='';}
+  else if(val.startsWith('year:')){ACTIVE_FILTERS.year=val.split(':')[1];ACTIVE_FILTERS.month='';}
+  else if(val.startsWith('month:')){const parts=val.split(':');ACTIVE_FILTERS.year=parts[1];ACTIVE_FILTERS.month=parts[2];}
+  const bval=document.getElementById('f-brand-combined').value;
+  if(!bval){ACTIVE_FILTERS.brandGroup='';ACTIVE_FILTERS.brand='';}
+  else if(bval.startsWith('group:')){ACTIVE_FILTERS.brandGroup=bval.split(':')[1];ACTIVE_FILTERS.brand='';}
+  else if(bval.startsWith('brand:')){const parts=bval.split(':');ACTIVE_FILTERS.brandGroup=parts[1];ACTIVE_FILTERS.brand=parts[2];}
+  ACTIVE_FILTERS.rpm=document.getElementById('f-rpm').value;
+  ACTIVE_FILTERS.acctMgr=document.getElementById('f-acctmgr').value;
+  ACTIVE_FILTERS.dealerCat=document.getElementById('f-dealercat').value;
+  ACTIVE_FILTERS.dealerGroup=document.getElementById('f-dealergroup').value;
+  ACTIVE_FILTERS.state=document.getElementById('f-state').value;
+  ACTIVE_FILTERS.oemRegion=document.getElementById('f-oemregion').value;
   loadAllPages();
 }
 function clearFilters(){
-  ['f-year','f-month','f-brandgroup','f-brand','f-rpm','f-acctmgr','f-dealercat','f-dealergroup','f-state','f-oemregion']
+  document.getElementById('f-period').value='';
+  document.getElementById('f-brand-combined').value='';
+  ['f-rpm','f-acctmgr','f-dealercat','f-dealergroup','f-state','f-oemregion']
     .forEach(id=>document.getElementById(id).value='');
   ACTIVE_FILTERS={year:'',month:'',brandGroup:'',brand:'',rpm:'',acctMgr:'',dealerCat:'',dealerGroup:'',state:'',oemRegion:''};
   loadAllPages();
@@ -512,13 +558,7 @@ async function loadFilterOptions(){
     });
     FILTER_DATA.years=[...yearSet];
     FILTER_DATA.months=monthMap;
-    populateSelect('f-year',FILTER_DATA.years,'All Years');
-    // Pre-select 2026
-    if([...document.getElementById('f-year').options].some(o=>o.value==='2026')){
-      document.getElementById('f-year').value='2026';
-      ACTIVE_FILTERS.year='2026';
-      updateMonthFilter();
-    }
+    populatePeriodFilter();
 
     // Brand Groups and Brands
     const brands=await dax(`EVALUATE SUMMARIZECOLUMNS('Dealers Local'[Brand Group],'Dealers Local'[Brand]) ORDER BY 'Dealers Local'[Brand Group] ASC,'Dealers Local'[Brand] ASC`);
@@ -529,7 +569,7 @@ async function loadFilterOptions(){
       if(bg&&br&&br!=='null'){if(!brandMap[bg])brandMap[bg]=[];brandMap[bg].push(br);}
     });
     FILTER_DATA.brandGroups=[...bgSet];FILTER_DATA.brands=brandMap;
-    populateSelect('f-brandgroup',FILTER_DATA.brandGroups,'All Brand Groups');
+    populateBrandFilter();
 
     // Other filters
     const dealers=await dax(`EVALUATE SUMMARIZECOLUMNS('Dealers Local'[RPM],'Dealers Local'[Account Manager],'Dealers Local'[Dealer Category],'Dealers Local'[Dealer Group],'Dealers Local'[State],'Dealers Local'[OEM Region],'Dealers Local'[Dealer SG Code],'Dealers Local'[Dealer Name]) ORDER BY 'Dealers Local'[Dealer Name] ASC`);
@@ -562,46 +602,53 @@ async function loadPage1(){
   try{
     // KT KPIs
     const cf=calcFilter();
-    const kt=await dax(`EVALUATE ROW("TotalDealers",CALCULATE([Total Dealers]${cf}),"PartDealers",CALCULATE([Participating dealers]${cf}),"RDR",CALCULATE([RDR for Pen CY]${cf}),"Products",CALCULATE([Products CY]${cf}),"Pen",CALCULATE([Product Pen CY]${cf}),"Target",CALCULATE([Target total]${cf}),"ATG",CALCULATE([ATG %]${cf}),"Visits",CALCULATE([Expense Visits CY]${cf}),"Expenses",CALCULATE([Expense Total CY]${cf}),"CostPerVisit",CALCULATE([Expense / visit]${cf}))`);
+    const kt=await dax(`EVALUATE ROW("TotalDealers",CALCULATE([Total Dealers]${cf}),"PartDealers",CALCULATE([Participating dealers]${cf}),"DealersGA",CALCULATE([Dealers in GA]${cf}),"PctGA",CALCULATE([Dealers in GA %]${cf}),"RDR",CALCULATE([RDR for Pen CY]${cf}),"Products",CALCULATE([Products CY]${cf}),"Pen",CALCULATE([Product Pen CY]${cf}),"Target",CALCULATE([Target total]${cf}),"ATG",CALCULATE([ATG %]${cf}),"Visits",CALCULATE([Expense Visits CY]${cf}),"Expenses",CALCULATE([Expense Total CY]${cf}),"CostPerVisit",CALCULATE([Expense / visit]${cf}))`);
     const k=kt[0]||{};
     document.getElementById('p1-kt-kpis').innerHTML=`
       <div class="kpi-card"><div class="kpi-lbl">Total Dealers</div><div class="kpi-val">${fmt(k['[TotalDealers]'])}</div></div>
-      <div class="kpi-card"><div class="kpi-lbl">Participating</div><div class="kpi-val">${fmt(k['[PartDealers]'])}</div><div class="kpi-sub">KT active dealers</div></div>
+      <div class="kpi-card"><div class="kpi-lbl">Participating Dealers</div><div class="kpi-val">${fmt(k['[PartDealers]'])}</div></div>
+      <div class="kpi-card"><div class="kpi-lbl">Dealers in GA</div><div class="kpi-val">${fmt(k['[DealersGA]'])}</div></div>
+      <div class="kpi-card"><div class="kpi-lbl">% in GA</div><div class="kpi-val">${fmt(k['[PctGA]'],'pct')}</div></div>
       <div class="kpi-card"><div class="kpi-lbl">Total RDRs</div><div class="kpi-val">${fmt(k['[RDR]'])}</div></div>
-      <div class="kpi-card"><div class="kpi-lbl">Products CY</div><div class="kpi-val">${fmt(k['[Products]'])}</div></div>
+      <div class="kpi-card"><div class="kpi-lbl">Coverages</div><div class="kpi-val">${fmt(k['[Products]'])}</div></div>
       <div class="kpi-card"><div class="kpi-lbl">Penetration</div><div class="kpi-val">${fmt(k['[Pen]'],'pct')}</div></div>
-      <div class="kpi-card ${(k['[ATG]']||0)>=1?'green':'yellow'}"><div class="kpi-lbl">% of Target</div><div class="kpi-val">${fmt(k['[ATG]'],'pct')}</div><div class="kpi-sub">Target: ${fmt(k['[Target]'])}</div></div>`;
+      <div class="kpi-card"><div class="kpi-lbl">Target Contracts</div><div class="kpi-val">${fmt(k['[Target]'])}</div></div>
+      <div class="kpi-card ${(k['[ATG]']||0)>=1?'green':'yellow'}"><div class="kpi-lbl">Target Achieved</div><div class="kpi-val">${fmt(k['[ATG]'],'pct')}</div></div>`;
     document.getElementById('p1-kt-kpis2').innerHTML=`
       <div class="kpi-card"><div class="kpi-lbl">Total Visits</div><div class="kpi-val">${fmt(k['[Visits]'])}</div></div>
       <div class="kpi-card"><div class="kpi-lbl">Expenses</div><div class="kpi-val">${fmt(k['[Expenses]'],'cur')}</div></div>
       <div class="kpi-card"><div class="kpi-lbl">$ per Visit</div><div class="kpi-val">${fmt(k['[CostPerVisit]'],'cur2')}</div></div>`;
 
     // GA KPIs
-    const ga=await dax(`EVALUATE ROW("Rooftops",CALCULATE([Rooftops]${cf}),"RDR",CALCULATE([RDR Total CY]${cf}),"Contracts",CALCULATE([Contracts CY BE]${cf}),"Pen",CALCULATE([Contract Pen CY]${cf}),"PVR",CALCULATE([BE PVR Total CY]${cf}),"NoDeal",CALCULATE([% No Deal CY]${cf}),"Missed",CALCULATE([SG Contracts CY TAM Missed]${cf}),"MissedAnn",CALCULATE([SG Contracts CY TAM Missed Annual]${cf}),"AdminMissed",CALCULATE([SG Admin CY TAM Missed]${cf}),"AdminMissedAnn",CALCULATE([SG Admin CY TAM Missed Annual]${cf}))`);
+    const ga=await dax(`EVALUATE ROW("Rooftops",CALCULATE([Rooftops]${cf}),"RDR",CALCULATE([RDR Total CY]${cf}),"Contracts",CALCULATE([Contracts CY BE]${cf}),"Pen",CALCULATE([Contract Pen CY BE]${cf}),"PVR",CALCULATE([BE PVR Total CY]${cf}),"FRPVR",CALCULATE([FR PVR Total CY]${cf}),"ProdPVR",CALCULATE([Prod PVR Total CY]${cf}),"NoDeal",CALCULATE([% No Deal CY]${cf}),"Missed",CALCULATE([SG Contracts CY TAM Missed]${cf}),"MissedAnn",CALCULATE([SG Contracts CY TAM Missed Annual]${cf}),"AdminMissed",CALCULATE([SG Admin CY TAM Missed]${cf}),"AdminMissedAnn",CALCULATE([SG Admin CY TAM Missed Annual]${cf}),"FRPVR",CALCULATE([FR PVR Total CY]${cf}),"ProdPVR",CALCULATE([Prod PVR Total CY]${cf}),"PenMissed",CALCULATE([SG Pen CY TAM Missed]${cf}))`);
     const g=ga[0]||{};
     document.getElementById('p1-ga-kpis').innerHTML=`
-      <div class="kpi-card green"><div class="kpi-lbl">GA Dealers</div><div class="kpi-val">${fmt(g['[Rooftops]'])}</div></div>
-      <div class="kpi-card green"><div class="kpi-lbl">GA RDRs</div><div class="kpi-val">${fmt(g['[RDR]'])}</div></div>
-      <div class="kpi-card green"><div class="kpi-lbl">BE Contracts</div><div class="kpi-val">${fmt(g['[Contracts]'])}</div></div>
+      <div class="kpi-card green"><div class="kpi-lbl">Total Dealers</div><div class="kpi-val">${fmt(g['[Rooftops]'])}</div></div>
+      <div class="kpi-card green"><div class="kpi-lbl">Total RDRs</div><div class="kpi-val">${fmt(g['[RDR]'])}</div></div>
+      <div class="kpi-card green"><div class="kpi-lbl">Contracts</div><div class="kpi-val">${fmt(g['[Contracts]'])}</div></div>
       <div class="kpi-card green"><div class="kpi-lbl">Penetration</div><div class="kpi-val">${fmt(g['[Pen]'],'pct')}</div></div>`;
     document.getElementById('p1-ga-kpis2').innerHTML=`
-      <div class="kpi-card orange"><div class="kpi-lbl">PVR</div><div class="kpi-val">${fmt(g['[PVR]'],'cur')}</div></div>
-      <div class="kpi-card orange"><div class="kpi-lbl">% No Product</div><div class="kpi-val">${fmt(g['[NoDeal]'],'pct')}</div></div>
-      <div class="kpi-card red"><div class="kpi-lbl">Missed Contracts</div><div class="kpi-val">${fmt(g['[Missed]'])}</div><div class="kpi-sub">Admin: ${fmt(g['[AdminMissed]'],'cur')}</div></div>
-      <div class="kpi-card red"><div class="kpi-lbl">Annualized Missed</div><div class="kpi-val">${fmt(g['[MissedAnn]'])}</div><div class="kpi-sub">Admin: ${fmt(g['[AdminMissedAnn]'],'cur')}</div></div>`;
+      <div class="kpi-card orange"><div class="kpi-lbl">Total PVR</div><div class="kpi-val">${fmt(g['[PVR]'],'cur')}</div></div>
+      <div class="kpi-card orange"><div class="kpi-lbl">Finance Reserve</div><div class="kpi-val">${fmt(g['[FRPVR]'],'cur')}</div></div>
+      <div class="kpi-card orange"><div class="kpi-lbl">Product PVR</div><div class="kpi-val">${fmt(g['[ProdPVR]'],'cur')}</div></div>
+      <div class="kpi-card orange"><div class="kpi-lbl">% with no Product</div><div class="kpi-val">${fmt(g['[NoDeal]'],'pct')}</div></div>
+      <div class="kpi-card red"><div class="kpi-lbl">Contracts Missed</div><div class="kpi-val">${fmt(g['[Missed]'])}</div><div class="kpi-sub">Pen Missed: ${fmt(g['[PenMissed]'],'pct')}</div></div>
+      <div class="kpi-card red"><div class="kpi-lbl">Contracts Missed Annualized</div><div class="kpi-val">${fmt(g['[MissedAnn]'])}</div></div>
+      <div class="kpi-card red"><div class="kpi-lbl">SG Admin Missed</div><div class="kpi-val">${fmt(g['[AdminMissed]'],'cur')}</div></div>
+      <div class="kpi-card red"><div class="kpi-lbl">SG Admin Missed Annualized</div><div class="kpi-val">${fmt(g['[AdminMissedAnn]'],'cur')}</div></div>`;
 
     // GA Breakdowns
-    const cond=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[N/U]${filterStr()},"RDR",[RDR Total CY],"Contracts",[Contracts CY BE],"Pen",[Contract Pen CY],"Missed",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY] DESC`);
+    const cond=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[N/U]${filterStr()},"RDR",[RDR Total CY],"Contracts",[Contracts CY BE],"Pen",[Contract Pen CY BE],"Missed",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY] DESC`);
     document.getElementById('p1-cond-tbl').innerHTML=buildBreakdownTable(cond,'DMS VIN[N/U]');
 
-    const st=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Sale Type Group]${filterStr()},"RDR",[RDR Total CY],"Contracts",[Contracts CY BE],"Pen",[Contract Pen CY],"Missed",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY] DESC`);
+    const st=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Sale Type Group]${filterStr()},"RDR",[RDR Total CY],"Contracts",[Contracts CY BE],"Pen",[Contract Pen CY BE],"Missed",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY] DESC`);
     document.getElementById('p1-saletype-tbl').innerHTML=buildBreakdownTable(st,'DMS VIN[Sale Type Group]');
 
-    const mi=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Miles Group]${filterStr()},"RDR",[RDR Total CY],"Contracts",[Contracts CY BE],"Pen",[Contract Pen CY],"Missed",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY] DESC`);
+    const mi=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Miles Group]${filterStr()},"RDR",[RDR Total CY],"Contracts",[Contracts CY BE],"Pen",[Contract Pen CY BE],"Missed",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY] DESC`);
     document.getElementById('p1-miles-tbl').innerHTML=buildBreakdownTable(mi,'DMS VIN[Miles Group]');
 
     // Top 10 F&I Managers
-    const fim=await dax(`EVALUATE TOPN(10,SUMMARIZECOLUMNS('DMS VIN'[Finance Manager Name]${filterStr()},"RDR",[RDR Total CY],"Contracts",[Contracts CY BE],"Pen",[Contract Pen CY],"SOW",[SG Contracts CY % of TAM],"Missed",[SG Contracts CY TAM Missed]),[RDR Total CY],DESC)`);
+    const fim=await dax(`EVALUATE TOPN(10,SUMMARIZECOLUMNS('DMS VIN'[Finance Manager Name]${filterStr()},"RDR",[RDR Total CY],"Contracts",[Contracts CY BE],"Pen",[Contract Pen CY BE],"SOW",[SG Contracts CY % of TAM],"Missed",[SG Contracts CY TAM Missed]),[RDR Total CY],DESC)`);
     document.getElementById('p1-fim-tbl').innerHTML=buildFIMTable(fim);
 
   }catch(e){console.error('Page1 error:',e);}
@@ -766,7 +813,7 @@ async function generateGameplan(){
   try{
     // Pull dealer data
     const kt=await dax(`EVALUATE FILTER(SUMMARIZECOLUMNS('Dealers Local'[Dealer SG Code],'Dealers Local'[RPM],"PCY",[Products CY],"PLY",[Products LY],"PenCY",[Product Pen CY],"AdminCY",[SG Admin CY],"ATG",[ATG %],"Visits",[Expense Visits CY],"Expenses",[Expense Total CY]),'Dealers Local'[Dealer SG Code]="${code}")`);
-    const ga=await dax(`EVALUATE FILTER(SUMMARIZECOLUMNS('DMS Dealer Mapping'[Dealer SG Code],"Contracts",[Contracts CY BE],"Pen",[Contract Pen CY],"SOW",[SG Contracts CY % of TAM],"Missed",[SG Contracts CY TAM Missed],"MissedAnn",[SG Contracts CY TAM Missed Annual],"NoDeal",[% No Deal CY]),'DMS Dealer Mapping'[Dealer SG Code]="${code}")`);
+    const ga=await dax(`EVALUATE FILTER(SUMMARIZECOLUMNS('DMS Dealer Mapping'[Dealer SG Code],"Contracts",[Contracts CY BE],"Pen",[Contract Pen CY BE],"SOW",[SG Contracts CY % of TAM],"Missed",[SG Contracts CY TAM Missed],"MissedAnn",[SG Contracts CY TAM Missed Annual],"NoDeal",[% No Deal CY]),'DMS Dealer Mapping'[Dealer SG Code]="${code}")`);
     const fim=await dax(`EVALUATE TOPN(5,FILTER(SUMMARIZECOLUMNS('DMS VIN'[Finance Manager Name],'DMS Dealer Mapping'[Dealer SG Code],"RDR",[RDR Total CY],"Missed",[SG Contracts CY TAM Missed],"SOW",[SG Contracts CY % of TAM]),'DMS Dealer Mapping'[Dealer SG Code]="${code}"),[SG Contracts CY TAM Missed],DESC)`);
 
     const k=kt[0]||{};const g=ga[0]||{};

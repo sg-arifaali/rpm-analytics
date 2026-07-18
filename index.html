@@ -206,7 +206,10 @@ tbody tr:hover td{background:var(--surface2)}
 
   <!-- FILTERS -->
   <div class="filter-panel">
-    <div class="fg"><label>Brand Group</label><div class="ms-wrap" id="ms-brandgroup"></div></div>
+    <div class="fg"><label>Brand Group</label>
+      <select id="f-brandgroup-sel" onchange="onBrandGroupChange()" style="min-width:140px;padding:7px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;outline:none"><option value="">All Brand Groups</option></select></div>
+    <div class="fg"><label>Brand</label>
+      <select id="f-brand-sel" onchange="onBrandChange()" style="min-width:130px;padding:7px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;outline:none"><option value="">All Brands</option></select></div>
     <div class="fg"><label>Account Manager</label><div class="ms-wrap" id="ms-acctmgr"></div></div>
     <div class="fg"><label>RPM</label><div class="ms-wrap" id="ms-rpm"></div></div>
     <div class="fg"><label>Dealer Category</label><div class="ms-wrap" id="ms-dealercat"></div></div>
@@ -214,7 +217,10 @@ tbody tr:hover td{background:var(--surface2)}
     <div class="fg"><label>OEM Region</label><div class="ms-wrap" id="ms-oemregion"></div></div>
     <div class="fg"><label>State</label><div class="ms-wrap" id="ms-state"></div></div>
     <div class="fg"><label>Dealer Name</label><div class="ms-wrap" id="ms-dealername"></div></div>
-    <div class="fg"><label>Period</label><div class="ms-wrap" id="ms-period"></div></div>
+    <div class="fg"><label>Year</label>
+      <select id="f-year-sel" onchange="onYearChange()" style="min-width:100px;padding:7px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;outline:none"><option value="">All Years</option></select></div>
+    <div class="fg"><label>Month</label>
+      <select id="f-month-sel" onchange="onMonthChange()" style="min-width:110px;padding:7px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;outline:none"><option value="">All Months</option></select></div>
     <button class="btn-clear" onclick="clearFilters()">Clear All</button>
     <!-- hidden selects for compatibility -->
     <select id="f-year" style="display:none"></select>
@@ -247,7 +253,7 @@ tbody tr:hover td{background:var(--surface2)}
       <div class="kpi-card"><div class="kpi-lbl">Total Dealers</div><div class="kpi-val skeleton" style="width:60px;height:24px"></div></div>
       <div class="kpi-card"><div class="kpi-lbl">Participating</div><div class="kpi-val skeleton" style="width:60px;height:24px"></div></div>
       <div class="kpi-card"><div class="kpi-lbl">Total RDRs</div><div class="kpi-val skeleton" style="width:80px;height:24px"></div></div>
-      <div class="kpi-card"><div class="kpi-lbl">Products CY</div><div class="kpi-val skeleton" style="width:80px;height:24px"></div></div>
+      <div class="kpi-card"><div class="kpi-lbl">Coverages</div><div class="kpi-val skeleton" style="width:80px;height:24px"></div></div>
       <div class="kpi-card"><div class="kpi-lbl">Penetration</div><div class="kpi-val skeleton" style="width:60px;height:24px"></div></div>
       <div class="kpi-card"><div class="kpi-lbl">% of Target</div><div class="kpi-val skeleton" style="width:60px;height:24px"></div></div>
     </div>
@@ -539,21 +545,49 @@ function populateSelect(id,values,placeholder){
 
 
 
+function populateBrandSel(bg){
+  const sel=document.getElementById('f-brand-sel');
+  sel.innerHTML='<option value="">All Brands</option>';
+  const brands=FILTER_DATA.brands[bg]||[];
+  brands.sort().forEach(br=>{const o=document.createElement('option');o.value=br;o.textContent=br;sel.appendChild(o);});
+}
+function onBrandGroupChange(){
+  const bg=document.getElementById('f-brandgroup-sel').value;
+  if(bg)populateBrandSel(bg);
+  else{document.getElementById('f-brand-sel').innerHTML='<option value="">All Brands</option>';}
+  document.getElementById('f-brand-sel').value='';
+  ACTIVE_FILTERS.brandGroup=bg?[bg]:[];
+  ACTIVE_FILTERS.brand=[];
+  loadAllPages();
+}
+function onBrandChange(){
+  const br=document.getElementById('f-brand-sel').value;
+  ACTIVE_FILTERS.brand=br?[br]:[];
+  loadAllPages();
+}
+function populateMonthSel(yr){
+  const sel=document.getElementById('f-month-sel');
+  sel.innerHTML='<option value="">All Months</option>';
+  const months=FILTER_DATA.months[yr]||[];
+  months.forEach(mo=>{const o=document.createElement('option');o.value=mo;o.textContent=mo;sel.appendChild(o);});
+}
+function onYearChange(){
+  const yr=document.getElementById('f-year-sel').value;
+  if(yr)populateMonthSel(yr);
+  else{document.getElementById('f-month-sel').innerHTML='<option value="">All Months</option>';}
+  document.getElementById('f-month-sel').value='';
+  ACTIVE_FILTERS.year=yr?[yr]:[];
+  ACTIVE_FILTERS.month=[];
+  loadAllPages();
+}
+function onMonthChange(){
+  const mo=document.getElementById('f-month-sel').value;
+  ACTIVE_FILTERS.month=mo?[mo]:[];
+  loadAllPages();
+}
 function applyFilters(){
-  // Read period selections and split into year/month arrays
-  const periodVals=getMSValues('ms-period');
-  ACTIVE_FILTERS.year=[];ACTIVE_FILTERS.month=[];
-  periodVals.forEach(v=>{
-    if(v.startsWith('year:')){const yr=v.split(':')[1];if(!ACTIVE_FILTERS.year.includes(yr))ACTIVE_FILTERS.year.push(yr);}
-    else if(v.startsWith('month:')){const parts=v.split(':');const mo=parts[2];if(!ACTIVE_FILTERS.month.includes(mo))ACTIVE_FILTERS.month.push(mo);}
-  });
-  // Read brand selections
-  const brandVals=getMSValues('ms-brandgroup');
-  ACTIVE_FILTERS.brandGroup=[];ACTIVE_FILTERS.brand=[];
-  brandVals.forEach(v=>{
-    if(v.startsWith('group:')){ACTIVE_FILTERS.brandGroup.push(v.split(':')[1]);}
-    else if(v.startsWith('brand:')){const parts=v.split(':');ACTIVE_FILTERS.brandGroup.push(parts[1]);ACTIVE_FILTERS.brand.push(parts[2]);}
-  });
+  // Year/month handled by onYearChange/onMonthChange
+  // Brand group/brand handled by onBrandGroupChange/onBrandChange
   // Cascade RPM filter based on brand group selection
   const selBGs=ACTIVE_FILTERS.brandGroup;
   if(selBGs.length>0&&FILTER_DATA.dealers.length>0){
@@ -569,7 +603,12 @@ function applyFilters(){
   loadAllPages();
 }
 function clearFilters(){
-  ['ms-brandgroup','ms-acctmgr','ms-rpm','ms-dealercat','ms-dealergroup','ms-oemregion','ms-state','ms-dealername','ms-period']
+  document.getElementById('f-year-sel').value='';
+  document.getElementById('f-month-sel').innerHTML='<option value="">All Months</option>';
+  document.getElementById('f-brandgroup-sel').value='';
+  document.getElementById('f-brand-sel').innerHTML='<option value="">All Brands</option>';
+  ACTIVE_FILTERS.brandGroup=[];ACTIVE_FILTERS.brand=[];
+  ['ms-acctmgr','ms-rpm','ms-dealercat','ms-dealergroup','ms-oemregion','ms-state','ms-dealername']
     .forEach(id=>{if(MS_STATE[id]){MS_STATE[id].selected.clear();updateMSBtn(id);}});
   ACTIVE_FILTERS={year:[],month:[],brandGroup:[],brand:[],rpm:[],acctMgr:[],dealerCat:[],dealerGroup:[],state:[],oemRegion:[],dealerName:[]};
   loadAllPages();
@@ -586,8 +625,13 @@ function inFilter(col, vals){
 function buildFilterClauses(){
   const f=ACTIVE_FILTERS;
   const c=[];
-  const yr=inFilter("'Business Dates Local'[Reporting Year]",f.year.map(String));
-  if(yr)c.push(yr);
+  // Year is numeric in DAX
+  if(f.year&&f.year.length){
+    if(f.year.length===1) c.push(`FILTER(ALL('Business Dates Local'),'Business Dates Local'[Reporting Year]=${f.year[0]})`);
+    else{const list=f.year.map(y=>`'Business Dates Local'[Reporting Year]=${y}`).join('||');c.push(`FILTER(ALL('Business Dates Local'),${list})`);}
+  }
+  const _skip_yr=null;
+  if(_skip_yr)c.push(_skip_yr);
   const mo=inFilter("'Business Dates Local'[Reporting MonthYear]",f.month);
   if(mo)c.push(mo);
   const bg=inFilter("'Dealers Local'[Brand Group]",f.brandGroup);
@@ -627,7 +671,6 @@ function calcFilter(){
 async function loadFilterOptions(){
   setLoad('Loading filter options...');
   // Initialize all multi-selects
-  createMultiSelect('ms-brandgroup','All Brand Groups');
   createMultiSelect('ms-acctmgr','All Account Managers');
   createMultiSelect('ms-rpm','All RPMs');
   createMultiSelect('ms-dealercat','All Categories');
@@ -635,7 +678,6 @@ async function loadFilterOptions(){
   createMultiSelect('ms-oemregion','All OEM Regions');
   createMultiSelect('ms-state','All States');
   createMultiSelect('ms-dealername','All Dealers');
-  createMultiSelect('ms-period','All Periods');
   try{
     // Period filter
     const dates=await dax(`EVALUATE SUMMARIZECOLUMNS('Business Dates Local'[Reporting Year],'Business Dates Local'[Reporting MonthYear],'Business Dates Local'[Mon-Year Sort]) ORDER BY 'Business Dates Local'[Mon-Year Sort] ASC`);
@@ -648,17 +690,17 @@ async function loadFilterOptions(){
     });
     FILTER_DATA.years=[...yearSet];
     FILTER_DATA.months=monthMap;
-    // Build period options grouped by year
-    const periodOpts=[];
+    // Populate year dropdown
+    const yearSel=document.getElementById('f-year-sel');
     [...yearSet].sort().reverse().forEach(yr=>{
-      periodOpts.push({isGroup:false,value:'year:'+yr,label:yr+' (Full Year)'});
-      (monthMap[yr]||[]).forEach(mo=>periodOpts.push({isGroup:false,value:'month:'+yr+':'+mo,label:'  '+mo}));
+      const o=document.createElement('option');o.value=yr;o.textContent=yr;yearSel.appendChild(o);
     });
-    populateMS('ms-period', periodOpts);
-    // Default select 2026
-    const state2026=MS_STATE['ms-period'];
-    const opt2026=periodOpts.find(o=>o.value==='year:2026');
-    if(opt2026){state2026.selected.add('year:2026');updateMSBtn('ms-period');ACTIVE_FILTERS.year=['2026'];}
+    // Default to 2026
+    if([...yearSel.options].some(o=>o.value==='2026')){
+      yearSel.value='2026';ACTIVE_FILTERS.year=['2026'];
+      // Populate months for 2026
+      populateMonthSel('2026');
+    }
 
     // Brand Groups and Brands
     const brands=await dax(`EVALUATE SUMMARIZECOLUMNS('Dealers Local'[Brand Group],'Dealers Local'[Brand]) ORDER BY 'Dealers Local'[Brand Group] ASC,'Dealers Local'[Brand] ASC`);
@@ -669,12 +711,11 @@ async function loadFilterOptions(){
       if(bg&&br&&br!=='null'){if(!brandMap[bg])brandMap[bg]=[];brandMap[bg].push(br);}
     });
     FILTER_DATA.brandGroups=[...bgSet];FILTER_DATA.brands=brandMap;
-    const brandOpts=[];
+    // Populate brand group dropdown
+    const bgSel=document.getElementById('f-brandgroup-sel');
     [...bgSet].sort().forEach(bg=>{
-      brandOpts.push({isGroup:false,value:'group:'+bg,label:bg+' (All)'});
-      (brandMap[bg]||[]).sort().forEach(br=>brandOpts.push({isGroup:false,value:'brand:'+bg+':'+br,label:'  '+br}));
+      const o=document.createElement('option');o.value=bg;o.textContent=bg;bgSel.appendChild(o);
     });
-    populateMS('ms-brandgroup', brandOpts);
 
     // Other filters
     const dealers=await dax(`EVALUATE SUMMARIZECOLUMNS('Dealers Local'[RPM],'Dealers Local'[Account Manager],'Dealers Local'[Dealer Category],'Dealers Local'[Dealer Group],'Dealers Local'[State],'Dealers Local'[OEM Region],'Dealers Local'[Dealer SG Code],'Dealers Local'[Dealer Name]) ORDER BY 'Dealers Local'[Dealer Name] ASC`);
@@ -711,21 +752,21 @@ async function loadPage1(){
     const kt=await dax(`EVALUATE ROW("TotalDealers",CALCULATE([Total Dealers]${cf}),"PartDealers",CALCULATE([Participating dealers]${cf}),"DealersGA",CALCULATE([Dealers in GA]${cf}),"PctGA",CALCULATE([Dealers in GA %]${cf}),"RDR",CALCULATE([RDR for Pen CY]${cf}),"Products",CALCULATE([Products CY]${cf}),"Pen",CALCULATE([Product Pen CY]${cf}),"Target",CALCULATE([Target total]${cf}),"ATG",CALCULATE([ATG %]${cf}),"Visits",CALCULATE([Expense Visits CY]${cf}),"Expenses",CALCULATE([Expense Total CY]${cf}),"CostPerVisit",CALCULATE([Expense / visit]${cf}))`);
     const k=kt[0]||{};
     document.getElementById('p1-kt-kpis').innerHTML=`
-      <div style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.5px;margin-bottom:6px;grid-column:1/-1">Dealer Coverage</div>
+      <div class="section-sub-label" style="grid-column:1/-1">Dealer Coverage</div>
       <div class="kpi-card"><div class="kpi-lbl">Total Dealers</div><div class="kpi-val">${fmt(k['[TotalDealers]'])}</div></div>
       <div class="kpi-card"><div class="kpi-lbl">Participating Dealers</div><div class="kpi-val">${fmt(k['[PartDealers]'])}</div></div>
       <div class="kpi-card"><div class="kpi-lbl">Dealers in GA</div><div class="kpi-val">${fmt(k['[DealersGA]'])}</div></div>
       <div class="kpi-card"><div class="kpi-lbl">% in GA</div><div class="kpi-val">${fmt(k['[PctGA]'],'pct')}</div></div>`;
     document.getElementById('p1-kt-kpis2').innerHTML=`
-      <div style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.5px;margin-bottom:6px;grid-column:1/-1">Production</div>
+      <div class="section-sub-label" style="grid-column:1/-1">Production</div>
       <div class="kpi-card"><div class="kpi-lbl">Total RDRs</div><div class="kpi-val">${fmt(k['[RDR]'])}</div></div>
       <div class="kpi-card"><div class="kpi-lbl">Coverages</div><div class="kpi-val">${fmt(k['[Products]'])}</div></div>
       <div class="kpi-card"><div class="kpi-lbl">Penetration</div><div class="kpi-val">${fmt(k['[Pen]'],'pct')}</div></div>
-      <div style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.5px;margin-bottom:6px;grid-column:1/-1;margin-top:12px">Target</div>
+      <div class="section-sub-label" style="grid-column:1/-1;margin-top:8px">Target</div>
       <div class="kpi-card"><div class="kpi-lbl">Target Contracts</div><div class="kpi-val">${fmt(k['[Target]'])}</div></div>
       <div class="kpi-card"><div class="kpi-lbl">Coverages</div><div class="kpi-val">${fmt(k['[Products]'])}</div></div>
       <div class="kpi-card ${(k['[ATG]']||0)>=1?'green':'yellow'}"><div class="kpi-lbl">Target Achieved</div><div class="kpi-val">${fmt(k['[ATG]'],'pct')}</div></div>
-      <div style="font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.5px;margin-bottom:6px;grid-column:1/-1;margin-top:12px">Activity</div>
+      <div class="section-sub-label" style="grid-column:1/-1;margin-top:8px">Activity</div>
       <div class="kpi-card"><div class="kpi-lbl">Total Visits</div><div class="kpi-val">${fmt(k['[Visits]'])}</div></div>
       <div class="kpi-card"><div class="kpi-lbl">Expenses</div><div class="kpi-val">${fmt(k['[Expenses]'],'cur')}</div></div>
       <div class="kpi-card"><div class="kpi-lbl">$ per Visit</div><div class="kpi-val">${fmt(k['[CostPerVisit]'],'cur')}</div></div>`;
@@ -829,7 +870,7 @@ async function loadPage2(){
     }).join('');
     document.getElementById('p2-dealer-tbl').innerHTML=`<table><thead><tr>
       <th>SG Code</th><th>Dealer Name</th><th>RPM</th><th>Brand Group</th><th>State</th>
-      <th class="td-num">RDR</th><th class="td-num">Products CY</th><th class="td-num">YoY</th>
+      <th class="td-num">RDR</th><th class="td-num">Coverages</th><th class="td-num">YoY</th>
       <th class="td-num">Pen</th><th class="td-num">% Target</th><th class="td-num">SG Admin</th>
       <th class="td-num">Visits</th><th class="td-num">Missed</th><th class="td-num">SOW</th><th class="td-num">Annlzd Missed</th>
     </tr></thead><tbody>${tbody||'<tr><td colspan="15" class="empty-state">No data</td></tr>'}</tbody></table>`;

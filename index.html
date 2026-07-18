@@ -932,7 +932,9 @@ async function generateGameplan(){
 
 // ── LOAD ALL ───────────────────────────────────────────────────────────
 async function loadAllPages(){
-  await Promise.all([loadPage1(),loadPage2(),loadPage3()]);
+  try{await loadPage1();}catch(e){console.error('Page1 failed:',e);}
+  try{await loadPage2();}catch(e){console.error('Page2 failed:',e);}
+  try{await loadPage3();}catch(e){console.error('Page3 failed:',e);}
   document.getElementById('last-refresh').textContent='Updated '+new Date().toLocaleTimeString();
 }
 
@@ -944,10 +946,18 @@ async function init(){
     setLoad('Loading filters...');
     await loadFilters();
     setLoad('Loading data...');
-    await loadAllPages();
+    await loadPage1();
+    setLoad('Loading dealer data...');
+    await loadPage2();
+    setLoad('Loading activity data...');
+    await loadPage3();
+    document.getElementById('last-refresh').textContent='Updated '+new Date().toLocaleTimeString();
     document.getElementById('loading-screen').style.display='none';
     document.getElementById('app').style.display='flex';
-  }catch(e){showError(e.message+'\n\nMake sure the Cloudflare Worker is running and the service principal has workspace access.');}
+  }catch(e){
+    console.error('Init error:',e);
+    showError(e.message);
+  }
 }
 init();
 </script>

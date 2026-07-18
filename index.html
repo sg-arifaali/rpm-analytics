@@ -641,8 +641,11 @@ async function loadPage1(){
   try{
     const c=cf();
     // KT
-    const kt=await dax(`EVALUATE ROW("TD",CALCULATE([Total Dealers]${c}),"PD",CALCULATE([Participating dealers]${c}),"DGA",CALCULATE([Dealers in GA]${c}),"PGA",CALCULATE([Dealers in GA %]${c}),"RDR",CALCULATE([RDR for Pen CY]${c}),"COV",CALCULATE([Products CY]${c}),"PEN",CALCULATE([Product Pen CY]${c}),"TGT",CALCULATE([Target total]${c}),"ATG",CALCULATE([ATG %]${c}),"VIS",CALCULATE([Expense Visits CY]${c}),"EXP",CALCULATE([Expenses RPM]${c}),"CPV",CALCULATE([$ per Visit RPM]${c}))`);
+    const kt=await dax(`EVALUATE ROW("TD",CALCULATE([Total Dealers]${c}),"PD",CALCULATE([Participating dealers]${c}),"DGA",CALCULATE([Dealers in GA]${c}),"PGA",CALCULATE([Dealers in GA %]${c}),"RDR",CALCULATE([RDR for Pen CY]${c}),"COV",CALCULATE([Products CY]${c}),"PEN",CALCULATE([Product Pen CY]${c}),"TGT",CALCULATE([Target total]${c}),"ATG",CALCULATE([ATG %]${c}),"VIS",CALCULATE([Expense Visits CY]${c}),"EXP",CALCULATE([Expenses RPM]${c}))`);
     const k=kt[0]||{};
+    // Calculate cost per visit separately ($ in measure name causes issues in ROW)
+    const cpv=await dax(`EVALUATE ROW("CPV",CALCULATE([Expense / visit]${c}))`);
+    k['[CPV]']=(cpv[0]||{})['[CPV]'];
     document.getElementById('p1-dealers').innerHTML=`
       <div class="kpi-card"><div class="kpi-lbl">Total Dealers</div><div class="kpi-val">${fmt(k['[TD]'])}</div></div>
       <div class="kpi-card"><div class="kpi-lbl">Participating Dealers</div><div class="kpi-val">${fmt(k['[PD]'])}</div></div>

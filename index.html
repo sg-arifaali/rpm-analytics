@@ -791,8 +791,8 @@ async function loadPage1(){
   function gaRender(id,html){document.getElementById(id).innerHTML=html;}
   function gaErr(id,e){document.getElementById(id).innerHTML=sectionErr(e.message);}
 
-  // Sale type filter — direct CALCULATE argument, folds into SQL WHERE clause
-  const stf=`,'DMS VIN'[Sale Type Group] IN {"Lease","Finance","Cash/OSL"}`;
+  // Sale type + Coverage Category filters — fold to SQL WHERE clauses
+  const stf=`,'DMS VIN'[Sale Type Group] IN {"Lease","Finance","Cash/OSL"},'DMS Coverage Mapping'[Coverage Category]="Back End"`;
 
   // Penetration
   dax(`EVALUATE ROW(
@@ -859,7 +859,7 @@ async function loadPage1(){
   }).catch(e=>gaErr('p1-ga-missed',e));
 
   // Breakdown tables — sale type filter via IN operator (folds to SQL WHERE)
-  const stfSC=`,'DMS VIN'[Sale Type Group] IN {"Lease","Finance","Cash/OSL"}`;
+  const stfSC=`,'DMS VIN'[Sale Type Group] IN {"Lease","Finance","Cash/OSL"},'DMS Coverage Mapping'[Coverage Category]="Back End"`;
   dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[N/U],${scf}"RDR",[RDR Total CY 2],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed],${stfSC.slice(1)}) ORDER BY [RDR Total CY 2] DESC`)
     .then(r=>gaRender('p1-cond-tbl',breakdownTable(r,'DMS VIN[N/U]')))
     .catch(e=>gaRender('p1-cond-tbl',sectionErr(e.message)));

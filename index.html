@@ -363,13 +363,13 @@ const WORKER = 'https://rpm-auth.aali-dfe.workers.dev';
 const WS_ID  = '258f02cc-ab3d-41ac-a532-295cfd4f3ade';
 const DS_ID  = '772c9f87-6e7c-4d14-87d4-3f511279cbee';
 
-// GA sale type filter — constant, applied to all GA queries
+// Sale type filter — used only in SUMMARIZECOLUMNS breakdown tables
 const STF = "FILTER('DMS VIN','DMS VIN'[Sale Type Group]=\"Lease\"||'DMS VIN'[Sale Type Group]=\"Cash/OSL\"||'DMS VIN'[Sale Type Group]=\"Finance\")";
 
 // ── STATE ──────────────────────────────────────────────────────────────
 let TOKEN = null;
 const F  = {brandGroup:[],brand:[],acctMgr:[],rpm:[],dealerCat:[],dealerGroup:[],oemRegion:[],state:[],dealerName:[],year:'',month:[]};
-const FD = {years:[],months:{},brandGroups:[],brands:{},dealers:[]};
+const FD = {years:[],months:{},brandGroups:[],brands:{},dealers:[],dealerRows:[]};
 const MS = {};
 
 // ── UTILS ──────────────────────────────────────────────────────────────
@@ -541,32 +541,41 @@ async function cascadeFilters(){
   const selBGs=[...MS['ms-brandgroup'].sel];
   const selBR=[...MS['ms-brand'].sel];
   const selAM=[...MS['ms-acctmgr'].sel];
+
+  // All filtering done client-side from FD cache — no DAX round trip
+  // Filter dealer rows from the full FD.dealerRows snapshot
+  let rows=FD.dealerRows;
+  if(selBGs.length) rows=rows.filter(r=>selBGs.includes(r.bg));
+  if(selBR.length)  rows=rows.filter(r=>selBR.includes(r.br));
+  if(selAM.length)  rows=rows.filter(r=>selAM.includes(r.am));
+
+  // Update Brand dropdown based on selected Brand Groups
+  const brands=selBGs.length
+    ?[...new Set(rows.map(r=>r.br).filter(Boolean))].sort()
+    :[...new Set(FD.dealerRows.map(r=>r.br).filter(Boolean))].sort();
   if(MS['ms-brand']){
-    const brands=selBGs.length?selBGs.flatMap(bg=>(FD.brands[bg]||[]).sort()):[...new Set(Object.values(FD.brands).flat())].sort();
-    const prevSel=[...MS['ms-brand'].sel];
+    const prev=[...MS['ms-brand'].sel];
     populateMS('ms-brand',brands.map(b=>({value:b,label:b})));
-    MS['ms-brand'].sel=new Set(prevSel.filter(b=>brands.includes(b)));
+    MS['ms-brand'].sel=new Set(prev.filter(b=>brands.includes(b)));
     updateMSBtn('ms-brand');
   }
-  try{
-    const c=[];
-    if(selBGs.length)c.push(`FILTER(ALL('Dealers Local'),'Dealers Local'[Brand Group] IN {${selBGs.map(v=>`"${v}"`).join(',')}})`);
-    if(selBR.length) c.push(`FILTER(ALL('Dealers Local'),'Dealers Local'[Brand] IN {${selBR.map(v=>`"${v}"`).join(',')}})`);
-    if(selAM.length) c.push(`FILTER(ALL('Dealers Local'),'Dealers Local'[Account Manager] IN {${selAM.map(v=>`"${v}"`).join(',')}})`);
-    const fStr=c.length?','+c.join(','):'';
-    const dealers=await dax(`EVALUATE SUMMARIZECOLUMNS('Dealers Local'[RPM],'Dealers Local'[Dealer Name],'Dealers Local'[OEM Region],'Dealers Local'[State]${fStr}) ORDER BY 'Dealers Local'[Dealer Name] ASC`);
-    const rpms=new Set(),dlrNames=[],oems=new Set(),states=new Set();
-    dealers.forEach(r=>{
-      if(r['Dealers Local[RPM]']&&r['Dealers Local[RPM]']!=='null')rpms.add(r['Dealers Local[RPM]']);
-      if(r['Dealers Local[Dealer Name]']&&r['Dealers Local[Dealer Name]']!=='null')dlrNames.push(r['Dealers Local[Dealer Name]']);
-      if(r['Dealers Local[OEM Region]']&&r['Dealers Local[OEM Region]']!=='null')oems.add(r['Dealers Local[OEM Region]']);
-      if(r['Dealers Local[State]']&&r['Dealers Local[State]']!=='null')states.add(r['Dealers Local[State]']);
-    });
-    if(MS['ms-rpm']){const prev=[...MS['ms-rpm'].sel];populateMS('ms-rpm',[...rpms].sort().map(v=>({value:v,label:v})));MS['ms-rpm'].sel=new Set(prev.filter(r=>rpms.has(r)));updateMSBtn('ms-rpm');}
-    if(MS['ms-dealername']){const prev=[...MS['ms-dealername'].sel];populateMS('ms-dealername',dlrNames.map(d=>({value:d,label:d})));MS['ms-dealername'].sel=new Set(prev.filter(d=>dlrNames.includes(d)));updateMSBtn('ms-dealername');}
-    if(MS['ms-oemregion']){const prev=[...MS['ms-oemregion'].sel];populateMS('ms-oemregion',[...oems].sort().map(v=>({value:v,label:v})));MS['ms-oemregion'].sel=new Set(prev.filter(o=>oems.has(o)));updateMSBtn('ms-oemregion');}
-    if(MS['ms-state']){const prev=[...MS['ms-state'].sel];populateMS('ms-state',[...states].sort().map(v=>({value:v,label:v})));MS['ms-state'].sel=new Set(prev.filter(s=>states.has(s)));updateMSBtn('ms-state');}
-  }catch(e){console.error('Cascade error:',e);}
+
+  // Refilter with brand selection applied
+  if(selBR.length) rows=FD.dealerRows.filter(r=>
+    (!selBGs.length||selBGs.includes(r.bg))&&
+    selBR.includes(r.br)&&
+    (!selAM.length||selAM.includes(r.am))
+  );
+
+  const rpms   =[...new Set(rows.map(r=>r.rpm).filter(Boolean))].sort();
+  const oems   =[...new Set(rows.map(r=>r.oem).filter(Boolean))].sort();
+  const states =[...new Set(rows.map(r=>r.st).filter(Boolean))].sort();
+  const dlrNames=rows.map(r=>r.name).filter(Boolean);
+
+  if(MS['ms-rpm']){const prev=[...MS['ms-rpm'].sel];populateMS('ms-rpm',rpms.map(v=>({value:v,label:v})));MS['ms-rpm'].sel=new Set(prev.filter(r=>rpms.includes(r)));updateMSBtn('ms-rpm');}
+  if(MS['ms-oemregion']){const prev=[...MS['ms-oemregion'].sel];populateMS('ms-oemregion',oems.map(v=>({value:v,label:v})));MS['ms-oemregion'].sel=new Set(prev.filter(o=>oems.includes(o)));updateMSBtn('ms-oemregion');}
+  if(MS['ms-state']){const prev=[...MS['ms-state'].sel];populateMS('ms-state',states.map(v=>({value:v,label:v})));MS['ms-state'].sel=new Set(prev.filter(s=>states.includes(s)));updateMSBtn('ms-state');}
+  if(MS['ms-dealername']){const prev=[...MS['ms-dealername'].sel];populateMS('ms-dealername',dlrNames.map(d=>({value:d,label:d})));MS['ms-dealername'].sel=new Set(prev.filter(d=>dlrNames.includes(d)));updateMSBtn('ms-dealername');}
 }
 function clearMS(id){
   MS[id].sel.clear();renderMS(id,MS[id].opts);updateMSBtn(id);
@@ -654,7 +663,19 @@ async function loadFilters(){
     if(v('Dealer Group')&&v('Dealer Group')!=='null')s.grp.add(v('Dealer Group'));
     if(v('State')&&v('State')!=='null')s.st.add(v('State'));
     if(v('OEM Region')&&v('OEM Region')!=='null')s.oem.add(v('OEM Region'));
-    if(v('Dealer SG Code')&&v('Dealer Name'))FD.dealers.push({code:v('Dealer SG Code'),name:v('Dealer Name')});
+    if(v('Dealer SG Code')&&v('Dealer Name')){
+      FD.dealers.push({code:v('Dealer SG Code'),name:v('Dealer Name')});
+      // Store full row for client-side cascade filtering
+      FD.dealerRows.push({
+        bg:bg&&bg!=='Head Office'?bg:null,
+        br:br&&br!=='Head Office'?br:null,
+        rpm:v('RPM')||null,
+        am:v('Account Manager')||null,
+        oem:v('OEM Region')||null,
+        st:v('State')||null,
+        name:v('Dealer Name')
+      });
+    }
   });
   FD.brandGroups=[...bgSet];
   populateMS('ms-brandgroup',FD.brandGroups.sort().map(b=>({value:b,label:b})));
@@ -738,9 +759,9 @@ async function loadPage1(){
 
   // Penetration (% No Deal fires separately — it's the slowest measure)
   dax(`EVALUATE ROW(
-    "RDR",CALCULATE([RDR Total CY]${g2},${STF}),
-    "CON",CALCULATE([Contracts CY BE]${g2},${STF}),
-    "PEN",CALCULATE([Contract Pen CY BE]${g2},${STF})
+    "RDR",CALCULATE([RDR Total CY]${g2}),
+    "CON",CALCULATE([Contracts CY BE]${g2}),
+    "PEN",CALCULATE([Contract Pen CY BE]${g2})
   )`).then(r=>{
     const gp=r[0]||{};
     gaRender('p1-ga-pen',`
@@ -748,8 +769,7 @@ async function loadPage1(){
       <div class="kpi-card green"><div class="kpi-lbl">Contracts</div><div class="kpi-val">${fmt(gp['[CON]'])}</div></div>
       <div class="kpi-card green"><div class="kpi-lbl">Penetration</div><div class="kpi-val">${fmt(gp['[PEN]'],'pct')}</div></div>
       <div class="kpi-card green" id="p1-ga-nd"><div class="kpi-lbl">% with no Product</div><div class="skeleton"></div></div>`);
-    // % No Deal async — fills in last
-    dax(`EVALUATE ROW("ND",CALCULATE([% No Deal CY]${g2},${STF}))`).then(r2=>{
+    dax(`EVALUATE ROW("ND",CALCULATE([% No Deal CY]${g2}))`).then(r2=>{
       const el=document.getElementById('p1-ga-nd');
       if(el)el.innerHTML=`<div class="kpi-lbl">% with no Product</div><div class="kpi-val">${fmt((r2[0]||{})['[ND]'],'pct')}</div>`;
     }).catch(e=>{
@@ -760,9 +780,9 @@ async function loadPage1(){
 
   // PVR
   dax(`EVALUATE ROW(
-    "FR",CALCULATE([FR PVR Total CY]${g2},${STF}),
-    "PP",CALCULATE([Prod PVR Total CY]${g2},${STF}),
-    "BE",CALCULATE([BE PVR Total CY]${g2},${STF})
+    "FR",CALCULATE([FR PVR Total CY]${g2}),
+    "PP",CALCULATE([Prod PVR Total CY]${g2}),
+    "BE",CALCULATE([BE PVR Total CY]${g2})
   )`).then(r=>{
     const gpv=r[0]||{};
     gaRender('p1-ga-pvr',`
@@ -773,9 +793,9 @@ async function loadPage1(){
 
   // Share of Wallet
   dax(`EVALUATE ROW(
-    "SGC" ,CALCULATE([SG Contracts CY]${g2},${STF}),
-    "SGCP",CALCULATE([SG Contracts CY % of TAM]${g2},${STF}),
-    "SGP" ,CALCULATE([SG Pen CY]${g2},${STF})
+    "SGC" ,CALCULATE([SG Contracts CY]${g2}),
+    "SGCP",CALCULATE([SG Contracts CY % of TAM]${g2}),
+    "SGP" ,CALCULATE([SG Pen CY]${g2})
   )`).then(r=>{
     const gs=r[0]||{};
     gaRender('p1-ga-sow',`
@@ -786,11 +806,11 @@ async function loadPage1(){
 
   // Missed Opportunity
   dax(`EVALUATE ROW(
-    "MSS" ,CALCULATE([SG Contracts CY TAM Missed]${g2},${STF}),
-    "MSSA",CALCULATE([SG Contracts CY TAM Missed Annual]${g2},${STF}),
-    "ADM" ,CALCULATE([SG Admin CY TAM Missed]${g2},${STF}),
-    "ADMA",CALCULATE([SG Admin CY TAM Missed Annual]${g2},${STF}),
-    "PM"  ,CALCULATE([SG Pen CY TAM Missed]${g2},${STF})
+    "MSS" ,CALCULATE([SG Contracts CY TAM Missed]${g2}),
+    "MSSA",CALCULATE([SG Contracts CY TAM Missed Annual]${g2}),
+    "ADM" ,CALCULATE([SG Admin CY TAM Missed]${g2}),
+    "ADMA",CALCULATE([SG Admin CY TAM Missed Annual]${g2}),
+    "PM"  ,CALCULATE([SG Pen CY TAM Missed]${g2})
   )`).then(r=>{
     const gm=r[0]||{};
     gaRender('p1-ga-missed',`
@@ -801,20 +821,21 @@ async function loadPage1(){
       <div class="kpi-card red"><div class="kpi-lbl">Pen Missed</div><div class="kpi-val">${fmt(gm['[PM]'],'pct')}</div></div>`);
   }).catch(e=>gaErr('p1-ga-missed',e));
 
-  // Breakdown tables — also parallel
-  dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[N/U],${scf}${STF},"RDR",[RDR Total CY],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY] DESC`)
+  // Breakdown tables — STF kept here as it's used for grouping dimension context
+  const STF_SC="FILTER('DMS VIN','DMS VIN'[Sale Type Group]=\"Lease\"||'DMS VIN'[Sale Type Group]=\"Cash/OSL\"||'DMS VIN'[Sale Type Group]=\"Finance\")";
+  dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[N/U],${scf}${STF_SC},"RDR",[RDR Total CY],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY] DESC`)
     .then(r=>gaRender('p1-cond-tbl',breakdownTable(r,'DMS VIN[N/U]')))
     .catch(e=>gaRender('p1-cond-tbl',sectionErr(e.message)));
 
-  dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Sale Type Group],${scf}${STF},"RDR",[RDR Total CY],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY] DESC`)
+  dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Sale Type Group],${scf}${STF_SC},"RDR",[RDR Total CY],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY] DESC`)
     .then(r=>gaRender('p1-saletype-tbl',breakdownTable(r,'DMS VIN[Sale Type Group]')))
     .catch(e=>gaRender('p1-saletype-tbl',sectionErr(e.message)));
 
-  dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Miles Group],${scf}${STF},"RDR",[RDR Total CY],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY] DESC`)
+  dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Miles Group],${scf}${STF_SC},"RDR",[RDR Total CY],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY] DESC`)
     .then(r=>gaRender('p1-miles-tbl',breakdownTable(r,'DMS VIN[Miles Group]')))
     .catch(e=>gaRender('p1-miles-tbl',sectionErr(e.message)));
 
-  dax(`EVALUATE TOPN(10,SUMMARIZECOLUMNS('DMS VIN'[Finance Manager Name],${scf}${STF},"RDR",[RDR Total CY],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"SOW",[SG Contracts CY % of TAM],"MSS",[SG Contracts CY TAM Missed]),[RDR Total CY],DESC)`)
+  dax(`EVALUATE TOPN(10,SUMMARIZECOLUMNS('DMS VIN'[Finance Manager Name],${scf}${STF_SC},"RDR",[RDR Total CY],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"SOW",[SG Contracts CY % of TAM],"MSS",[SG Contracts CY TAM Missed]),[RDR Total CY],DESC)`)
     .then(r=>gaRender('p1-fim-tbl',fimTable(r)))
     .catch(e=>gaRender('p1-fim-tbl',sectionErr(e.message)));
 }

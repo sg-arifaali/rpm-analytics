@@ -412,10 +412,21 @@ async function getToken(){
 // ── DAX ────────────────────────────────────────────────────────────────
 // Retries once on 524 (Cloudflare/PBI cold-start timeout) after a short delay
 async function daxOnce(q){
-  const r=await fetch(`${WORKER}?groupId=${WS_ID}&datasetId=${DS_ID}`,{
-    method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({queries:[{query:q}],serializerSettings:{includeNulls:true}})
-  });
+  const ctrl=new AbortController();
+  const timer=setTimeout(()=>ctrl.abort(),35000); // 35s hard timeout
+  let r;
+  try{
+    r=await fetch(`${WORKER}?groupId=${WS_ID}&datasetId=${DS_ID}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({queries:[{query:q}],serializerSettings:{includeNulls:true}}),
+      signal:ctrl.signal
+    });
+  }catch(e){
+    clearTimeout(timer);
+    if(e.name==='AbortError')throw new Error('Query timed out after 35s — Power BI may be slow or unreachable');
+    throw e;
+  }
+  clearTimeout(timer);
   const text=await r.text();
   let d;
   try{d=JSON.parse(text);}catch(e){throw new Error('Parse error: '+text.slice(0,200));}
@@ -607,7 +618,13 @@ async function loadFilters(){
   ['ms-brandgroup','ms-brand','ms-acctmgr','ms-rpm','ms-dealercat','ms-dealergroup','ms-oemregion','ms-state','ms-dealername','ms-month']
     .forEach(id=>createMS(id,phMap[id]));
 
-  const dates=await dax(`EVALUATE SUMMARIZECOLUMNS('Business Dates Local'[Reporting Year],'Business Dates Local'[Reporting MonthYear],'Business Dates Local'[Mon-Year Sort]) ORDER BY 'Business Dates Local'[Mon-Year Sort] ASC`);
+  // Fire all three queries in parallel — single round-trip wait instead of three
+  const [dates, dealers] = await Promise.all([
+    dax(`EVALUATE SUMMARIZECOLUMNS('Business Dates Local'[Reporting Year],'Business Dates Local'[Reporting MonthYear],'Business Dates Local'[Mon-Year Sort]) ORDER BY 'Business Dates Local'[Mon-Year Sort] ASC`),
+    dax(`EVALUATE SUMMARIZECOLUMNS('Dealers Local'[Brand Group],'Dealers Local'[Brand],'Dealers Local'[RPM],'Dealers Local'[Account Manager],'Dealers Local'[Dealer Category],'Dealers Local'[Dealer Group],'Dealers Local'[State],'Dealers Local'[OEM Region],'Dealers Local'[Dealer SG Code],'Dealers Local'[Dealer Name]) ORDER BY 'Dealers Local'[Dealer Name] ASC`)
+  ]);
+
+  // Dates
   const yearSet=new Set();
   dates.forEach(r=>{
     const yr=String(r['Business Dates Local[Reporting Year]']);
@@ -620,22 +637,13 @@ async function loadFilters(){
   FD.years.sort().reverse().forEach(yr=>{const o=document.createElement('option');o.value=yr;o.textContent=yr;yearSel.appendChild(o);});
   if(FD.years.includes('2026')){yearSel.value='2026';F.year='2026';populateMS('ms-month',(FD.months['2026']||[]).map(m=>({value:m,label:m})));}
 
-  const brands=await dax(`EVALUATE SUMMARIZECOLUMNS('Dealers Local'[Brand Group],'Dealers Local'[Brand]) ORDER BY 'Dealers Local'[Brand Group] ASC,'Dealers Local'[Brand] ASC`);
+  // Brands + Dealers (single query)
   const bgSet=new Set();
-  brands.forEach(r=>{
-    const bg=r['Dealers Local[Brand Group]'],br=r['Dealers Local[Brand]'];
-    if(bg&&bg!=='null')bgSet.add(bg);
-    if(bg&&br&&br!=='null'){if(!FD.brands[bg])FD.brands[bg]=[];FD.brands[bg].push(br);}
-  });
-  bgSet.delete('Head Office');if(FD.brands['Head Office'])delete FD.brands['Head Office'];
-  FD.brandGroups=[...bgSet];
-  populateMS('ms-brandgroup',FD.brandGroups.sort().map(b=>({value:b,label:b})));
-  populateMS('ms-brand',[...new Set(Object.values(FD.brands).flat())].sort().filter(b=>b!=='Head Office').map(b=>({value:b,label:b})));
-
-  const dealers=await dax(`EVALUATE SUMMARIZECOLUMNS('Dealers Local'[RPM],'Dealers Local'[Account Manager],'Dealers Local'[Dealer Category],'Dealers Local'[Dealer Group],'Dealers Local'[State],'Dealers Local'[OEM Region],'Dealers Local'[Dealer SG Code],'Dealers Local'[Dealer Name]) ORDER BY 'Dealers Local'[Dealer Name] ASC`);
   const s={rpm:new Set(),am:new Set(),cat:new Set(),grp:new Set(),st:new Set(),oem:new Set()};
   dealers.forEach(r=>{
     const v=k=>r[`Dealers Local[${k}]`];
+    const bg=v('Brand Group'), br=v('Brand');
+    if(bg&&bg!=='null'&&bg!=='Head Office'){bgSet.add(bg);if(br&&br!=='null'&&br!=='Head Office'){if(!FD.brands[bg])FD.brands[bg]=[];if(!FD.brands[bg].includes(br))FD.brands[bg].push(br);}}
     if(v('RPM')&&v('RPM')!=='null')s.rpm.add(v('RPM'));
     if(v('Account Manager')&&v('Account Manager')!=='null')s.am.add(v('Account Manager'));
     if(v('Dealer Category')&&v('Dealer Category')!=='null')s.cat.add(v('Dealer Category'));
@@ -644,6 +652,9 @@ async function loadFilters(){
     if(v('OEM Region')&&v('OEM Region')!=='null')s.oem.add(v('OEM Region'));
     if(v('Dealer SG Code')&&v('Dealer Name'))FD.dealers.push({code:v('Dealer SG Code'),name:v('Dealer Name')});
   });
+  FD.brandGroups=[...bgSet];
+  populateMS('ms-brandgroup',FD.brandGroups.sort().map(b=>({value:b,label:b})));
+  populateMS('ms-brand',[...new Set(Object.values(FD.brands).flat())].sort().map(b=>({value:b,label:b})));
   populateMS('ms-rpm',[...s.rpm].sort().map(v=>({value:v,label:v})));
   populateMS('ms-acctmgr',[...s.am].sort().map(v=>({value:v,label:v})));
   populateMS('ms-dealercat',[...s.cat].sort().map(v=>({value:v,label:v})));
@@ -1011,7 +1022,7 @@ async function init(){
     TOKEN=await getToken();
 
     setLoad('Loading filters...');
-    await loadFilters();
+    await loadFilters().catch(e=>{throw new Error('Filter load failed: '+e.message);});
 
     // App visible immediately — pages render async behind it
     document.getElementById('loading-screen').style.display='none';

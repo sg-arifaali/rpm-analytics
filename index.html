@@ -464,11 +464,15 @@ function buildFilters(){
   // Year - numeric
   if(F.year){
     c.push(`FILTER(ALL('Business Dates Local'),'Business Dates Local'[Reporting Year]=${F.year})`);
-    c.push(`FILTER(ALL('Business Dates GA'),'Business Dates GA'[Reporting Year]=${F.year})`);
+    c.push(`FILTER('Business Dates GA','Business Dates GA'[Reporting Year]=${F.year})`);
   }
   // Month
   const mo=inFilter("'Business Dates Local'[Reporting MonthYear]",F.month);
-  if(mo){c.push(mo);c.push(inFilter("'Business Dates GA'[Reporting MonthYear]",F.month));}
+  if(mo){
+    c.push(mo);
+    const moGA=inFilter("'Business Dates GA'[Reporting MonthYear]",F.month);
+    if(moGA)c.push(moGA.replace('FILTER(ALL(','FILTER('));
+  }
   const bg=inFilter("'Dealers Local'[Brand Group]",F.brandGroup);if(bg)c.push(bg);
   const br=inFilter("'Dealers Local'[Brand]",F.brand);if(br)c.push(br);
   const am=inFilter("'Dealers Local'[Account Manager]",F.acctMgr);if(am)c.push(am);
@@ -666,9 +670,12 @@ async function loadFilters(){
       if(bg&&bg!=='null')bgSet.add(bg);
       if(bg&&br&&br!=='null'){if(!FD.brands[bg])FD.brands[bg]=[];FD.brands[bg].push(br);}
     });
+    // Remove Head Office
+    bgSet.delete('Head Office');
+    if(FD.brands['Head Office'])delete FD.brands['Head Office'];
     FD.brandGroups=[...bgSet];
     populateMS('ms-brandgroup',FD.brandGroups.sort().map(b=>({value:b,label:b})));
-    populateMS('ms-brand',[...new Set(Object.values(FD.brands).flat())].sort().map(b=>({value:b,label:b})));
+    populateMS('ms-brand',[...new Set(Object.values(FD.brands).flat())].sort().filter(b=>b!=='Head Office').map(b=>({value:b,label:b})));
 
     // Dealers
     const dealers=await dax(`EVALUATE SUMMARIZECOLUMNS('Dealers Local'[RPM],'Dealers Local'[Account Manager],'Dealers Local'[Dealer Category],'Dealers Local'[Dealer Group],'Dealers Local'[State],'Dealers Local'[OEM Region],'Dealers Local'[Dealer SG Code],'Dealers Local'[Dealer Name]) ORDER BY 'Dealers Local'[Dealer Name] ASC`);
@@ -726,7 +733,8 @@ async function loadPage1(){
     // GA - split into separate queries to avoid any measure conflicts
     const f2=fs();
     // Section 1: Penetration
-    const gaPen=await dax(`EVALUATE ROW("RDR",CALCULATE([RDR Total CY]${c}),"CON",CALCULATE([Contracts CY BE]${c}),"PEN",CALCULATE([Contract Pen CY BE]${c}),"ND",CALCULATE([% No Deal CY]${c}))`);
+    const STFILTER=",FILTER('DMS VIN','DMS VIN'[Sale Type Group]="Lease"||'DMS VIN'[Sale Type Group]="Cash/OSL"||'DMS VIN'[Sale Type Group]="Finance")";
+    const gaPen=await dax(`EVALUATE ROW("RDR",CALCULATE([RDR Total CY]${c}${STFILTER}),"CON",CALCULATE([Contracts CY BE]${c}${STFILTER}),"PEN",CALCULATE([Contract Pen CY BE]${c}${STFILTER}),"ND",CALCULATE([% No Deal CY]${c}${STFILTER}))`);
     const gp=gaPen[0]||{};
     document.getElementById('p1-ga-pen').innerHTML=`
       <div class="kpi-card green"><div class="kpi-lbl">Total RDRs</div><div class="kpi-val">${fmt(gp['[RDR]'])}</div></div>
@@ -734,21 +742,21 @@ async function loadPage1(){
       <div class="kpi-card green"><div class="kpi-lbl">Penetration</div><div class="kpi-val">${fmt(gp['[PEN]'],'pct')}</div></div>
       <div class="kpi-card green"><div class="kpi-lbl">% with no Product</div><div class="kpi-val">${fmt(gp['[ND]'],'pct')}</div></div>`;
     // Section 2: PVR
-    const gaPvr=await dax(`EVALUATE ROW("FR",CALCULATE([FR PVR Total CY]${c}),"PP",CALCULATE([Prod PVR Total CY]${c}),"BE",CALCULATE([BE PVR Total CY]${c}))`);
+    const gaPvr=await dax(`EVALUATE ROW("FR",CALCULATE([FR PVR Total CY]${c}${STFILTER}),"PP",CALCULATE([Prod PVR Total CY]${c}${STFILTER}),"BE",CALCULATE([BE PVR Total CY]${c}${STFILTER}))`);
     const gpv=gaPvr[0]||{};
     document.getElementById('p1-ga-pvr').innerHTML=`
       <div class="kpi-card orange"><div class="kpi-lbl">Finance Reserve</div><div class="kpi-val">${fmt(gpv['[FR]'],'cur')}</div></div>
       <div class="kpi-card orange"><div class="kpi-lbl">Product PVR</div><div class="kpi-val">${fmt(gpv['[PP]'],'cur')}</div></div>
       <div class="kpi-card orange"><div class="kpi-lbl">Total PVR</div><div class="kpi-val">${fmt(gpv['[BE]'],'cur')}</div></div>`;
     // Section 3: Share of Wallet
-    const gaSow=await dax(`EVALUATE ROW("SGC",CALCULATE([SG Contracts CY]${c}),"SGCP",CALCULATE([SG Contracts CY % of TAM]${c}),"SGP",CALCULATE([SG Pen CY]${c}))`);
+    const gaSow=await dax(`EVALUATE ROW("SGC",CALCULATE([SG Contracts CY]${c}${STFILTER}),"SGCP",CALCULATE([SG Contracts CY % of TAM]${c}${STFILTER}),"SGP",CALCULATE([SG Pen CY]${c}${STFILTER}))`);
     const gs=gaSow[0]||{};
     document.getElementById('p1-ga-sow').innerHTML=`
       <div class="kpi-card blue"><div class="kpi-lbl">SG Share Contracts</div><div class="kpi-val">${fmt(gs['[SGC]'])}</div></div>
       <div class="kpi-card blue"><div class="kpi-lbl">SG Share %</div><div class="kpi-val">${fmt(gs['[SGCP]'],'pct')}</div></div>
       <div class="kpi-card blue"><div class="kpi-lbl">SG Pen</div><div class="kpi-val">${fmt(gs['[SGP]'],'pct')}</div></div>`;
     // Section 4: Missed Opportunity
-    const gaMiss=await dax(`EVALUATE ROW("MSS",CALCULATE([SG Contracts CY TAM Missed]${c}),"MSSA",CALCULATE([SG Contracts CY TAM Missed Annual]${c}),"ADM",CALCULATE([SG Admin CY TAM Missed]${c}),"ADMA",CALCULATE([SG Admin CY TAM Missed Annual]${c}),"PM",CALCULATE([SG Pen CY TAM Missed]${c}))`);
+    const gaMiss=await dax(`EVALUATE ROW("MSS",CALCULATE([SG Contracts CY TAM Missed]${c}${STFILTER}),"MSSA",CALCULATE([SG Contracts CY TAM Missed Annual]${c}${STFILTER}),"ADM",CALCULATE([SG Admin CY TAM Missed]${c}${STFILTER}),"ADMA",CALCULATE([SG Admin CY TAM Missed Annual]${c}${STFILTER}),"PM",CALCULATE([SG Pen CY TAM Missed]${c}${STFILTER}))`);
     const gm=gaMiss[0]||{};
     document.getElementById('p1-ga-missed').innerHTML=`
       <div class="kpi-card red"><div class="kpi-lbl">Contracts Missed</div><div class="kpi-val">${fmt(gm['[MSS]'])}</div></div>
@@ -759,13 +767,13 @@ async function loadPage1(){
 
     // GA Breakdowns
     const f=fs();
-    const cond=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[N/U]${f},"RDR",[RDR Total CY],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY] DESC`);
+    const cond=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[N/U],${f},FILTER('DMS VIN','DMS VIN'[Sale Type Group]="Lease"||'DMS VIN'[Sale Type Group]="Cash/OSL"||'DMS VIN'[Sale Type Group]="Finance"),"RDR",[RDR Total CY],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY] DESC`);
     document.getElementById('p1-cond-tbl').innerHTML=breakdownTable(cond,'DMS VIN[N/U]');
-    const sale=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Sale Type Group]${f},"RDR",[RDR Total CY],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY] DESC`);
+    const sale=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Sale Type Group],${f},FILTER('DMS VIN','DMS VIN'[Sale Type Group]="Lease"||'DMS VIN'[Sale Type Group]="Cash/OSL"||'DMS VIN'[Sale Type Group]="Finance"),"RDR",[RDR Total CY],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY] DESC`);
     document.getElementById('p1-saletype-tbl').innerHTML=breakdownTable(sale,'DMS VIN[Sale Type Group]');
-    const miles=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Miles Group]${f},"RDR",[RDR Total CY],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY] DESC`);
+    const miles=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Miles Group],${f},FILTER('DMS VIN','DMS VIN'[Sale Type Group]="Lease"||'DMS VIN'[Sale Type Group]="Cash/OSL"||'DMS VIN'[Sale Type Group]="Finance"),"RDR",[RDR Total CY],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY] DESC`);
     document.getElementById('p1-miles-tbl').innerHTML=breakdownTable(miles,'DMS VIN[Miles Group]');
-    const fim=await dax(`EVALUATE TOPN(10,SUMMARIZECOLUMNS('DMS VIN'[Finance Manager Name]${f},"RDR",[RDR Total CY],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"SOW",[SG Contracts CY % of TAM],"MSS",[SG Contracts CY TAM Missed]),[RDR Total CY],DESC)`);
+    const fim=await dax(`EVALUATE TOPN(10,SUMMARIZECOLUMNS('DMS VIN'[Finance Manager Name],${f},FILTER('DMS VIN','DMS VIN'[Sale Type Group]="Lease"||'DMS VIN'[Sale Type Group]="Cash/OSL"||'DMS VIN'[Sale Type Group]="Finance"),"RDR",[RDR Total CY],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"SOW",[SG Contracts CY % of TAM],"MSS",[SG Contracts CY TAM Missed]),[RDR Total CY],DESC)`);
     document.getElementById('p1-fim-tbl').innerHTML=fimTable(fim);
   }catch(e){console.error('Page1 error:',e);['p1-dealers','p1-activity','p1-production','p1-target','p1-ga-overview','p1-ga-pvr','p1-ga-missed'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=`<div style="color:var(--red);padding:12px;font-size:12px">Error: ${e.message}</div>`;});}
 }

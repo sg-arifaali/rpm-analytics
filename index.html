@@ -806,6 +806,13 @@ async function init(){
     TOKEN=await getToken();
     setLoad('Loading filter options...');
     await loadFilterOptions();
+    // Default to 2026
+    const yearSel=document.getElementById('f-year');
+    if([...yearSel.options].some(o=>o.value==='2026')){
+      yearSel.value='2026';
+      ACTIVE_FILTERS.year='2026';
+      updateMonthFilter();
+    }
     setLoad('Loading dashboard data...');
     await loadAllPages();
     document.getElementById('last-refresh').textContent='Updated '+new Date().toLocaleTimeString();

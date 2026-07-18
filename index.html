@@ -512,18 +512,63 @@ function toggleMSItem(id,value,checked){
   if(checked)MS[id].sel.add(value);
   else MS[id].sel.delete(value);
   updateMSBtn(id);
-  // Brand group cascade
-  if(id==='ms-brandgroup'){
-    const selBGs=[...MS[id].sel];
-    const brands=selBGs.length?selBGs.flatMap(bg=>(FD.brands[bg]||[]).sort()):[...new Set(Object.values(FD.brands).flat())].sort();
-    if(MS['ms-brand']){MS['ms-brand'].sel.clear();populateMS('ms-brand',brands.map(b=>({value:b,label:b})));updateMSBtn('ms-brand');}
-    F.brand=[];
+  // Brand group cascade -> update Brand, RPM, Dealer Name
+  if(id==='ms-brandgroup'||id==='ms-brand'||id==='ms-acctmgr'){
+    cascadeFilters();
   }
   applyFilters();
 }
+
+async function cascadeFilters(){
+  // Build current filter state for cascade query
+  const selBGs=[...MS['ms-brandgroup'].sel];
+  const selBR=[...MS['ms-brand'].sel];
+  const selAM=[...MS['ms-acctmgr'].sel];
+  
+  // Update brand list based on brand group
+  if(MS['ms-brand']){
+    const brands=selBGs.length?selBGs.flatMap(bg=>(FD.brands[bg]||[]).sort()):[...new Set(Object.values(FD.brands).flat())].sort();
+    const prevSel=[...MS['ms-brand'].sel];
+    populateMS('ms-brand',brands.map(b=>({value:b,label:b})));
+    // Keep previously selected brands that are still valid
+    MS['ms-brand'].sel=new Set(prevSel.filter(b=>brands.includes(b)));
+    updateMSBtn('ms-brand');
+  }
+
+  // Query filtered dealers and RPMs
+  try{
+    const c=[];
+    const bg=selBGs.length?`FILTER(ALL('Dealers Local'),'Dealers Local'[Brand Group] IN {${selBGs.map(v=>`"${v}"`).join(',')}})`:null;
+    const br=selBR.length?`FILTER(ALL('Dealers Local'),'Dealers Local'[Brand] IN {${selBR.map(v=>`"${v}"`).join(',')}})`:null;
+    const am=selAM.length?`FILTER(ALL('Dealers Local'),'Dealers Local'[Account Manager] IN {${selAM.map(v=>`"${v}"`).join(',')}})`:null;
+    if(bg)c.push(bg);if(br)c.push(br);if(am)c.push(am);
+    const fStr=c.length?','+c.join(','):'';
+    
+    const dealers=await dax(`EVALUATE SUMMARIZECOLUMNS('Dealers Local'[RPM],'Dealers Local'[Dealer Name]${fStr}) ORDER BY 'Dealers Local'[Dealer Name] ASC`);
+    const rpms=new Set(),dlrNames=[];
+    dealers.forEach(r=>{
+      if(r['Dealers Local[RPM]']&&r['Dealers Local[RPM]']!=='null')rpms.add(r['Dealers Local[RPM]']);
+      if(r['Dealers Local[Dealer Name]']&&r['Dealers Local[Dealer Name]']!=='null')dlrNames.push(r['Dealers Local[Dealer Name]']);
+    });
+    // Update RPM list
+    if(MS['ms-rpm']){
+      const prevRPM=[...MS['ms-rpm'].sel];
+      populateMS('ms-rpm',[...rpms].sort().map(v=>({value:v,label:v})));
+      MS['ms-rpm'].sel=new Set(prevRPM.filter(r=>rpms.has(r)));
+      updateMSBtn('ms-rpm');
+    }
+    // Update dealer name list
+    if(MS['ms-dealername']){
+      const prevDN=[...MS['ms-dealername'].sel];
+      populateMS('ms-dealername',dlrNames.map(d=>({value:d,label:d})));
+      MS['ms-dealername'].sel=new Set(prevDN.filter(d=>dlrNames.includes(d)));
+      updateMSBtn('ms-dealername');
+    }
+  }catch(e){console.error('Cascade error:',e);}
+}
 function clearMS(id){
   MS[id].sel.clear();renderMS(id,MS[id].opts);updateMSBtn(id);
-  if(id==='ms-brandgroup'&&MS['ms-brand']){MS['ms-brand'].sel.clear();updateMSBtn('ms-brand');F.brand=[];}
+  if(id==='ms-brandgroup'||id==='ms-brand'||id==='ms-acctmgr'){cascadeFilters();}
   applyFilters();
 }
 function updateMSBtn(id){

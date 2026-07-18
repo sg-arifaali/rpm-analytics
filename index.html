@@ -14,7 +14,7 @@
 }
 body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:13px}
 
-/* LOADING SCREEN */
+/* LOADING */
 #loading-screen{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1000;gap:16px}
 .load-logo{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--accent)}
 .load-title{font-size:28px;font-weight:700;color:var(--text)}
@@ -23,175 +23,162 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 @keyframes loadfill{from{width:0}to{width:100%}}
 .load-msg{font-size:12px;color:var(--text2)}
 
-/* ERROR SCREEN */
-#error-screen{display:none;position:fixed;inset:0;background:var(--bg);align-items:center;justify-content:center;flex-direction:column;gap:16px;z-index:999}
+/* ERROR */
+#error-screen{display:none;position:fixed;inset:0;background:var(--bg);flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:999}
 .err-icon{font-size:48px}
 .err-title{font-size:20px;font-weight:700;color:var(--red)}
-.err-msg{font-size:14px;color:var(--text2);max-width:400px;text-align:center;line-height:1.6}
-.btn-retry{padding:10px 24px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;margin-top:8px}
+.err-msg{font-size:14px;color:var(--text2);max-width:500px;text-align:center;line-height:1.6}
+.btn-retry{padding:10px 24px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer}
 
-/* MAIN APP */
+/* APP */
 #app{display:none;flex-direction:column;min-height:100vh}
 
 /* HEADER */
-.hdr{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100}
-.hdr-left{display:flex;align-items:center;gap:20px}
+.hdr{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:52px;position:sticky;top:0;z-index:100}
 .hdr-brand{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--accent);font-weight:600}
-.hdr-title{font-size:15px;font-weight:700;color:var(--text)}
+.hdr-title{font-size:15px;font-weight:700;color:var(--text);margin-left:16px}
+.hdr-left{display:flex;align-items:center}
 .hdr-right{display:flex;align-items:center;gap:12px}
 .live-badge{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--green)}
 .live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.last-refresh{font-size:11px;color:var(--text2)}
 
 /* FILTER PANEL */
-.filter-panel{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
-.fg{display:flex;flex-direction:column;gap:4px;position:relative}
-.fg label{font-size:11px;color:var(--accent);letter-spacing:.3px;font-weight:600}
-.fg select{padding:7px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;outline:none;min-width:130px;cursor:pointer}
+.filter-panel{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 24px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fg label{font-size:10px;color:var(--accent);letter-spacing:.5px;font-weight:600;text-transform:uppercase}
+.fg select{padding:6px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;outline:none;cursor:pointer;min-width:120px}
 .fg select:focus{border-color:var(--accent)}
-.ms-wrap{position:relative;min-width:150px}
-.ms-btn{width:100%;padding:7px 28px 7px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;cursor:pointer;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:relative;box-sizing:border-box}
-.ms-btn::after{content:"▾";position:absolute;right:8px;top:50%;transform:translateY(-50%);color:var(--text2)}
-.ms-dropdown{display:none;position:fixed;z-index:1000;background:var(--surface2);border:1px solid var(--border);border-radius:8px;min-width:220px;max-height:280px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.5);padding:4px 0}
+/* Multi-select */
+.ms-wrap{position:relative}
+.ms-btn{width:100%;padding:6px 26px 6px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;cursor:pointer;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:relative;min-width:130px}
+.ms-btn::after{content:"▾";position:absolute;right:8px;top:50%;transform:translateY(-50%);color:var(--text2);pointer-events:none}
+.ms-dropdown{display:none;position:fixed;z-index:500;background:var(--surface2);border:1px solid var(--border);border-radius:8px;min-width:200px;max-height:260px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.5);padding:4px 0}
 .ms-dropdown.open{display:block}
-.ms-search{width:calc(100% - 16px);margin:6px 8px;padding:6px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;outline:none;box-sizing:border-box}
-.ms-item{display:flex;align-items:center;gap:8px;padding:6px 12px;cursor:pointer;font-size:12px;color:var(--text)}
+.ms-search{width:calc(100% - 16px);margin:6px 8px;padding:5px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;outline:none;box-sizing:border-box}
+.ms-item{display:flex;align-items:center;gap:8px;padding:5px 12px;cursor:pointer;font-size:12px;color:var(--text)}
 .ms-item:hover{background:rgba(255,255,255,.05)}
-.ms-item input[type=checkbox]{width:14px;height:14px;accent-color:var(--accent);cursor:pointer;flex-shrink:0}
-.ms-group-hdr{padding:5px 12px;font-size:10px;color:var(--accent);font-weight:700;letter-spacing:.8px;text-transform:uppercase;background:var(--surface);border-top:1px solid var(--border);margin-top:2px}
-.ms-clear-btn{padding:6px 12px;font-size:11px;color:var(--text2);cursor:pointer;text-align:right;border-top:1px solid var(--border);margin-top:4px}
-.ms-clear-btn:hover{color:var(--accent)}
-.btn-apply{padding:8px 18px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;align-self:flex-end}
-.btn-apply:hover{background:var(--accent2)}
-.btn-clear{padding:8px 14px;background:transparent;color:var(--text2);border:1px solid var(--border);border-radius:6px;font-size:12px;cursor:pointer;align-self:flex-end}
+.ms-item input[type=checkbox]{width:13px;height:13px;accent-color:var(--accent);cursor:pointer;flex-shrink:0}
+.ms-clear{padding:5px 12px;font-size:11px;color:var(--text2);cursor:pointer;border-top:1px solid var(--border);margin-top:2px;text-align:right}
+.ms-clear:hover{color:var(--accent)}
 .filter-divider{width:1px;background:var(--border);align-self:stretch;margin:0 4px}
+.btn-clear-all{padding:6px 14px;background:transparent;color:var(--text2);border:1px solid var(--border);border-radius:6px;font-size:12px;cursor:pointer;align-self:flex-end;white-space:nowrap}
+.btn-clear-all:hover{color:var(--text);border-color:var(--text2)}
 
 /* NAV */
 .nav{background:var(--bg);border-bottom:1px solid var(--border);padding:0 24px;display:flex;gap:2px;overflow-x:auto}
-.nav-tab{padding:12px 18px;font-size:12px;font-weight:500;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s}
+.nav-tab{padding:11px 18px;font-size:12px;font-weight:500;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s}
 .nav-tab:hover{color:var(--text)}
 .nav-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
 
 /* CONTENT */
-.page{display:none;padding:20px 24px;flex-direction:column;gap:20px}
+.page{display:none;padding:20px 24px;flex-direction:column;gap:16px}
 .page.active{display:flex}
 
-/* SECTION HEADER */
-.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-.sec-title{font-size:13px;font-weight:700;color:var(--text);letter-spacing:.3px}
-.sec-sub{font-size:11px;color:var(--text2)}
+/* SECTION LABEL */
+.section-label{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--accent);padding:6px 0;border-bottom:1px solid var(--border);margin-bottom:12px}
+.section-sub{font-size:10px;font-weight:700;color:var(--text2);letter-spacing:.5px;text-transform:uppercase;padding:6px 10px;background:var(--surface2);border-radius:6px 6px 0 0;border:1px solid var(--border);border-bottom:none}
 
 /* KPI GRID */
-.kpi-row{display:grid;gap:12px}
-.kpi-row.cols-6{grid-template-columns:repeat(6,1fr)}
-.kpi-row.cols-4{grid-template-columns:repeat(4,1fr)}
-.kpi-row.cols-3{grid-template-columns:repeat(3,1fr)}
-.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;position:relative;overflow:hidden}
+.kpi-section{background:var(--surface);border:1px solid var(--border);border-radius:0 8px 8px 8px;padding:12px;display:grid;gap:10px}
+.kpi-section.cols-2{grid-template-columns:repeat(2,1fr)}
+.kpi-section.cols-3{grid-template-columns:repeat(3,1fr)}
+.kpi-section.cols-4{grid-template-columns:repeat(4,1fr)}
+.kpi-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;position:relative;overflow:hidden}
 .kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--accent)}
 .kpi-card.green::before{background:var(--green)}
 .kpi-card.red::before{background:var(--red)}
 .kpi-card.yellow::before{background:var(--yellow)}
 .kpi-card.orange::before{background:var(--orange)}
-.kpi-lbl{font-size:11px;color:var(--text2);letter-spacing:.3px;margin-bottom:8px;font-weight:600}
-.kpi-val{font-size:22px;font-weight:800;color:var(--text);line-height:1;margin-bottom:6px}
+.kpi-lbl{font-size:11px;color:var(--text2);margin-bottom:6px;font-weight:500}
+.kpi-val{font-size:20px;font-weight:800;color:var(--text);line-height:1;margin-bottom:4px}
 .kpi-sub{font-size:11px;color:var(--text2)}
-.kpi-chg{font-size:11px;font-weight:600}
 .kpi-chg.pos{color:var(--green)}.kpi-chg.neg{color:var(--red)}.kpi-chg.neu{color:var(--text2)}
 
-/* DIVIDER */
-.page-divider{border:none;border-top:1px solid var(--border);margin:4px 0}
-
-/* SECTION LABEL */
-.section-label{font-size:10px;font-weight:700;letter-spacing:.5px;color:var(--accent);padding:4px 0;border-bottom:1px solid var(--border);margin-bottom:12px}
+/* SIDE BY SIDE SECTIONS */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
 
 /* TABLE */
 .tbl-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
-.tbl-hdr{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.tbl-hdr{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
 .tbl-title{font-size:13px;font-weight:700}
 .tbl-sub{font-size:11px;color:var(--text2)}
-.tbl-wrap{overflow-x:auto;max-height:400px;overflow-y:auto}
+.tbl-wrap{overflow-x:auto;max-height:420px;overflow-y:auto}
 table{width:100%;border-collapse:collapse}
 thead{position:sticky;top:0;z-index:10}
-th{padding:9px 14px;text-align:left;font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:.8px;background:var(--surface2);border-bottom:1px solid var(--border);white-space:nowrap;font-weight:700}
-td{padding:9px 14px;border-bottom:1px solid var(--bg);color:var(--text);white-space:nowrap}
+th{padding:8px 14px;text-align:left;font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;background:var(--surface2);border-bottom:1px solid var(--border);white-space:nowrap;font-weight:700}
+td{padding:8px 14px;border-bottom:1px solid var(--bg);color:var(--text);white-space:nowrap}
 tr:last-child td{border-bottom:none}
 tbody tr:hover td{background:var(--surface2)}
 .td-num{text-align:right;font-variant-numeric:tabular-nums}
 .td-name{font-weight:600}
 
 /* BADGES */
-.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:.3px}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700}
 .bg-green{background:var(--green-bg);color:var(--green)}
 .bg-red{background:var(--red-bg);color:var(--red)}
 .bg-yellow{background:var(--yellow-bg);color:var(--yellow)}
 .bg-blue{background:#0d1e35;color:var(--accent)}
 .bg-orange{background:#1f1000;color:var(--orange)}
 
-/* TWO COL */
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
-
 /* VISIT IMPACT */
-.vi-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:16px}
+.vi-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;padding:16px}
 .vi-month{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 8px;text-align:center}
 .vi-month.visit-month{border-color:var(--accent);background:#0d1e35}
 .vi-month-label{font-size:10px;color:var(--text2);margin-bottom:6px;font-weight:600}
-.vi-month-val{font-size:16px;font-weight:800;color:var(--text);margin-bottom:4px}
+.vi-month-val{font-size:16px;font-weight:800;color:var(--text);margin-bottom:2px}
 .vi-month-sub{font-size:10px;color:var(--text2)}
+
+/* GAMEPLAN */
+.gp-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px}
+.gp-name{font-size:16px;font-weight:800;margin-bottom:4px}
+.gp-meta{font-size:12px;color:var(--text2);margin-bottom:16px}
+.gp-section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:8px;margin-top:16px}
+.gp-item{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.gp-item:last-child{border-bottom:none}
+.gp-priority{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+.pri-1{background:var(--red-bg);color:var(--red)}
+.pri-2{background:var(--yellow-bg);color:var(--yellow)}
+.pri-3{background:var(--green-bg);color:var(--green)}
+.gp-text{font-size:13px;line-height:1.5}
+
+/* SKELETON */
+.skeleton{background:linear-gradient(90deg,var(--surface) 25%,var(--surface2) 50%,var(--surface) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:4px;height:20px;width:80px}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* EMPTY/LOADING */
+.empty{text-align:center;padding:48px;color:var(--text2);font-size:13px}
+.loading-inline{display:flex;align-items:center;justify-content:center;padding:48px;gap:12px;color:var(--accent);font-size:13px}
+.spinner{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
 
 /* SUSPICION */
 .susp-high{color:var(--red);font-weight:700}
 .susp-med{color:var(--yellow);font-weight:700}
-.susp-low{color:var(--green);font-weight:600}
+.susp-low{color:var(--green)}
 
-/* GAMEPLAN */
-.gp-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px}
-.gp-dealer-name{font-size:16px;font-weight:800;margin-bottom:4px}
-.gp-dealer-meta{font-size:12px;color:var(--text2);margin-bottom:16px}
-.gp-section{margin-bottom:16px}
-.gp-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:8px}
-.gp-item{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
-.gp-item:last-child{border-bottom:none}
-.gp-priority{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;margin-top:1px}
-.pri-1{background:var(--red-bg);color:var(--red)}
-.pri-2{background:var(--yellow-bg);color:var(--yellow)}
-.pri-3{background:var(--green-bg);color:var(--green)}
-.gp-text{font-size:13px;color:var(--text);line-height:1.5}
-.gp-loading{padding:40px;text-align:center;color:var(--text2)}
-
-/* LOADING STATE */
-.skeleton{background:linear-gradient(90deg,var(--surface) 25%,var(--surface2) 50%,var(--surface) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:6px;height:16px}
-@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
-
-/* EMPTY */
-.empty-state{padding:48px;text-align:center;color:var(--text2);font-size:13px}
-
-/* RESPONSIVE */
-@media(max-width:1100px){.kpi-row.cols-6{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:768px){.kpi-row.cols-6,.kpi-row.cols-4{grid-template-columns:repeat(2,1fr)}.two-col,.three-col{grid-template-columns:1fr}.filter-panel{gap:8px}}
+@media(max-width:900px){.two-col,.three-col{grid-template-columns:1fr}.filter-panel{gap:8px}}
 </style>
 </head>
 <body>
 
-<!-- LOADING -->
 <div id="loading-screen">
   <div class="load-logo">Safe-Guard Products</div>
   <div class="load-title">RPM Analytics</div>
   <div class="load-bar"><div class="load-fill"></div></div>
-  <div class="load-msg" id="load-msg">Authenticating with Power BI...</div>
+  <div class="load-msg" id="load-msg">Connecting to Power BI...</div>
 </div>
 
-<!-- ERROR -->
-<div id="error-screen" style="display:none;position:fixed;inset:0;background:var(--bg);flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:999">
+<div id="error-screen">
   <div class="err-icon">⚠️</div>
   <div class="err-title">Connection Failed</div>
-  <div class="err-msg" id="err-msg">Unable to connect to Power BI. Please check your network and try again.</div>
+  <div class="err-msg" id="err-msg"></div>
   <button class="btn-retry" onclick="location.reload()">Retry</button>
 </div>
 
-<!-- APP -->
-<div id="app" style="display:none;flex-direction:column;min-height:100vh">
-
+<div id="app">
   <!-- HEADER -->
   <div class="hdr">
     <div class="hdr-left">
@@ -199,42 +186,32 @@ tbody tr:hover td{background:var(--surface2)}
       <div class="hdr-title">RPM Analytics</div>
     </div>
     <div class="hdr-right">
-      <div class="live-badge"><div class="live-dot"></div>Live Data</div>
-      <div style="font-size:11px;color:var(--text2)" id="last-refresh"></div>
+      <div class="live-badge"><div class="live-dot"></div>Live</div>
+      <div class="last-refresh" id="last-refresh"></div>
     </div>
   </div>
 
-  <!-- FILTERS -->
+  <!-- FILTER PANEL -->
   <div class="filter-panel">
-    <div class="fg"><label>Brand Group</label>
-      <select id="f-brandgroup-sel" onchange="onBrandGroupChange()" style="min-width:140px;padding:7px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;outline:none"><option value="">All Brand Groups</option></select></div>
-    <div class="fg"><label>Brand</label>
-      <select id="f-brand-sel" onchange="onBrandChange()" style="min-width:130px;padding:7px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;outline:none"><option value="">All Brands</option></select></div>
+    <div class="fg"><label>Brand Group</label><div class="ms-wrap" id="ms-brandgroup"></div></div>
+    <div class="fg"><label>Brand</label><div class="ms-wrap" id="ms-brand"></div></div>
+    <div class="filter-divider"></div>
     <div class="fg"><label>Account Manager</label><div class="ms-wrap" id="ms-acctmgr"></div></div>
     <div class="fg"><label>RPM</label><div class="ms-wrap" id="ms-rpm"></div></div>
+    <div class="filter-divider"></div>
     <div class="fg"><label>Dealer Category</label><div class="ms-wrap" id="ms-dealercat"></div></div>
     <div class="fg"><label>Dealer Group</label><div class="ms-wrap" id="ms-dealergroup"></div></div>
     <div class="fg"><label>OEM Region</label><div class="ms-wrap" id="ms-oemregion"></div></div>
     <div class="fg"><label>State</label><div class="ms-wrap" id="ms-state"></div></div>
     <div class="fg"><label>Dealer Name</label><div class="ms-wrap" id="ms-dealername"></div></div>
+    <div class="filter-divider"></div>
     <div class="fg"><label>Year</label>
-      <select id="f-year-sel" onchange="onYearChange()" style="min-width:100px;padding:7px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;outline:none"><option value="">All Years</option></select></div>
-    <div class="fg"><label>Month</label>
-      <select id="f-month-sel" onchange="onMonthChange()" style="min-width:110px;padding:7px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;outline:none"><option value="">All Months</option></select></div>
-    <button class="btn-clear" onclick="clearFilters()">Clear All</button>
-    <!-- hidden selects for compatibility -->
-    <select id="f-year" style="display:none"></select>
-    <select id="f-month" style="display:none"></select>
-    <select id="f-brandgroup" style="display:none"></select>
-    <select id="f-brand" style="display:none"></select>
-    <select id="f-rpm" style="display:none"></select>
-    <select id="f-acctmgr" style="display:none"></select>
-    <select id="f-dealercat" style="display:none"></select>
-    <select id="f-dealergroup" style="display:none"></select>
-    <select id="f-state" style="display:none"></select>
-    <select id="f-oemregion" style="display:none"></select>
-    <select id="f-brand-combined" style="display:none"></select>
-    <select id="f-period" style="display:none"></select>
+      <select id="f-year" onchange="onYearChange()" style="min-width:90px">
+        <option value="">All Years</option>
+      </select>
+    </div>
+    <div class="fg"><label>Month</label><div class="ms-wrap" id="ms-month"></div></div>
+    <button class="btn-clear-all" onclick="clearFilters()">Clear All</button>
   </div>
 
   <!-- NAV -->
@@ -247,51 +224,94 @@ tbody tr:hover td{background:var(--surface2)}
 
   <!-- PAGE 1: RPM OVERVIEW -->
   <div class="page active" id="p1">
-
     <div class="section-label">KT — KPI Teams Internal Performance</div>
-    <div class="kpi-row cols-4" id="p1-kt-kpis">
-      <div class="kpi-card"><div class="kpi-lbl">Total Dealers</div><div class="kpi-val skeleton" style="width:60px;height:24px"></div></div>
-      <div class="kpi-card"><div class="kpi-lbl">Participating</div><div class="kpi-val skeleton" style="width:60px;height:24px"></div></div>
-      <div class="kpi-card"><div class="kpi-lbl">Total RDRs</div><div class="kpi-val skeleton" style="width:80px;height:24px"></div></div>
-      <div class="kpi-card"><div class="kpi-lbl">Coverages</div><div class="kpi-val skeleton" style="width:80px;height:24px"></div></div>
-      <div class="kpi-card"><div class="kpi-lbl">Penetration</div><div class="kpi-val skeleton" style="width:60px;height:24px"></div></div>
-      <div class="kpi-card"><div class="kpi-lbl">% of Target</div><div class="kpi-val skeleton" style="width:60px;height:24px"></div></div>
+    <div class="two-col">
+      <!-- Section 1: Dealers -->
+      <div>
+        <div class="section-sub">Dealers</div>
+        <div class="kpi-section cols-2" id="p1-dealers">
+          <div class="kpi-card"><div class="kpi-lbl">Total Dealers</div><div class="skeleton"></div></div>
+          <div class="kpi-card"><div class="kpi-lbl">Participating Dealers</div><div class="skeleton"></div></div>
+          <div class="kpi-card"><div class="kpi-lbl">Dealers in GA</div><div class="skeleton"></div></div>
+          <div class="kpi-card"><div class="kpi-lbl">% in GA</div><div class="skeleton"></div></div>
+        </div>
+      </div>
+      <!-- Section 2: Activity -->
+      <div>
+        <div class="section-sub">Activity</div>
+        <div class="kpi-section cols-3" id="p1-activity">
+          <div class="kpi-card"><div class="kpi-lbl">Total Visits</div><div class="skeleton"></div></div>
+          <div class="kpi-card"><div class="kpi-lbl">Expenses RPM</div><div class="skeleton"></div></div>
+          <div class="kpi-card"><div class="kpi-lbl">$ per Visit</div><div class="skeleton"></div></div>
+        </div>
+      </div>
     </div>
-    <div class="kpi-row cols-4" id="p1-kt-kpis2" style="grid-template-columns:repeat(auto-fill,minmax(190px,1fr))">
-      <div class="kpi-card"><div class="kpi-lbl">Total Visits</div><div class="kpi-val skeleton" style="width:60px;height:24px"></div></div>
-      <div class="kpi-card"><div class="kpi-lbl">Expenses</div><div class="kpi-val skeleton" style="width:80px;height:24px"></div></div>
-      <div class="kpi-card"><div class="kpi-lbl">$ per Visit</div><div class="kpi-val skeleton" style="width:60px;height:24px"></div></div>
+    <div class="two-col">
+      <!-- Section 3: Production -->
+      <div>
+        <div class="section-sub">Production</div>
+        <div class="kpi-section cols-3" id="p1-production">
+          <div class="kpi-card"><div class="kpi-lbl">Total RDRs</div><div class="skeleton"></div></div>
+          <div class="kpi-card"><div class="kpi-lbl">Coverages</div><div class="skeleton"></div></div>
+          <div class="kpi-card"><div class="kpi-lbl">Penetration</div><div class="skeleton"></div></div>
+        </div>
+      </div>
+      <!-- Section 4: Target -->
+      <div>
+        <div class="section-sub">Target</div>
+        <div class="kpi-section cols-3" id="p1-target">
+          <div class="kpi-card"><div class="kpi-lbl">Target Contracts</div><div class="skeleton"></div></div>
+          <div class="kpi-card"><div class="kpi-lbl">Coverages</div><div class="skeleton"></div></div>
+          <div class="kpi-card"><div class="kpi-lbl">Target Achieved</div><div class="skeleton"></div></div>
+        </div>
+      </div>
     </div>
 
-    <hr class="page-divider">
-    <div class="section-label">GA — Growth Accelerator Market View</div>
-    <div class="kpi-row cols-4" id="p1-ga-kpis">
-      <div class="kpi-card green"><div class="kpi-lbl">GA Dealers</div><div class="kpi-val skeleton" style="width:60px;height:24px"></div></div>
-      <div class="kpi-card green"><div class="kpi-lbl">GA RDRs</div><div class="kpi-val skeleton" style="width:80px;height:24px"></div></div>
-      <div class="kpi-card green"><div class="kpi-lbl">BE Contracts</div><div class="kpi-val skeleton" style="width:80px;height:24px"></div></div>
-      <div class="kpi-card green"><div class="kpi-lbl">Penetration</div><div class="kpi-val skeleton" style="width:60px;height:24px"></div></div>
+    <div class="section-label" style="margin-top:8px">GA — Growth Accelerator Market View</div>
+    <div class="two-col">
+      <div>
+        <div class="section-sub">Overview</div>
+        <div class="kpi-section cols-2" id="p1-ga-overview">
+          <div class="kpi-card green"><div class="kpi-lbl">Total Dealers</div><div class="skeleton"></div></div>
+          <div class="kpi-card green"><div class="kpi-lbl">Total RDRs</div><div class="skeleton"></div></div>
+          <div class="kpi-card green"><div class="kpi-lbl">Contracts</div><div class="skeleton"></div></div>
+          <div class="kpi-card green"><div class="kpi-lbl">Penetration</div><div class="skeleton"></div></div>
+        </div>
+      </div>
+      <div>
+        <div class="section-sub">PVR</div>
+        <div class="kpi-section cols-3" id="p1-ga-pvr">
+          <div class="kpi-card orange"><div class="kpi-lbl">Total PVR</div><div class="skeleton"></div></div>
+          <div class="kpi-card orange"><div class="kpi-lbl">Finance Reserve</div><div class="skeleton"></div></div>
+          <div class="kpi-card orange"><div class="kpi-lbl">Product PVR</div><div class="skeleton"></div></div>
+          <div class="kpi-card orange"><div class="kpi-lbl">% with no Product</div><div class="skeleton"></div></div>
+        </div>
+      </div>
     </div>
-    <div class="kpi-row cols-4" id="p1-ga-kpis2">
-      <div class="kpi-card orange"><div class="kpi-lbl">PVR</div><div class="kpi-val skeleton" style="width:60px;height:24px"></div></div>
-      <div class="kpi-card orange"><div class="kpi-lbl">% No Product</div><div class="kpi-val skeleton" style="width:60px;height:24px"></div></div>
-      <div class="kpi-card red"><div class="kpi-lbl">Missed Contracts</div><div class="kpi-val skeleton" style="width:80px;height:24px"></div></div>
-      <div class="kpi-card red"><div class="kpi-lbl">Annualized Missed</div><div class="kpi-val skeleton" style="width:80px;height:24px"></div></div>
+    <div>
+      <div class="section-sub">Missed Contracts</div>
+      <div class="kpi-section" style="grid-template-columns:repeat(6,1fr)" id="p1-ga-missed">
+        <div class="kpi-card red"><div class="kpi-lbl">Contracts Missed</div><div class="skeleton"></div></div>
+        <div class="kpi-card red"><div class="kpi-lbl">Contracts Missed Annualized</div><div class="skeleton"></div></div>
+        <div class="kpi-card red"><div class="kpi-lbl">SG Admin Missed</div><div class="skeleton"></div></div>
+        <div class="kpi-card red"><div class="kpi-lbl">SG Admin Missed Annualized</div><div class="skeleton"></div></div>
+        <div class="kpi-card red"><div class="kpi-lbl">Pen Missed</div><div class="skeleton"></div></div>
+      </div>
     </div>
 
-    <hr class="page-divider">
-    <div class="section-label">GA — Growth Accelerator Breakdown</div>
+    <div class="section-label" style="margin-top:8px">GA — Growth Accelerator Breakdown</div>
     <div class="three-col">
       <div class="tbl-card">
         <div class="tbl-hdr"><div class="tbl-title">By Vehicle Condition</div></div>
-        <div class="tbl-wrap"><div id="p1-cond-tbl"><div class="empty-state">Loading...</div></div></div>
+        <div class="tbl-wrap"><div id="p1-cond-tbl"><div class="loading-inline"><div class="spinner"></div>Loading...</div></div></div>
       </div>
       <div class="tbl-card">
         <div class="tbl-hdr"><div class="tbl-title">By Sale Type</div></div>
-        <div class="tbl-wrap"><div id="p1-saletype-tbl"><div class="empty-state">Loading...</div></div></div>
+        <div class="tbl-wrap"><div id="p1-saletype-tbl"><div class="loading-inline"><div class="spinner"></div>Loading...</div></div></div>
       </div>
       <div class="tbl-card">
         <div class="tbl-hdr"><div class="tbl-title">By Miles Group</div></div>
-        <div class="tbl-wrap"><div id="p1-miles-tbl"><div class="empty-state">Loading...</div></div></div>
+        <div class="tbl-wrap"><div id="p1-miles-tbl"><div class="loading-inline"><div class="spinner"></div>Loading...</div></div></div>
       </div>
     </div>
     <div class="tbl-card">
@@ -299,7 +319,7 @@ tbody tr:hover td{background:var(--surface2)}
         <div class="tbl-title">Top 10 F&amp;I Managers by Vehicle Sales</div>
         <div class="tbl-sub">Ranked by RDR volume</div>
       </div>
-      <div class="tbl-wrap"><div id="p1-fim-tbl"><div class="empty-state">Loading...</div></div></div>
+      <div class="tbl-wrap"><div id="p1-fim-tbl"><div class="loading-inline"><div class="spinner"></div>Loading...</div></div></div>
     </div>
   </div>
 
@@ -307,162 +327,62 @@ tbody tr:hover td{background:var(--surface2)}
   <div class="page" id="p2">
     <div class="tbl-card">
       <div class="tbl-hdr">
-        <div class="tbl-title">Dealer Performance — KT + GA Combined</div>
-        <div class="tbl-sub" id="p2-sub">All dealers</div>
+        <div class="tbl-title">Dealer Performance — KT + GA</div>
+        <div class="tbl-sub" id="p2-sub">—</div>
       </div>
-      <div class="tbl-wrap"><div id="p2-dealer-tbl"><div class="empty-state">Loading...</div></div></div>
+      <div class="tbl-wrap"><div id="p2-tbl"><div class="loading-inline"><div class="spinner"></div>Loading...</div></div></div>
     </div>
-
-    <hr class="page-divider">
-    <div class="section-label">Visit Impact — Select a Dealer Above to See ROI Window</div>
-    <div id="p2-vi-section">
-      <div class="tbl-card">
-        <div class="tbl-hdr">
-          <div class="tbl-title">Visit Impact: M-3 to M+3</div>
-          <div class="tbl-sub" id="p2-vi-sub">Click a dealer row to load</div>
-        </div>
-        <div id="p2-vi-content"><div class="empty-state">Select a dealer above to see visit impact analysis</div></div>
+    <div class="section-label">Visit Impact — M-3 to M+3</div>
+    <div class="tbl-card">
+      <div class="tbl-hdr">
+        <div class="tbl-title" id="p2-vi-title">Click a dealer row above to load visit impact</div>
       </div>
+      <div id="p2-vi-content"><div class="empty">Select a dealer above</div></div>
     </div>
   </div>
 
   <!-- PAGE 3: ACTIVITY & ROI -->
   <div class="page" id="p3">
-    <div class="kpi-row cols-4" id="p3-kpis">
-      <div class="kpi-card"><div class="kpi-lbl">Total Activities</div><div class="kpi-val" id="p3-total-acts">—</div></div>
-      <div class="kpi-card red"><div class="kpi-lbl">🚨 High Suspicion</div><div class="kpi-val" id="p3-high">—</div><div class="kpi-sub">Visits flagged as gaming</div></div>
+    <div class="kpi-section cols-4" id="p3-kpis" style="border-radius:10px;border:1px solid var(--border)">
+      <div class="kpi-card"><div class="kpi-lbl">Total Activities</div><div class="kpi-val" id="p3-total">—</div></div>
+      <div class="kpi-card red"><div class="kpi-lbl">🚨 High Suspicion</div><div class="kpi-val" id="p3-high">—</div><div class="kpi-sub">Gaming flagged</div></div>
       <div class="kpi-card yellow"><div class="kpi-lbl">⚠️ Medium Suspicion</div><div class="kpi-val" id="p3-med">—</div><div class="kpi-sub">Needs review</div></div>
-      <div class="kpi-card green"><div class="kpi-lbl">✅ Low / Normal</div><div class="kpi-val" id="p3-low">—</div><div class="kpi-sub">Looks legitimate</div></div>
+      <div class="kpi-card green"><div class="kpi-lbl">✅ Normal</div><div class="kpi-val" id="p3-low">—</div></div>
     </div>
     <div class="tbl-card">
       <div class="tbl-hdr">
-        <div class="tbl-title">Activity Log with Suspicion Scoring</div>
-        <div class="tbl-sub">Flagged visits sorted by suspicion level — review with sales leaders</div>
+        <div class="tbl-title">Activity Log — Suspicion Scoring</div>
+        <div class="tbl-sub">Sorted by suspicion — review with sales leaders</div>
       </div>
-      <div class="tbl-wrap"><div id="p3-activity-tbl"><div class="empty-state">Loading activities...</div></div></div>
+      <div class="tbl-wrap"><div id="p3-tbl"><div class="loading-inline"><div class="spinner"></div>Loading...</div></div></div>
     </div>
   </div>
 
   <!-- PAGE 4: GAMEPLAN -->
   <div class="page" id="p4">
-    <div class="tbl-card" style="margin-bottom:16px">
-      <div class="tbl-hdr">
-        <div class="tbl-title">Select Dealer for Gameplan</div>
-        <div class="tbl-sub">AI-generated action plan based on KT + GA data</div>
-      </div>
-      <div style="padding:16px;display:flex;gap:12px;align-items:center">
+    <div class="tbl-card" style="padding:16px">
+      <div style="display:flex;gap:12px;align-items:center">
         <select id="gp-dealer-select" style="flex:1;padding:9px 12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;outline:none">
           <option value="">— Select a dealer —</option>
         </select>
-        <button class="btn-apply" onclick="generateGameplan()">Generate Gameplan</button>
+        <button onclick="generateGameplan()" style="padding:9px 20px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer">Generate Gameplan</button>
       </div>
     </div>
-    <div id="p4-content"><div class="empty-state">Select a dealer and click Generate Gameplan</div></div>
+    <div id="p4-content"><div class="empty">Select a dealer and click Generate Gameplan</div></div>
   </div>
-
 </div>
 
 <script>
 // ── CONFIG ─────────────────────────────────────────────────────────────
-const CFG={
-  clientId:'cab428bb-6548-4f42-863e-056ff0ff0608',
-  tenantId:'b45b2e14-b22d-4196-b48c-b1b5506c874a',
-  clientSecret:'hfg8Q~qGl34P2Z-HyPn6N3646LUylprI-Q9K.bnW',
-  workspaceId:'258f02cc-ab3d-41ac-a532-295cfd4f3ade',
-  datasetId:'772c9f87-6e7c-4d14-87d4-3f511279cbee'
-};
+const WORKER='https://rpm-auth.aali-dfe.workers.dev';
+const WS_ID='258f02cc-ab3d-41ac-a532-295cfd4f3ade';
+const DS_ID='772c9f87-6e7c-4d14-87d4-3f511279cbee';
 
+// ── STATE ──────────────────────────────────────────────────────────────
 let TOKEN=null;
-let FILTER_DATA={years:[],months:{},brandGroups:[],brands:{},rpms:[],acctMgrs:[],dealerCats:[],dealerGroups:[],states:[],oemRegions:[],dealers:[]};
-let ACTIVE_FILTERS={year:[],month:[],brandGroup:[],brand:[],rpm:[],acctMgr:[],dealerCat:[],dealerGroup:[],state:[],oemRegion:[],dealerName:[]};
-
-// ── MULTI-SELECT ENGINE ────────────────────────────────────────────────
-const MS_STATE={};
-
-function createMultiSelect(containerId, placeholder){
-  const wrap=document.getElementById(containerId);
-  if(!wrap)return;
-  const id=containerId;
-  MS_STATE[id]={options:[],selected:new Set(),placeholder};
-  wrap.innerHTML=`
-    <button class="ms-btn" id="${id}-btn" onclick="toggleMS('${id}',event)">${placeholder}</button>
-    <div class="ms-dropdown" id="${id}-dd">
-      <input class="ms-search" placeholder="Search..." oninput="searchMS('${id}',this.value)"/>
-      <div class="ms-clear-btn" onclick="clearMS('${id}')">Clear selection</div>
-      <div id="${id}-list"></div>
-    </div>`;
-}
-
-function toggleMS(id,e){
-  e.stopPropagation();
-  const dd=document.getElementById(id+'-dd');
-  const btn=document.getElementById(id+'-btn');
-  const rect=btn.getBoundingClientRect();
-  // Close all others
-  document.querySelectorAll('.ms-dropdown.open').forEach(el=>{if(el.id!==id+'-dd')el.classList.remove('open');});
-  if(dd.classList.toggle('open')){
-    dd.style.top=(rect.bottom+4)+'px';
-    dd.style.left=rect.left+'px';
-    dd.style.minWidth=Math.max(rect.width,220)+'px';
-    dd.querySelector('.ms-search').focus();
-  }
-}
-
-document.addEventListener('click',()=>{
-  document.querySelectorAll('.ms-dropdown.open').forEach(el=>el.classList.remove('open'));
-});
-
-function populateMS(id, options, grouped=false){
-  MS_STATE[id].options=options;
-  renderMS(id, options);
-}
-
-function renderMS(id, options){
-  const list=document.getElementById(id+'-list');
-  if(!list)return;
-  const sel=MS_STATE[id].selected;
-  if(!options.length){list.innerHTML='<div class="ms-item" style="color:var(--text2)">No options</div>';return;}
-  list.innerHTML=options.map(opt=>{
-    if(opt.isGroup) return`<div class="ms-group-hdr">${opt.label}</div>`;
-    const checked=sel.has(opt.value)?'checked':'';
-    return`<label class="ms-item"><input type="checkbox" value="${opt.value}" ${checked} onchange="toggleMSItem('${id}','${opt.value}',this.checked)"/>${opt.label}</label>`;
-  }).join('');
-}
-
-function searchMS(id, q){
-  const all=MS_STATE[id].options.filter(o=>!o.isGroup);
-  const filtered=q?all.filter(o=>o.label.toLowerCase().includes(q.toLowerCase())):MS_STATE[id].options;
-  renderMS(id, filtered);
-}
-
-function toggleMSItem(id, value, checked){
-  const state=MS_STATE[id];
-  if(checked)state.selected.add(value);
-  else state.selected.delete(value);
-  updateMSBtn(id);
-  applyFilters();
-}
-
-function clearMS(id){
-  MS_STATE[id].selected.clear();
-  renderMS(id, MS_STATE[id].options);
-  updateMSBtn(id);
-  applyFilters();
-}
-
-function updateMSBtn(id){
-  const state=MS_STATE[id];
-  const btn=document.getElementById(id+'-btn');
-  if(!btn)return;
-  if(state.selected.size===0) btn.textContent=state.placeholder;
-  else if(state.selected.size===1) btn.textContent=[...state.selected][0];
-  else btn.textContent=state.selected.size+' selected';
-}
-
-function getMSValues(id){
-  return MS_STATE[id]?[...MS_STATE[id].selected]:[];
-}
-let ALL_DEALER_DATA=[];
+const F={brandGroup:[],brand:[],acctMgr:[],rpm:[],dealerCat:[],dealerGroup:[],oemRegion:[],state:[],dealerName:[],year:'',month:[]};
+const FD={years:[],months:{},brandGroups:[],brands:{},dealers:[]};
+const MS={};
 
 // ── UTILS ──────────────────────────────────────────────────────────────
 function fmt(n,t='num'){
@@ -471,17 +391,16 @@ function fmt(n,t='num'){
   if(t==='pct')return(n*100).toFixed(1)+'%';
   if(t==='pct1')return n.toFixed(1)+'%';
   if(t==='cur')return'$'+n.toLocaleString('en-US',{maximumFractionDigits:0});
-  if(t==='cur2')return'$'+n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
   return n.toLocaleString('en-US',{maximumFractionDigits:0});
 }
-function badge(v,thresholds,labels,classes){
-  for(let i=0;i<thresholds.length;i++)if(v>=thresholds[i])return`<span class="badge ${classes[i]}">${labels[i]}</span>`;
-  return`<span class="badge ${classes[classes.length-1]}">${labels[labels.length-1]}</span>`;
-}
 function yoy(cy,ly){
-  if(!cy||!ly||ly===0)return'<span class="kpi-chg neu">—</span>';
+  if(!cy||!ly||ly===0)return'<span class="kpi-sub">—</span>';
   const p=((cy-ly)/Math.abs(ly)*100).toFixed(1);
-  return`<span class="kpi-chg ${parseFloat(p)>=0?'pos':'neg'}">${parseFloat(p)>=0?'▲':'▼'} ${Math.abs(p)}% YoY</span>`;
+  return`<span class="kpi-sub kpi-chg ${parseFloat(p)>=0?'pos':'neg'}">${parseFloat(p)>=0?'▲':'▼'} ${Math.abs(p)}% vs LY</span>`;
+}
+function sowBadge(v){
+  const b=v>=0.5?'bg-green':v>=0.25?'bg-yellow':'bg-red';
+  return`<span class="badge ${b}">${fmt(v,'pct')}</span>`;
 }
 function setLoad(msg){document.getElementById('load-msg').textContent=msg;}
 function showError(msg){
@@ -491,36 +410,160 @@ function showError(msg){
   document.getElementById('err-msg').textContent=msg;
 }
 
-// ── CLOUDFLARE WORKER URL ──────────────────────────────────────────────
-const WORKER_URL='https://rpm-auth.aali-dfe.workers.dev';
-
 // ── AUTH ───────────────────────────────────────────────────────────────
 async function getToken(){
-  const r=await fetch(WORKER_URL);
+  const r=await fetch(WORKER);
   const d=await r.json();
   if(!d.access_token)throw new Error(d.error||'Auth failed');
   return d.access_token;
 }
 
-// ── DAX QUERY ──────────────────────────────────────────────────────────
+// ── DAX ────────────────────────────────────────────────────────────────
 async function dax(q){
-  const r=await fetch(`${WORKER_URL}?groupId=${CFG.workspaceId}&datasetId=${CFG.datasetId}`,{
+  const r=await fetch(`${WORKER}?groupId=${WS_ID}&datasetId=${DS_ID}`,{
     method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({queries:[{query:q}],serializerSettings:{includeNulls:true}})
   });
   const text=await r.text();
   let d;
-  try{d=JSON.parse(text);}catch(e){throw new Error('Parse error: '+text.slice(0,300));}
-  // Handle wrapped response format {status, body}
-  if(d.status&&d.body!==undefined){
-    if(!d.body)return[];
+  try{d=JSON.parse(text);}catch(e){throw new Error('Parse error: '+text.slice(0,200));}
+  if(d.status!==undefined&&d.body!==undefined){
+    if(!d.body||d.body==='')return[];
     let inner;
-    try{inner=JSON.parse(d.body);}catch(e){throw new Error('PBI parse error: '+d.body.slice(0,300));}
-    if(inner.error)throw new Error('PBI error: '+JSON.stringify(inner.error));
+    try{inner=JSON.parse(d.body);}catch(e){throw new Error('PBI error ('+d.status+'): '+d.body.slice(0,300));}
+    if(inner.error)throw new Error('PBI: '+JSON.stringify(inner.error));
     return inner.results?.[0]?.tables?.[0]?.rows||[];
   }
   if(d.error)throw new Error(JSON.stringify(d.error));
   return d.results?.[0]?.tables?.[0]?.rows||[];
+}
+
+// ── FILTER CLAUSES ─────────────────────────────────────────────────────
+function inFilter(col,vals){
+  if(!vals||!vals.length)return null;
+  const tbl=col.split('[')[0].trim();
+  if(vals.length===1)return`FILTER(ALL(${tbl}),${col}="${vals[0]}")`;
+  return`FILTER(ALL(${tbl}),${vals.map(v=>`${col}="${v}"`).join('||')})`;
+}
+function buildFilters(){
+  const c=[];
+  // Year - numeric
+  if(F.year){
+    c.push(`FILTER(ALL('Business Dates Local'),'Business Dates Local'[Reporting Year]=${F.year})`);
+    c.push(`FILTER(ALL('Business Dates GA'),'Business Dates GA'[Reporting Year]=${F.year})`);
+  }
+  // Month
+  const mo=inFilter("'Business Dates Local'[Reporting MonthYear]",F.month);
+  if(mo){c.push(mo);c.push(inFilter("'Business Dates GA'[Reporting MonthYear]",F.month));}
+  const bg=inFilter("'Dealers Local'[Brand Group]",F.brandGroup);if(bg)c.push(bg);
+  const br=inFilter("'Dealers Local'[Brand]",F.brand);if(br)c.push(br);
+  const am=inFilter("'Dealers Local'[Account Manager]",F.acctMgr);if(am)c.push(am);
+  const rpm=inFilter("'Dealers Local'[RPM]",F.rpm);if(rpm)c.push(rpm);
+  const dc=inFilter("'Dealers Local'[Dealer Category]",F.dealerCat);if(dc)c.push(dc);
+  const dg=inFilter("'Dealers Local'[Dealer Group]",F.dealerGroup);if(dg)c.push(dg);
+  const oem=inFilter("'Dealers Local'[OEM Region]",F.oemRegion);if(oem)c.push(oem);
+  const st=inFilter("'Dealers Local'[State]",F.state);if(st)c.push(st);
+  const dn=inFilter("'Dealers Local'[Dealer Name]",F.dealerName);if(dn)c.push(dn);
+  return c.filter(Boolean);
+}
+function fs(){const c=buildFilters();return c.length?','+c.join(','):'';}
+function cf(){const c=buildFilters();return c.length?','+c.join(','):'';}
+
+// ── MULTI-SELECT ───────────────────────────────────────────────────────
+function createMS(id,placeholder){
+  const wrap=document.getElementById(id);
+  if(!wrap)return;
+  MS[id]={opts:[],sel:new Set(),ph:placeholder};
+  wrap.innerHTML=`<button class="ms-btn" id="${id}-btn" onclick="toggleMS('${id}',event)">${placeholder}</button>
+    <div class="ms-dropdown" id="${id}-dd">
+      <input class="ms-search" placeholder="Search..." oninput="searchMS('${id}',this.value)"/>
+      <div id="${id}-list"></div>
+      <div class="ms-clear" onclick="clearMS('${id}')">Clear</div>
+    </div>`;
+}
+function toggleMS(id,e){
+  e.stopPropagation();
+  const dd=document.getElementById(id+'-dd');
+  const btn=document.getElementById(id+'-btn');
+  const rect=btn.getBoundingClientRect();
+  document.querySelectorAll('.ms-dropdown.open').forEach(el=>{if(el.id!==id+'-dd')el.classList.remove('open');});
+  if(dd.classList.toggle('open')){
+    dd.style.top=(rect.bottom+2)+'px';
+    dd.style.left=rect.left+'px';
+    dd.style.minWidth=Math.max(rect.width,200)+'px';
+    dd.querySelector('.ms-search').value='';
+    renderMS(id,MS[id].opts);
+    dd.querySelector('.ms-search').focus();
+  }
+}
+document.addEventListener('click',()=>document.querySelectorAll('.ms-dropdown.open').forEach(el=>el.classList.remove('open')));
+function populateMS(id,opts){MS[id].opts=opts;renderMS(id,opts);}
+function renderMS(id,opts){
+  const list=document.getElementById(id+'-list');
+  if(!list)return;
+  const sel=MS[id].sel;
+  list.innerHTML=opts.map(o=>`<label class="ms-item"><input type="checkbox" value="${o.value}" ${sel.has(o.value)?'checked':''} onchange="toggleMSItem('${id}','${o.value.replace(/'/g,"\\'")}',this.checked)"/>${o.label}</label>`).join('');
+}
+function searchMS(id,q){
+  const filtered=q?MS[id].opts.filter(o=>o.label.toLowerCase().includes(q.toLowerCase())):MS[id].opts;
+  renderMS(id,filtered);
+}
+function toggleMSItem(id,value,checked){
+  if(checked)MS[id].sel.add(value);
+  else MS[id].sel.delete(value);
+  updateMSBtn(id);
+  // Brand group cascade
+  if(id==='ms-brandgroup'){
+    const selBGs=[...MS[id].sel];
+    const brands=selBGs.length?selBGs.flatMap(bg=>(FD.brands[bg]||[]).sort()):[...new Set(Object.values(FD.brands).flat())].sort();
+    if(MS['ms-brand']){MS['ms-brand'].sel.clear();populateMS('ms-brand',brands.map(b=>({value:b,label:b})));updateMSBtn('ms-brand');}
+    F.brand=[];
+  }
+  applyFilters();
+}
+function clearMS(id){
+  MS[id].sel.clear();renderMS(id,MS[id].opts);updateMSBtn(id);
+  if(id==='ms-brandgroup'&&MS['ms-brand']){MS['ms-brand'].sel.clear();updateMSBtn('ms-brand');F.brand=[];}
+  applyFilters();
+}
+function updateMSBtn(id){
+  const state=MS[id];const btn=document.getElementById(id+'-btn');if(!btn)return;
+  btn.textContent=state.sel.size===0?state.ph:state.sel.size===1?[...state.sel][0]:state.sel.size+' selected';
+}
+function getMSVals(id){return MS[id]?[...MS[id].sel]:[];}
+
+// ── FILTER HANDLERS ────────────────────────────────────────────────────
+function onYearChange(){
+  const yr=document.getElementById('f-year').value;
+  F.year=yr;F.month=[];
+  // Update month options
+  if(MS['ms-month']){
+    MS['ms-month'].sel.clear();
+    const months=yr?FD.months[yr]||[]:[...new Set(Object.values(FD.months).flat())];
+    populateMS('ms-month',months.map(m=>({value:m,label:m})));
+    updateMSBtn('ms-month');
+  }
+  loadAllPages();
+}
+function applyFilters(){
+  F.brandGroup=getMSVals('ms-brandgroup');
+  F.brand=getMSVals('ms-brand');
+  F.acctMgr=getMSVals('ms-acctmgr');
+  F.rpm=getMSVals('ms-rpm');
+  F.dealerCat=getMSVals('ms-dealercat');
+  F.dealerGroup=getMSVals('ms-dealergroup');
+  F.oemRegion=getMSVals('ms-oemregion');
+  F.state=getMSVals('ms-state');
+  F.dealerName=getMSVals('ms-dealername');
+  F.month=getMSVals('ms-month');
+  loadAllPages();
+}
+function clearFilters(){
+  document.getElementById('f-year').value='';F.year='';F.month=[];
+  ['ms-brandgroup','ms-brand','ms-acctmgr','ms-rpm','ms-dealercat','ms-dealergroup','ms-oemregion','ms-state','ms-dealername','ms-month']
+    .forEach(id=>{if(MS[id]){MS[id].sel.clear();renderMS(id,MS[id].opts);updateMSBtn(id);}});
+  F.brandGroup=[];F.brand=[];F.acctMgr=[];F.rpm=[];F.dealerCat=[];F.dealerGroup=[];F.oemRegion=[];F.state=[];F.dealerName=[];
+  loadAllPages();
 }
 
 // ── NAV ────────────────────────────────────────────────────────────────
@@ -531,326 +574,156 @@ function showPage(id,el){
   el.classList.add('active');
 }
 
-// ── FILTERS ────────────────────────────────────────────────────────────
-function populateSelect(id,values,placeholder){
-  const el=document.getElementById(id);
-  el.innerHTML=`<option value="">${placeholder}</option>`+values.map(v=>`<option value="${v}">${v}</option>`).join('');
-}
-
-
-
-
-
-
-
-
-
-function populateBrandSel(bg){
-  const sel=document.getElementById('f-brand-sel');
-  sel.innerHTML='<option value="">All Brands</option>';
-  const brands=FILTER_DATA.brands[bg]||[];
-  brands.sort().forEach(br=>{const o=document.createElement('option');o.value=br;o.textContent=br;sel.appendChild(o);});
-}
-function onBrandGroupChange(){
-  const bg=document.getElementById('f-brandgroup-sel').value;
-  if(bg)populateBrandSel(bg);
-  else{document.getElementById('f-brand-sel').innerHTML='<option value="">All Brands</option>';}
-  document.getElementById('f-brand-sel').value='';
-  ACTIVE_FILTERS.brandGroup=bg?[bg]:[];
-  ACTIVE_FILTERS.brand=[];
-  loadAllPages();
-}
-function onBrandChange(){
-  const br=document.getElementById('f-brand-sel').value;
-  ACTIVE_FILTERS.brand=br?[br]:[];
-  loadAllPages();
-}
-function populateMonthSel(yr){
-  const sel=document.getElementById('f-month-sel');
-  sel.innerHTML='<option value="">All Months</option>';
-  const months=FILTER_DATA.months[yr]||[];
-  months.forEach(mo=>{const o=document.createElement('option');o.value=mo;o.textContent=mo;sel.appendChild(o);});
-}
-function onYearChange(){
-  const yr=document.getElementById('f-year-sel').value;
-  if(yr)populateMonthSel(yr);
-  else{document.getElementById('f-month-sel').innerHTML='<option value="">All Months</option>';}
-  document.getElementById('f-month-sel').value='';
-  ACTIVE_FILTERS.year=yr?[yr]:[];
-  ACTIVE_FILTERS.month=[];
-  loadAllPages();
-}
-function onMonthChange(){
-  const mo=document.getElementById('f-month-sel').value;
-  ACTIVE_FILTERS.month=mo?[mo]:[];
-  loadAllPages();
-}
-function applyFilters(){
-  // Year/month handled by onYearChange/onMonthChange
-  // Brand group/brand handled by onBrandGroupChange/onBrandChange
-  // Cascade RPM filter based on brand group selection
-  const selBGs=ACTIVE_FILTERS.brandGroup;
-  if(selBGs.length>0&&FILTER_DATA.dealers.length>0){
-    // Will be handled server-side via DAX filters
-  }
-  ACTIVE_FILTERS.rpm=getMSValues('ms-rpm');
-  ACTIVE_FILTERS.acctMgr=getMSValues('ms-acctmgr');
-  ACTIVE_FILTERS.dealerCat=getMSValues('ms-dealercat');
-  ACTIVE_FILTERS.dealerGroup=getMSValues('ms-dealergroup');
-  ACTIVE_FILTERS.state=getMSValues('ms-state');
-  ACTIVE_FILTERS.oemRegion=getMSValues('ms-oemregion');
-  ACTIVE_FILTERS.dealerName=getMSValues('ms-dealername');
-  loadAllPages();
-}
-function clearFilters(){
-  document.getElementById('f-year-sel').value='';
-  document.getElementById('f-month-sel').innerHTML='<option value="">All Months</option>';
-  document.getElementById('f-brandgroup-sel').value='';
-  document.getElementById('f-brand-sel').innerHTML='<option value="">All Brands</option>';
-  ACTIVE_FILTERS.brandGroup=[];ACTIVE_FILTERS.brand=[];
-  ['ms-acctmgr','ms-rpm','ms-dealercat','ms-dealergroup','ms-oemregion','ms-state','ms-dealername']
-    .forEach(id=>{if(MS_STATE[id]){MS_STATE[id].selected.clear();updateMSBtn(id);}});
-  ACTIVE_FILTERS={year:[],month:[],brandGroup:[],brand:[],rpm:[],acctMgr:[],dealerCat:[],dealerGroup:[],state:[],oemRegion:[],dealerName:[]};
-  loadAllPages();
-}
-
-// Build DAX FILTER clauses from active filters
-function inFilter(col, vals){
-  if(!vals||!vals.length)return null;
-  if(vals.length===1)return `FILTER(ALL(${col.split('[')[0].trim()}),${col}="${vals[0]}")`;
-  const list=vals.map(v=>`${col}="${v}"`).join('||');
-  return `FILTER(ALL(${col.split('[')[0].trim()}),${list})`;
-}
-
-function buildFilterClauses(){
-  const f=ACTIVE_FILTERS;
-  const c=[];
-  // Year is numeric in DAX
-  if(f.year&&f.year.length){
-    if(f.year.length===1) c.push(`FILTER(ALL('Business Dates Local'),'Business Dates Local'[Reporting Year]=${f.year[0]})`);
-    else{const list=f.year.map(y=>`'Business Dates Local'[Reporting Year]=${y}`).join('||');c.push(`FILTER(ALL('Business Dates Local'),${list})`);}
-  }
-  const _skip_yr=null;
-  if(_skip_yr)c.push(_skip_yr);
-  const mo=inFilter("'Business Dates Local'[Reporting MonthYear]",f.month);
-  if(mo)c.push(mo);
-  const bg=inFilter("'Dealers Local'[Brand Group]",f.brandGroup);
-  if(bg)c.push(bg);
-  const br=inFilter("'Dealers Local'[Brand]",f.brand);
-  if(br)c.push(br);
-  const rpm=inFilter("'Dealers Local'[RPM]",f.rpm);
-  if(rpm)c.push(rpm);
-  const am=inFilter("'Dealers Local'[Account Manager]",f.acctMgr);
-  if(am)c.push(am);
-  const dc=inFilter("'Dealers Local'[Dealer Category]",f.dealerCat);
-  if(dc)c.push(dc);
-  const dg=inFilter("'Dealers Local'[Dealer Group]",f.dealerGroup);
-  if(dg)c.push(dg);
-  const st=inFilter("'Dealers Local'[State]",f.state);
-  if(st)c.push(st);
-  const oem=inFilter("'Dealers Local'[OEM Region]",f.oemRegion);
-  if(oem)c.push(oem);
-  const dn=inFilter("'Dealers Local'[Dealer Name]",f.dealerName);
-  if(dn)c.push(dn);
-  return c;
-}
-
-// Build filter string for SUMMARIZECOLUMNS
-function filterStr(){
-  const c=buildFilterClauses();
-  return c.length?','+c.join(','):'';
-}
-
-// Build filter string for ROW/CALCULATE
-function calcFilter(){
-  const c=buildFilterClauses();
-  return c.length?','+c.join(','):'';
-}
-
 // ── LOAD FILTER OPTIONS ────────────────────────────────────────────────
-async function loadFilterOptions(){
-  setLoad('Loading filter options...');
-  // Initialize all multi-selects
-  createMultiSelect('ms-acctmgr','All Account Managers');
-  createMultiSelect('ms-rpm','All RPMs');
-  createMultiSelect('ms-dealercat','All Categories');
-  createMultiSelect('ms-dealergroup','All Dealer Groups');
-  createMultiSelect('ms-oemregion','All OEM Regions');
-  createMultiSelect('ms-state','All States');
-  createMultiSelect('ms-dealername','All Dealers');
+async function loadFilters(){
+  setLoad('Loading filters...');
+  ['ms-brandgroup','ms-brand','ms-acctmgr','ms-rpm','ms-dealercat','ms-dealergroup','ms-oemregion','ms-state','ms-dealername','ms-month']
+    .forEach(id=>createMS(id,{
+      'ms-brandgroup':'All Brand Groups','ms-brand':'All Brands','ms-acctmgr':'All AMs',
+      'ms-rpm':'All RPMs','ms-dealercat':'All Categories','ms-dealergroup':'All Groups',
+      'ms-oemregion':'All Regions','ms-state':'All States','ms-dealername':'All Dealers','ms-month':'All Months'
+    }[id]));
   try{
-    // Period filter
+    // Dates
     const dates=await dax(`EVALUATE SUMMARIZECOLUMNS('Business Dates Local'[Reporting Year],'Business Dates Local'[Reporting MonthYear],'Business Dates Local'[Mon-Year Sort]) ORDER BY 'Business Dates Local'[Mon-Year Sort] ASC`);
-    const yearSet=new Set(); const monthMap={};
+    const yearSet=new Set();
     dates.forEach(r=>{
       const yr=String(r['Business Dates Local[Reporting Year]']);
       const mo=r['Business Dates Local[Reporting MonthYear]'];
       if(yr&&yr!=='null')yearSet.add(yr);
-      if(yr&&mo&&mo!=='null'){if(!monthMap[yr])monthMap[yr]=[];if(!monthMap[yr].includes(mo))monthMap[yr].push(mo);}
+      if(yr&&mo&&mo!=='null'){if(!FD.months[yr])FD.months[yr]=[];if(!FD.months[yr].includes(mo))FD.months[yr].push(mo);}
     });
-    FILTER_DATA.years=[...yearSet];
-    FILTER_DATA.months=monthMap;
-    // Populate year dropdown
-    const yearSel=document.getElementById('f-year-sel');
-    [...yearSet].sort().reverse().forEach(yr=>{
-      const o=document.createElement('option');o.value=yr;o.textContent=yr;yearSel.appendChild(o);
-    });
-    // Default to 2026
-    if([...yearSel.options].some(o=>o.value==='2026')){
-      yearSel.value='2026';ACTIVE_FILTERS.year=['2026'];
-      // Populate months for 2026
-      populateMonthSel('2026');
-    }
+    FD.years=[...yearSet];
+    const yearSel=document.getElementById('f-year');
+    FD.years.sort().reverse().forEach(yr=>{const o=document.createElement('option');o.value=yr;o.textContent=yr;yearSel.appendChild(o);});
+    // Default 2026
+    if(FD.years.includes('2026')){yearSel.value='2026';F.year='2026';populateMS('ms-month',(FD.months['2026']||[]).map(m=>({value:m,label:m})));}
 
-    // Brand Groups and Brands
+    // Brands
     const brands=await dax(`EVALUATE SUMMARIZECOLUMNS('Dealers Local'[Brand Group],'Dealers Local'[Brand]) ORDER BY 'Dealers Local'[Brand Group] ASC,'Dealers Local'[Brand] ASC`);
-    const bgSet=new Set(); const brandMap={};
+    const bgSet=new Set();
     brands.forEach(r=>{
-      const bg=r['Dealers Local[Brand Group]'];const br=r['Dealers Local[Brand]'];
+      const bg=r['Dealers Local[Brand Group]'],br=r['Dealers Local[Brand]'];
       if(bg&&bg!=='null')bgSet.add(bg);
-      if(bg&&br&&br!=='null'){if(!brandMap[bg])brandMap[bg]=[];brandMap[bg].push(br);}
+      if(bg&&br&&br!=='null'){if(!FD.brands[bg])FD.brands[bg]=[];FD.brands[bg].push(br);}
     });
-    FILTER_DATA.brandGroups=[...bgSet];FILTER_DATA.brands=brandMap;
-    // Populate brand group dropdown
-    const bgSel=document.getElementById('f-brandgroup-sel');
-    [...bgSet].sort().forEach(bg=>{
-      const o=document.createElement('option');o.value=bg;o.textContent=bg;bgSel.appendChild(o);
-    });
+    FD.brandGroups=[...bgSet];
+    populateMS('ms-brandgroup',FD.brandGroups.sort().map(b=>({value:b,label:b})));
+    populateMS('ms-brand',[...new Set(Object.values(FD.brands).flat())].sort().map(b=>({value:b,label:b})));
 
-    // Other filters
+    // Dealers
     const dealers=await dax(`EVALUATE SUMMARIZECOLUMNS('Dealers Local'[RPM],'Dealers Local'[Account Manager],'Dealers Local'[Dealer Category],'Dealers Local'[Dealer Group],'Dealers Local'[State],'Dealers Local'[OEM Region],'Dealers Local'[Dealer SG Code],'Dealers Local'[Dealer Name]) ORDER BY 'Dealers Local'[Dealer Name] ASC`);
-    const sets={rpm:new Set(),acct:new Set(),cat:new Set(),grp:new Set(),st:new Set(),oem:new Set()};
-    const dlrList=[];
+    const s={rpm:new Set(),am:new Set(),cat:new Set(),grp:new Set(),st:new Set(),oem:new Set()};
     dealers.forEach(r=>{
-      const v=(k)=>r['Dealers Local['+k+']'];
-      if(v('RPM')&&v('RPM')!=='null')sets.rpm.add(v('RPM'));
-      if(v('Account Manager')&&v('Account Manager')!=='null')sets.acct.add(v('Account Manager'));
-      if(v('Dealer Category')&&v('Dealer Category')!=='null')sets.cat.add(v('Dealer Category'));
-      if(v('Dealer Group')&&v('Dealer Group')!=='null')sets.grp.add(v('Dealer Group'));
-      if(v('State')&&v('State')!=='null')sets.st.add(v('State'));
-      if(v('OEM Region')&&v('OEM Region')!=='null')sets.oem.add(v('OEM Region'));
-      if(v('Dealer SG Code')&&v('Dealer Name'))dlrList.push({code:v('Dealer SG Code'),name:v('Dealer Name')});
+      const v=k=>r[`Dealers Local[${k}]`];
+      if(v('RPM')&&v('RPM')!=='null')s.rpm.add(v('RPM'));
+      if(v('Account Manager')&&v('Account Manager')!=='null')s.am.add(v('Account Manager'));
+      if(v('Dealer Category')&&v('Dealer Category')!=='null')s.cat.add(v('Dealer Category'));
+      if(v('Dealer Group')&&v('Dealer Group')!=='null')s.grp.add(v('Dealer Group'));
+      if(v('State')&&v('State')!=='null')s.st.add(v('State'));
+      if(v('OEM Region')&&v('OEM Region')!=='null')s.oem.add(v('OEM Region'));
+      if(v('Dealer SG Code')&&v('Dealer Name'))FD.dealers.push({code:v('Dealer SG Code'),name:v('Dealer Name')});
     });
-    populateMS('ms-rpm',[...sets.rpm].sort().map(v=>({value:v,label:v})));
-    populateMS('ms-acctmgr',[...sets.acct].sort().map(v=>({value:v,label:v})));
-    populateMS('ms-dealercat',[...sets.cat].sort().map(v=>({value:v,label:v})));
-    populateMS('ms-dealergroup',[...sets.grp].sort().map(v=>({value:v,label:v})));
-    populateMS('ms-state',[...sets.st].sort().map(v=>({value:v,label:v})));
-    populateMS('ms-oemregion',[...sets.oem].sort().map(v=>({value:v,label:v})));
-    populateMS('ms-dealername',dlrList.map(d=>({value:d.name,label:d.name})));
-    FILTER_DATA.dealers=dlrList;
+    populateMS('ms-rpm',[...s.rpm].sort().map(v=>({value:v,label:v})));
+    populateMS('ms-acctmgr',[...s.am].sort().map(v=>({value:v,label:v})));
+    populateMS('ms-dealercat',[...s.cat].sort().map(v=>({value:v,label:v})));
+    populateMS('ms-dealergroup',[...s.grp].sort().map(v=>({value:v,label:v})));
+    populateMS('ms-state',[...s.st].sort().map(v=>({value:v,label:v})));
+    populateMS('ms-oemregion',[...s.oem].sort().map(v=>({value:v,label:v})));
+    populateMS('ms-dealername',FD.dealers.map(d=>({value:d.name,label:d.name})));
     const gpSel=document.getElementById('gp-dealer-select');
-    if(gpSel)gpSel.innerHTML='<option value="">— Select a dealer —</option>'+dlrList.map(d=>`<option value="${d.code}">${d.name} (${d.code})</option>`).join('');
-  }catch(e){console.error('Filter load error:',e);}
+    gpSel.innerHTML='<option value="">— Select a dealer —</option>'+FD.dealers.map(d=>`<option value="${d.code}">${d.name} (${d.code})</option>`).join('');
+  }catch(e){console.error('Filter error:',e);}
 }
 
-// ── PAGE 1: RPM OVERVIEW ──────────────────────────────────────────────
+// ── PAGE 1 ─────────────────────────────────────────────────────────────
 async function loadPage1(){
   try{
-    // KT KPIs
-    const cf=calcFilter();
-    const kt=await dax(`EVALUATE ROW("TotalDealers",CALCULATE([Total Dealers]${cf}),"PartDealers",CALCULATE([Participating dealers]${cf}),"DealersGA",CALCULATE([Dealers in GA]${cf}),"PctGA",CALCULATE([Dealers in GA %]${cf}),"RDR",CALCULATE([RDR for Pen CY]${cf}),"Products",CALCULATE([Products CY]${cf}),"Pen",CALCULATE([Product Pen CY]${cf}),"Target",CALCULATE([Target total]${cf}),"ATG",CALCULATE([ATG %]${cf}),"Visits",CALCULATE([Expense Visits CY]${cf}),"Expenses",CALCULATE([Expense Total CY]${cf}),"CostPerVisit",CALCULATE([Expense / visit]${cf}))`);
+    const c=cf();
+    // KT
+    const kt=await dax(`EVALUATE ROW("TD",CALCULATE([Total Dealers]${c}),"PD",CALCULATE([Participating dealers]${c}),"DGA",CALCULATE([Dealers in GA]${c}),"PGA",CALCULATE([Dealers in GA %]${c}),"RDR",CALCULATE([RDR for Pen CY]${c}),"COV",CALCULATE([Products CY]${c}),"PEN",CALCULATE([Product Pen CY]${c}),"TGT",CALCULATE([Target total]${c}),"ATG",CALCULATE([ATG %]${c}),"VIS",CALCULATE([Expense Visits CY]${c}),"EXP",CALCULATE([Expenses RPM]${c}),"CPV",CALCULATE([$ per Visit RPM]${c}))`);
     const k=kt[0]||{};
-    document.getElementById('p1-kt-kpis').innerHTML=`
-      <div class="section-sub-label" style="grid-column:1/-1">Dealer Coverage</div>
-      <div class="kpi-card"><div class="kpi-lbl">Total Dealers</div><div class="kpi-val">${fmt(k['[TotalDealers]'])}</div></div>
-      <div class="kpi-card"><div class="kpi-lbl">Participating Dealers</div><div class="kpi-val">${fmt(k['[PartDealers]'])}</div></div>
-      <div class="kpi-card"><div class="kpi-lbl">Dealers in GA</div><div class="kpi-val">${fmt(k['[DealersGA]'])}</div></div>
-      <div class="kpi-card"><div class="kpi-lbl">% in GA</div><div class="kpi-val">${fmt(k['[PctGA]'],'pct')}</div></div>`;
-    document.getElementById('p1-kt-kpis2').innerHTML=`
-      <div class="section-sub-label" style="grid-column:1/-1">Production</div>
+    document.getElementById('p1-dealers').innerHTML=`
+      <div class="kpi-card"><div class="kpi-lbl">Total Dealers</div><div class="kpi-val">${fmt(k['[TD]'])}</div></div>
+      <div class="kpi-card"><div class="kpi-lbl">Participating Dealers</div><div class="kpi-val">${fmt(k['[PD]'])}</div></div>
+      <div class="kpi-card"><div class="kpi-lbl">Dealers in GA</div><div class="kpi-val">${fmt(k['[DGA]'])}</div></div>
+      <div class="kpi-card"><div class="kpi-lbl">% in GA</div><div class="kpi-val">${fmt(k['[PGA]'],'pct')}</div></div>`;
+    document.getElementById('p1-activity').innerHTML=`
+      <div class="kpi-card"><div class="kpi-lbl">Total Visits</div><div class="kpi-val">${fmt(k['[VIS]'])}</div></div>
+      <div class="kpi-card"><div class="kpi-lbl">Expenses RPM</div><div class="kpi-val">${fmt(k['[EXP]'],'cur')}</div></div>
+      <div class="kpi-card"><div class="kpi-lbl">$ per Visit</div><div class="kpi-val">${fmt(k['[CPV]'],'cur')}</div></div>`;
+    document.getElementById('p1-production').innerHTML=`
       <div class="kpi-card"><div class="kpi-lbl">Total RDRs</div><div class="kpi-val">${fmt(k['[RDR]'])}</div></div>
-      <div class="kpi-card"><div class="kpi-lbl">Coverages</div><div class="kpi-val">${fmt(k['[Products]'])}</div></div>
-      <div class="kpi-card"><div class="kpi-lbl">Penetration</div><div class="kpi-val">${fmt(k['[Pen]'],'pct')}</div></div>
-      <div class="section-sub-label" style="grid-column:1/-1;margin-top:8px">Target</div>
-      <div class="kpi-card"><div class="kpi-lbl">Target Contracts</div><div class="kpi-val">${fmt(k['[Target]'])}</div></div>
-      <div class="kpi-card"><div class="kpi-lbl">Coverages</div><div class="kpi-val">${fmt(k['[Products]'])}</div></div>
-      <div class="kpi-card ${(k['[ATG]']||0)>=1?'green':'yellow'}"><div class="kpi-lbl">Target Achieved</div><div class="kpi-val">${fmt(k['[ATG]'],'pct')}</div></div>
-      <div class="section-sub-label" style="grid-column:1/-1;margin-top:8px">Activity</div>
-      <div class="kpi-card"><div class="kpi-lbl">Total Visits</div><div class="kpi-val">${fmt(k['[Visits]'])}</div></div>
-      <div class="kpi-card"><div class="kpi-lbl">Expenses</div><div class="kpi-val">${fmt(k['[Expenses]'],'cur')}</div></div>
-      <div class="kpi-card"><div class="kpi-lbl">$ per Visit</div><div class="kpi-val">${fmt(k['[CostPerVisit]'],'cur')}</div></div>`;
+      <div class="kpi-card"><div class="kpi-lbl">Coverages</div><div class="kpi-val">${fmt(k['[COV]'])}</div></div>
+      <div class="kpi-card"><div class="kpi-lbl">Penetration</div><div class="kpi-val">${fmt(k['[PEN]'],'pct')}</div></div>`;
+    document.getElementById('p1-target').innerHTML=`
+      <div class="kpi-card"><div class="kpi-lbl">Target Contracts</div><div class="kpi-val">${fmt(k['[TGT]'])}</div></div>
+      <div class="kpi-card"><div class="kpi-lbl">Coverages</div><div class="kpi-val">${fmt(k['[COV]'])}</div></div>
+      <div class="kpi-card ${(k['[ATG]']||0)>=1?'green':'yellow'}"><div class="kpi-lbl">Target Achieved</div><div class="kpi-val">${fmt(k['[ATG]'],'pct')}</div></div>`;
 
-    // GA KPIs
-    const ga=await dax(`EVALUATE ROW("Rooftops",CALCULATE([Rooftops]${cf}),"RDR",CALCULATE([RDR Total CY]${cf}),"Contracts",CALCULATE([Contracts CY BE]${cf}),"Pen",CALCULATE([Contract Pen CY BE]${cf}),"PVR",CALCULATE([BE PVR Total CY]${cf}),"FRPVR",CALCULATE([FR PVR Total CY]${cf}),"ProdPVR",CALCULATE([Prod PVR Total CY]${cf}),"NoDeal",CALCULATE([% No Deal CY]${cf}),"Missed",CALCULATE([SG Contracts CY TAM Missed]${cf}),"MissedAnn",CALCULATE([SG Contracts CY TAM Missed Annual]${cf}),"AdminMissed",CALCULATE([SG Admin CY TAM Missed]${cf}),"AdminMissedAnn",CALCULATE([SG Admin CY TAM Missed Annual]${cf}),"PenMissed",CALCULATE([SG Pen CY TAM Missed]${cf}))`);
+    // GA
+    const ga=await dax(`EVALUATE ROW("RT",CALCULATE([Rooftops]${c}),"RDR",CALCULATE([RDR Total CY]${c}),"CON",CALCULATE([Contracts CY BE]${c}),"PEN",CALCULATE([Contract Pen CY BE]${c}),"PVR",CALCULATE([BE PVR Total CY]${c}),"FRPVR",CALCULATE([FR PVR Total CY]${c}),"PPVR",CALCULATE([Prod PVR Total CY]${c}),"ND",CALCULATE([% No Deal CY]${c}),"MSS",CALCULATE([SG Contracts CY TAM Missed]${c}),"MSSA",CALCULATE([SG Contracts CY TAM Missed Annual]${c}),"ADM",CALCULATE([SG Admin CY TAM Missed]${c}),"ADMA",CALCULATE([SG Admin CY TAM Missed Annual]${c}),"PM",CALCULATE([SG Pen CY TAM Missed]${c}))`);
     const g=ga[0]||{};
-    document.getElementById('p1-ga-kpis').innerHTML=`
-      <div class="kpi-card green"><div class="kpi-lbl">Total Dealers</div><div class="kpi-val">${fmt(g['[Rooftops]'])}</div></div>
+    document.getElementById('p1-ga-overview').innerHTML=`
+      <div class="kpi-card green"><div class="kpi-lbl">Total Dealers</div><div class="kpi-val">${fmt(g['[RT]'])}</div></div>
       <div class="kpi-card green"><div class="kpi-lbl">Total RDRs</div><div class="kpi-val">${fmt(g['[RDR]'])}</div></div>
-      <div class="kpi-card green"><div class="kpi-lbl">Contracts</div><div class="kpi-val">${fmt(g['[Contracts]'])}</div></div>
-      <div class="kpi-card green"><div class="kpi-lbl">Penetration</div><div class="kpi-val">${fmt(g['[Pen]'],'pct')}</div></div>`;
-    document.getElementById('p1-ga-kpis2').innerHTML=`
+      <div class="kpi-card green"><div class="kpi-lbl">Contracts</div><div class="kpi-val">${fmt(g['[CON]'])}</div></div>
+      <div class="kpi-card green"><div class="kpi-lbl">Penetration</div><div class="kpi-val">${fmt(g['[PEN]'],'pct')}</div></div>`;
+    document.getElementById('p1-ga-pvr').innerHTML=`
       <div class="kpi-card orange"><div class="kpi-lbl">Total PVR</div><div class="kpi-val">${fmt(g['[PVR]'],'cur')}</div></div>
       <div class="kpi-card orange"><div class="kpi-lbl">Finance Reserve</div><div class="kpi-val">${fmt(g['[FRPVR]'],'cur')}</div></div>
-      <div class="kpi-card orange"><div class="kpi-lbl">Product PVR</div><div class="kpi-val">${fmt(g['[ProdPVR]'],'cur')}</div></div>
-      <div class="kpi-card orange"><div class="kpi-lbl">% with no Product</div><div class="kpi-val">${fmt(g['[NoDeal]'],'pct')}</div></div>
-      <div class="kpi-card red"><div class="kpi-lbl">Contracts Missed</div><div class="kpi-val">${fmt(g['[Missed]'])}</div><div class="kpi-sub">Pen Missed: ${fmt(g['[PenMissed]'],'pct')}</div></div>
-      <div class="kpi-card red"><div class="kpi-lbl">Contracts Missed Annualized</div><div class="kpi-val">${fmt(g['[MissedAnn]'])}</div></div>
-      <div class="kpi-card red"><div class="kpi-lbl">SG Admin Missed</div><div class="kpi-val">${fmt(g['[AdminMissed]'],'cur')}</div></div>
-      <div class="kpi-card red"><div class="kpi-lbl">SG Admin Missed Annualized</div><div class="kpi-val">${fmt(g['[AdminMissedAnn]'],'cur')}</div></div>`;
+      <div class="kpi-card orange"><div class="kpi-lbl">Product PVR</div><div class="kpi-val">${fmt(g['[PPVR]'],'cur')}</div></div>
+      <div class="kpi-card orange"><div class="kpi-lbl">% with no Product</div><div class="kpi-val">${fmt(g['[ND]'],'pct')}</div></div>`;
+    document.getElementById('p1-ga-missed').innerHTML=`
+      <div class="kpi-card red"><div class="kpi-lbl">Contracts Missed</div><div class="kpi-val">${fmt(g['[MSS]'])}</div></div>
+      <div class="kpi-card red"><div class="kpi-lbl">Contracts Missed Annualized</div><div class="kpi-val">${fmt(g['[MSSA]'])}</div></div>
+      <div class="kpi-card red"><div class="kpi-lbl">SG Admin Missed</div><div class="kpi-val">${fmt(g['[ADM]'],'cur')}</div></div>
+      <div class="kpi-card red"><div class="kpi-lbl">SG Admin Missed Annualized</div><div class="kpi-val">${fmt(g['[ADMA]'],'cur')}</div></div>
+      <div class="kpi-card red"><div class="kpi-lbl">Pen Missed</div><div class="kpi-val">${fmt(g['[PM]'],'pct')}</div></div>`;
 
     // GA Breakdowns
-    const cond=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[N/U]${filterStr()},"RDR",[RDR Total CY],"Contracts",[Contracts CY BE],"Pen",[Contract Pen CY BE],"Missed",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY] DESC`);
-    document.getElementById('p1-cond-tbl').innerHTML=buildBreakdownTable(cond,'DMS VIN[N/U]');
-
-    const st=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Sale Type Group]${filterStr()},"RDR",[RDR Total CY],"Contracts",[Contracts CY BE],"Pen",[Contract Pen CY BE],"Missed",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY] DESC`);
-    document.getElementById('p1-saletype-tbl').innerHTML=buildBreakdownTable(st,'DMS VIN[Sale Type Group]');
-
-    const mi=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Miles Group]${filterStr()},"RDR",[RDR Total CY],"Contracts",[Contracts CY BE],"Pen",[Contract Pen CY BE],"Missed",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY] DESC`);
-    document.getElementById('p1-miles-tbl').innerHTML=buildBreakdownTable(mi,'DMS VIN[Miles Group]');
-
-    // Top 10 F&I Managers
-    const fim=await dax(`EVALUATE TOPN(10,SUMMARIZECOLUMNS('DMS VIN'[Finance Manager Name]${filterStr()},"RDR",[RDR Total CY],"Contracts",[Contracts CY BE],"Pen",[Contract Pen CY BE],"SOW",[SG Contracts CY % of TAM],"Missed",[SG Contracts CY TAM Missed]),[RDR Total CY],DESC)`);
-    document.getElementById('p1-fim-tbl').innerHTML=buildFIMTable(fim);
-
-  }catch(e){console.error('Page1 error:',e);}
+    const f=fs();
+    const cond=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[N/U]${f},"RDR",[RDR Total CY],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY] DESC`);
+    document.getElementById('p1-cond-tbl').innerHTML=breakdownTable(cond,'DMS VIN[N/U]');
+    const sale=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Sale Type Group]${f},"RDR",[RDR Total CY],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY] DESC`);
+    document.getElementById('p1-saletype-tbl').innerHTML=breakdownTable(sale,'DMS VIN[Sale Type Group]');
+    const miles=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Miles Group]${f},"RDR",[RDR Total CY],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY] DESC`);
+    document.getElementById('p1-miles-tbl').innerHTML=breakdownTable(miles,'DMS VIN[Miles Group]');
+    const fim=await dax(`EVALUATE TOPN(10,SUMMARIZECOLUMNS('DMS VIN'[Finance Manager Name]${f},"RDR",[RDR Total CY],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"SOW",[SG Contracts CY % of TAM],"MSS",[SG Contracts CY TAM Missed]),[RDR Total CY],DESC)`);
+    document.getElementById('p1-fim-tbl').innerHTML=fimTable(fim);
+  }catch(e){console.error('Page1 error:',e);['p1-dealers','p1-activity','p1-production','p1-target','p1-ga-overview','p1-ga-pvr','p1-ga-missed'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=`<div style="color:var(--red);padding:12px;font-size:12px">Error: ${e.message}</div>`;});}
 }
 
-function buildBreakdownTable(rows,dimKey){
-  if(!rows.length)return'<div class="empty-state">No data</div>';
-  const h=`<table><thead><tr><th>Segment</th><th class="td-num">RDR</th><th class="td-num">Contracts</th><th class="td-num">Pen</th><th class="td-num">Missed</th></tr></thead><tbody>`;
-  const b=rows.map(r=>`<tr>
-    <td class="td-name">${r[dimKey]||'—'}</td>
-    <td class="td-num">${fmt(r['[RDR]'])}</td>
-    <td class="td-num">${fmt(r['[Contracts]'])}</td>
-    <td class="td-num">${fmt(r['[Pen]'],'pct')}</td>
-    <td class="td-num" style="color:var(--red)">${fmt(r['[Missed]'])}</td>
-  </tr>`).join('');
-  return h+b+'</tbody></table>';
+function breakdownTable(rows,dim){
+  if(!rows.length)return'<div class="empty">No data</div>';
+  return`<table><thead><tr><th>Segment</th><th class="td-num">RDR</th><th class="td-num">Contracts</th><th class="td-num">Pen</th><th class="td-num">Missed</th></tr></thead><tbody>${
+    rows.map(r=>`<tr><td class="td-name">${r[dim]||'—'}</td><td class="td-num">${fmt(r['[RDR]'])}</td><td class="td-num">${fmt(r['[CON]'])}</td><td class="td-num">${fmt(r['[PEN]'],'pct')}</td><td class="td-num" style="color:var(--red)">${fmt(r['[MSS]'])}</td></tr>`).join('')
+  }</tbody></table>`;
 }
 
-function buildFIMTable(rows){
-  if(!rows.length)return'<div class="empty-state">No data</div>';
-  const h=`<table><thead><tr><th>#</th><th>F&I Manager</th><th class="td-num">Vehicle Sales</th><th class="td-num">BE Contracts</th><th class="td-num">Penetration</th><th class="td-num">Share of Wallet</th><th class="td-num">Missed</th></tr></thead><tbody>`;
-  const b=rows.map((r,i)=>{
-    const sow=r['[SOW]']||0;
-    const sowBadgeHtml=sow>=0.5?`<span class="badge bg-green">${fmt(sow,'pct')}</span>`:sow>=0.25?`<span class="badge bg-yellow">${fmt(sow,'pct')}</span>`:`<span class="badge bg-red">${fmt(sow,'pct')}</span>`;
-    return`<tr>
-      <td style="color:var(--text2);font-weight:700">${i+1}</td>
-      <td class="td-name">${r['DMS VIN[Finance Manager Name]']||'—'}</td>
-      <td class="td-num">${fmt(r['[RDR]'])}</td>
-      <td class="td-num">${fmt(r['[Contracts]'])}</td>
-      <td class="td-num">${fmt(r['[Pen]'],'pct')}</td>
-      <td class="td-num">${sowBadgeHtml}</td>
-      <td class="td-num" style="color:var(--red);font-weight:700">${fmt(r['[Missed]'])}</td>
-    </tr>`;
-  }).join('');
-  return h+b+'</tbody></table>';
+function fimTable(rows){
+  if(!rows.length)return'<div class="empty">No data</div>';
+  return`<table><thead><tr><th>#</th><th>F&I Manager</th><th class="td-num">Vehicle Sales</th><th class="td-num">Contracts</th><th class="td-num">Penetration</th><th class="td-num">Share of Wallet</th><th class="td-num">Missed</th></tr></thead><tbody>${
+    rows.map((r,i)=>`<tr><td style="color:var(--text2);font-weight:700">${i+1}</td><td class="td-name">${r['DMS VIN[Finance Manager Name]']||'—'}</td><td class="td-num">${fmt(r['[RDR]'])}</td><td class="td-num">${fmt(r['[CON]'])}</td><td class="td-num">${fmt(r['[PEN]'],'pct')}</td><td class="td-num">${sowBadge(r['[SOW]']||0)}</td><td class="td-num" style="color:var(--red);font-weight:700">${fmt(r['[MSS]'])}</td></tr>`).join('')
+  }</tbody></table>`;
 }
 
-// ── PAGE 2: DEALER OVERVIEW ───────────────────────────────────────────
+// ── PAGE 2 ─────────────────────────────────────────────────────────────
 async function loadPage2(){
+  document.getElementById('p2-tbl').innerHTML='<div class="loading-inline"><div class="spinner"></div>Loading...</div>';
   try{
-    const rows=await dax(`EVALUATE SUMMARIZECOLUMNS('Dealers Local'[Dealer SG Code],'Dealers Local'[Dealer Name],'Dealers Local'[RPM],'Dealers Local'[Brand Group],'Dealers Local'[State]${filterStr()},"PCY",[Products CY],"PLY",[Products LY],"PenCY",[Product Pen CY],"AdminCY",[SG Admin CY],"RDR",[RDR for Pen CY],"ATG",[ATG %],"Visits",[Expense Visits CY],"Missed",[SG Contracts CY TAM Missed],"SOW",[SG Contracts CY % of TAM],"MissedAnn",[SG Contracts CY TAM Missed Annual]) ORDER BY [Products CY] DESC`);
-    ALL_DEALER_DATA=rows;
+    const f=fs();
+    const rows=await dax(`EVALUATE SUMMARIZECOLUMNS('Dealers Local'[Dealer SG Code],'Dealers Local'[Dealer Name],'Dealers Local'[RPM],'Dealers Local'[Brand Group],'Dealers Local'[State]${f},"PCY",[Products CY],"PLY",[Products LY],"PEN",[Product Pen CY],"ADM",[SG Admin CY],"RDR",[RDR for Pen CY],"ATG",[ATG %],"VIS",[Expense Visits CY],"MSS",[SG Contracts CY TAM Missed],"SOW",[SG Contracts CY % of TAM],"MSSA",[SG Contracts CY TAM Missed Annual]) ORDER BY [Products CY] DESC`);
     document.getElementById('p2-sub').textContent=`${rows.length} dealers`;
-    const tbody=rows.map(r=>{
+    document.getElementById('p2-tbl').innerHTML=`<table><thead><tr>
+      <th>SG Code</th><th>Dealer Name</th><th>RPM</th><th>Brand Group</th><th>State</th>
+      <th class="td-num">RDR</th><th class="td-num">Coverages</th><th class="td-num">YoY</th>
+      <th class="td-num">Pen</th><th class="td-num">% Target</th><th class="td-num">SG Admin</th>
+      <th class="td-num">Visits</th><th class="td-num">Missed</th><th class="td-num">SOW</th><th class="td-num">Annlzd Missed</th>
+    </tr></thead><tbody>${rows.slice(0,200).map(r=>{
       const code=r['Dealers Local[Dealer SG Code]']||'—';
       const atg=r['[ATG]']||0;
-      const atgBadge=atg>=1?'bg-green':atg>=0.8?'bg-yellow':'bg-red';
-      const sow=r['[SOW]']||0;
-      const sowBadge2=sow>=0.5?'bg-green':sow>=0.25?'bg-yellow':'bg-red';
-      return`<tr onclick="loadVisitImpact('${code}','${(r['Dealers Local[Dealer Name]']||'').replace(/'/g,"\\'")}')">
+      return`<tr onclick="loadVI('${code}','${(r['Dealers Local[Dealer Name]']||'').replace(/'/g,"\\'")}')">
         <td class="td-name" style="cursor:pointer;color:var(--accent)">${code}</td>
         <td>${r['Dealers Local[Dealer Name]']||'—'}</td>
         <td>${r['Dealers Local[RPM]']||'—'}</td>
@@ -859,182 +732,138 @@ async function loadPage2(){
         <td class="td-num">${fmt(r['[RDR]'])}</td>
         <td class="td-num">${fmt(r['[PCY]'])}</td>
         <td class="td-num">${yoy(r['[PCY]'],r['[PLY]'])}</td>
-        <td class="td-num">${fmt(r['[PenCY]'],'pct')}</td>
-        <td class="td-num"><span class="badge ${atgBadge}">${fmt(atg,'pct')}</span></td>
-        <td class="td-num">${fmt(r['[AdminCY]'],'cur')}</td>
-        <td class="td-num">${fmt(r['[Visits]'])}</td>
-        <td class="td-num" style="color:var(--red)">${fmt(r['[Missed]'])}</td>
-        <td class="td-num"><span class="badge ${sowBadge2}">${fmt(sow,'pct')}</span></td>
-        <td class="td-num">${fmt(r['[MissedAnn]'])}</td>
+        <td class="td-num">${fmt(r['[PEN]'],'pct')}</td>
+        <td class="td-num"><span class="badge ${atg>=1?'bg-green':atg>=0.8?'bg-yellow':'bg-red'}">${fmt(atg,'pct')}</span></td>
+        <td class="td-num">${fmt(r['[ADM]'],'cur')}</td>
+        <td class="td-num">${fmt(r['[VIS]'])}</td>
+        <td class="td-num" style="color:var(--red)">${fmt(r['[MSS]'])}</td>
+        <td class="td-num">${sowBadge(r['[SOW]']||0)}</td>
+        <td class="td-num">${fmt(r['[MSSA]'])}</td>
       </tr>`;
-    }).join('');
-    document.getElementById('p2-dealer-tbl').innerHTML=`<table><thead><tr>
-      <th>SG Code</th><th>Dealer Name</th><th>RPM</th><th>Brand Group</th><th>State</th>
-      <th class="td-num">RDR</th><th class="td-num">Coverages</th><th class="td-num">YoY</th>
-      <th class="td-num">Pen</th><th class="td-num">% Target</th><th class="td-num">SG Admin</th>
-      <th class="td-num">Visits</th><th class="td-num">Missed</th><th class="td-num">SOW</th><th class="td-num">Annlzd Missed</th>
-    </tr></thead><tbody>${tbody||'<tr><td colspan="15" class="empty-state">No data</td></tr>'}</tbody></table>`;
-  }catch(e){document.getElementById('p2-dealer-tbl').innerHTML=`<div class="empty-state" style="color:var(--red)">${e.message}</div>`;}
+    }).join('')}</tbody></table>`;
+  }catch(e){document.getElementById('p2-tbl').innerHTML=`<div class="empty" style="color:var(--red)">${e.message}</div>`;}
 }
 
-async function loadVisitImpact(code,name){
-  document.getElementById('p2-vi-sub').textContent=`${name} (${code})`;
-  document.getElementById('p2-vi-content').innerHTML='<div class="empty-state">Loading visit impact...</div>';
+async function loadVI(code,name){
+  document.getElementById('p2-vi-title').textContent=`${name} (${code}) — M-3 to M+3`;
+  document.getElementById('p2-vi-content').innerHTML='<div class="loading-inline"><div class="spinner"></div>Loading...</div>';
   try{
-    const rows=await dax(`EVALUATE SUMMARIZECOLUMNS('Dealers Local'[Dealer SG Code],'Dealers Local'[Dealer Name],"M3PV",[3 Mon Pre Visit Prod],"M2PV",[2 Mon Pre Visit Prod],"M1PV",[1 Mon Pre Visit Prod],"M1POV",[1 Mon Post Visit Prod],"M2POV",[2 Mon Post Visit Prod],"M3POV",[3 Mon Post Visit Prod],"M3PA",[3 Mon Pre Visit SG Admin],"M2PA",[2 Mon Pre Visit SG Admin],"M1PA",[1 Mon Pre Visit SG Admin],"M1POA",[1 Mon Post Visit SG Admin],"M2POA",[2 Mon Post Visit SG Admin],"M3POA",[3 Mon Post Visit SG Admin]) FILTER('Dealers Local','Dealers Local'[Dealer SG Code]="${code}")`);
-    if(!rows.length){document.getElementById('p2-vi-content').innerHTML='<div class="empty-state">No visit impact data for this dealer</div>';return;}
+    const rows=await dax(`EVALUATE FILTER(SUMMARIZECOLUMNS('Dealers Local'[Dealer SG Code],"M3PV",[3 Mon Pre Visit Prod],"M2PV",[2 Mon Pre Visit Prod],"M1PV",[1 Mon Pre Visit Prod],"M1POV",[1 Mon Post Visit Prod],"M2POV",[2 Mon Post Visit Prod],"M3POV",[3 Mon Post Visit Prod],"M3PA",[3 Mon Pre Visit SG Admin],"M2PA",[2 Mon Pre Visit SG Admin],"M1PA",[1 Mon Pre Visit SG Admin],"M1POA",[1 Mon Post Visit SG Admin],"M2POA",[2 Mon Post Visit SG Admin],"M3POA",[3 Mon Post Visit SG Admin]),'Dealers Local'[Dealer SG Code]="${code}")`);
+    if(!rows.length){document.getElementById('p2-vi-content').innerHTML='<div class="empty">No visit data for this dealer</div>';return;}
     const r=rows[0];
     const months=[
-      {label:'M-3',vol:r['[M3PV]'],admin:r['[M3PA]'],visit:false},
-      {label:'M-2',vol:r['[M2PV]'],admin:r['[M2PA]'],visit:false},
-      {label:'M-1',vol:r['[M1PV]'],admin:r['[M1PA]'],visit:false},
-      {label:'M0 (Visit)',vol:null,admin:null,visit:true},
-      {label:'M+1',vol:r['[M1POV]'],admin:r['[M1POA]'],visit:false},
-      {label:'M+2',vol:r['[M2POV]'],admin:r['[M2POA]'],visit:false},
-      {label:'M+3',vol:r['[M3POV]'],admin:r['[M3POA]'],visit:false},
+      {l:'M-3',v:r['[M3PV]'],a:r['[M3PA]'],vis:false},
+      {l:'M-2',v:r['[M2PV]'],a:r['[M2PA]'],vis:false},
+      {l:'M-1',v:r['[M1PV]'],a:r['[M1PA]'],vis:false},
+      {l:'M0',v:null,a:null,vis:true},
+      {l:'M+1',v:r['[M1POV]'],a:r['[M1POA]'],vis:false},
+      {l:'M+2',v:r['[M2POV]'],a:r['[M2POA]'],vis:false},
+      {l:'M+3',v:r['[M3POV]'],a:r['[M3POA]'],vis:false},
     ];
-    const grid=months.map(m=>`<div class="vi-month ${m.visit?'visit-month':''}">
-      <div class="vi-month-label">${m.label}</div>
-      ${m.visit?'<div class="vi-month-val" style="color:var(--accent);font-size:12px">Visit Date</div>':
-        `<div class="vi-month-val">${fmt(m.vol)}</div><div class="vi-month-sub">${fmt(m.admin,'cur')}</div>`}
-    </div>`).join('');
-    document.getElementById('p2-vi-content').innerHTML=`
-      <div style="padding:16px">
-        <div style="font-size:11px;color:var(--text2);margin-bottom:12px;font-weight:600">CONTRACTS (top) · SG ADMIN (bottom)</div>
-        <div class="vi-grid">${grid}</div>
-      </div>`;
-  }catch(e){document.getElementById('p2-vi-content').innerHTML=`<div class="empty-state" style="color:var(--red)">${e.message}</div>`;}
+    document.getElementById('p2-vi-content').innerHTML=`<div class="vi-grid">${months.map(m=>`<div class="vi-month ${m.vis?'visit-month':''}">
+      <div class="vi-month-label">${m.l}</div>
+      ${m.vis?'<div class="vi-month-val" style="color:var(--accent);font-size:11px">Visit</div>':
+        `<div class="vi-month-val">${fmt(m.v)}</div><div class="vi-month-sub">${fmt(m.a,'cur')}</div>`}
+    </div>`).join('')}</div>`;
+  }catch(e){document.getElementById('p2-vi-content').innerHTML=`<div class="empty" style="color:var(--red)">${e.message}</div>`;}
 }
 
-// ── PAGE 3: ACTIVITY & ROI ────────────────────────────────────────────
+// ── PAGE 3 ─────────────────────────────────────────────────────────────
 async function loadPage3(){
+  document.getElementById('p3-tbl').innerHTML='<div class="loading-inline"><div class="spinner"></div>Loading...</div>';
   try{
-    const rows=await dax(`EVALUATE SUMMARIZECOLUMNS('Salesforce Event'[EventStoreNumber__c],'Salesforce Event'[ActivityDate],'Salesforce Event'[Time Scheduled Group],'Salesforce Event'[Time Spent],'Dealers Local'[RPM],'Dealers Local'[Dealer Name],"Visit",[SF CL Sum Actual RPM],"Notes",[Internal_Notes__c]) ORDER BY 'Salesforce Event'[ActivityDate] DESC`);
-
+    const f=fs();
+    const rows=await dax(`EVALUATE SUMMARIZECOLUMNS('Salesforce Event'[EventStoreNumber__c],'Salesforce Event'[ActivityDate],'Salesforce Event'[Time Scheduled Group],'Salesforce Event'[Time Spent],'Dealers Local'[RPM],'Dealers Local'[Dealer Name]${f},"VIS",[SF CL Sum Actual RPM]) ORDER BY 'Salesforce Event'[ActivityDate] DESC`);
     let high=0,med=0,low=0;
     const scored=rows.map(r=>{
-      const timeSpent=Number(r['Salesforce Event[Time Spent]'])||0;
-      const visit=Number(r['[Visit]'])||0;
-      const notes=String(r['[Notes]']||'');
-      const notesLen=notes.replace(/\s/g,'').length;
-      let score=0;let flags=[];
-      if(timeSpent<30&&visit>3){score+=3;flags.push('Short time, many depts');}
-      if(timeSpent<15){score+=2;flags.push('Very short visit (<15min)');}
-      if(visit===0&&notes.length<10){score+=2;flags.push('No checklist, no notes');}
-      if(notesLen<20&&visit>0){score+=1;flags.push('Minimal notes');}
-      if(visit>5&&timeSpent<60){score+=3;flags.push('5+ depts in <1hr (impossible)');}
-      const level=score>=5?'HIGH':score>=2?'MEDIUM':'LOW';
-      if(level==='HIGH')high++;else if(level==='MEDIUM')med++;else low++;
+      const ts=Number(r['Salesforce Event[Time Spent]'])||0;
+      const vis=Number(r['[VIS]'])||0;
+      let score=0;const flags=[];
+      if(vis>5&&ts<60){score+=3;flags.push('5+ depts in <1hr');}
+      if(ts<15&&vis>0){score+=2;flags.push('Very short visit');}
+      if(ts<30&&vis>3){score+=1;flags.push('Short time, many depts');}
+      if(vis===0&&ts<10){score+=2;flags.push('No checklist, no activity');}
+      const level=score>=4?'HIGH':score>=2?'MED':'LOW';
+      if(level==='HIGH')high++;else if(level==='MED')med++;else low++;
       return{...r,score,level,flags};
     });
-
-    document.getElementById('p3-total-acts').textContent=fmt(rows.length);
+    document.getElementById('p3-total').textContent=fmt(rows.length);
     document.getElementById('p3-high').textContent=fmt(high);
     document.getElementById('p3-med').textContent=fmt(med);
     document.getElementById('p3-low').textContent=fmt(low);
-
     const sorted=scored.sort((a,b)=>b.score-a.score);
-    const tbody=sorted.slice(0,200).map(r=>{
-      const lvlClass=r.level==='HIGH'?'susp-high':r.level==='MEDIUM'?'susp-med':'susp-low';
-      const lvlBadge=r.level==='HIGH'?'bg-red':r.level==='MEDIUM'?'bg-yellow':'bg-green';
+    document.getElementById('p3-tbl').innerHTML=`<table><thead><tr>
+      <th>Level</th><th>RPM</th><th>Dealer</th><th>Date</th><th class="td-num">Time Spent</th><th class="td-num">Depts</th><th>Flags</th>
+    </tr></thead><tbody>${sorted.slice(0,200).map(r=>{
+      const lb=r.level==='HIGH'?'bg-red':r.level==='MED'?'bg-yellow':'bg-green';
       return`<tr>
-        <td><span class="badge ${lvlBadge}">${r.level}</span></td>
+        <td><span class="badge ${lb}">${r.level}</span></td>
         <td class="td-name">${r['Dealers Local[RPM]']||'—'}</td>
         <td>${r['Dealers Local[Dealer Name]']||'—'}</td>
         <td>${r['Salesforce Event[ActivityDate]']||'—'}</td>
         <td class="td-num">${fmt(r['Salesforce Event[Time Spent]'])}</td>
-        <td class="td-num">${fmt(r['[Visit]'])}</td>
-        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;font-size:11px;color:var(--text2)">${(r['[Notes]']||'').slice(0,80)}${(r['[Notes]']||'').length>80?'...':''}</td>
+        <td class="td-num">${fmt(r['[VIS]'])}</td>
         <td style="font-size:11px;color:var(--yellow)">${r.flags.join(' · ')||'—'}</td>
       </tr>`;
-    }).join('');
-    document.getElementById('p3-activity-tbl').innerHTML=`<table><thead><tr>
-      <th>Suspicion</th><th>RPM</th><th>Dealer</th><th>Date</th>
-      <th class="td-num">Time Spent</th><th class="td-num">Depts Visited</th><th>Notes Preview</th><th>Flags</th>
-    </tr></thead><tbody>${tbody||'<tr><td colspan="8" class="empty-state">No activity data</td></tr>'}</tbody></table>`;
-  }catch(e){document.getElementById('p3-activity-tbl').innerHTML=`<div class="empty-state" style="color:var(--red)">${e.message}</div>`;}
+    }).join('')}</tbody></table>`;
+  }catch(e){document.getElementById('p3-tbl').innerHTML=`<div class="empty" style="color:var(--red)">${e.message}</div>`;}
 }
 
-// ── PAGE 4: GAMEPLAN ─────────────────────────────────────────────────
+// ── PAGE 4 ─────────────────────────────────────────────────────────────
 async function generateGameplan(){
   const code=document.getElementById('gp-dealer-select').value;
-  if(!code){document.getElementById('p4-content').innerHTML='<div class="empty-state">Please select a dealer first</div>';return;}
-  const dealerName=FILTER_DATA.dealers.find(d=>d.code===code)?.name||code;
-  document.getElementById('p4-content').innerHTML='<div class="gp-card"><div class="gp-loading">⚙️ Analyzing dealer data and generating gameplan...</div></div>';
-
+  if(!code){document.getElementById('p4-content').innerHTML='<div class="empty">Please select a dealer first</div>';return;}
+  const name=FD.dealers.find(d=>d.code===code)?.name||code;
+  document.getElementById('p4-content').innerHTML='<div class="loading-inline"><div class="spinner"></div>Analyzing dealer data...</div>';
   try{
-    // Pull dealer data
-    const kt=await dax(`EVALUATE FILTER(SUMMARIZECOLUMNS('Dealers Local'[Dealer SG Code],'Dealers Local'[RPM],"PCY",[Products CY],"PLY",[Products LY],"PenCY",[Product Pen CY],"AdminCY",[SG Admin CY],"ATG",[ATG %],"Visits",[Expense Visits CY],"Expenses",[Expense Total CY]),'Dealers Local'[Dealer SG Code]="${code}")`);
-    const ga=await dax(`EVALUATE FILTER(SUMMARIZECOLUMNS('DMS Dealer Mapping'[Dealer SG Code],"Contracts",[Contracts CY BE],"Pen",[Contract Pen CY BE],"SOW",[SG Contracts CY % of TAM],"Missed",[SG Contracts CY TAM Missed],"MissedAnn",[SG Contracts CY TAM Missed Annual],"NoDeal",[% No Deal CY]),'DMS Dealer Mapping'[Dealer SG Code]="${code}")`);
-    const fim=await dax(`EVALUATE TOPN(5,FILTER(SUMMARIZECOLUMNS('DMS VIN'[Finance Manager Name],'DMS Dealer Mapping'[Dealer SG Code],"RDR",[RDR Total CY],"Missed",[SG Contracts CY TAM Missed],"SOW",[SG Contracts CY % of TAM]),'DMS Dealer Mapping'[Dealer SG Code]="${code}"),[SG Contracts CY TAM Missed],DESC)`);
-
-    const k=kt[0]||{};const g=ga[0]||{};
+    const kt=await dax(`EVALUATE FILTER(SUMMARIZECOLUMNS('Dealers Local'[Dealer SG Code],'Dealers Local'[RPM],"COV",[Products CY],"PLY",[Products LY],"PEN",[Product Pen CY],"ADM",[SG Admin CY],"ATG",[ATG %],"VIS",[Expense Visits CY],"EXP",[Expenses RPM]),'Dealers Local'[Dealer SG Code]="${code}")`);
+    const ga=await dax(`EVALUATE FILTER(SUMMARIZECOLUMNS('DMS Dealer Mapping'[Dealer SG Code],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"SOW",[SG Contracts CY % of TAM],"MSS",[SG Contracts CY TAM Missed],"MSSA",[SG Contracts CY TAM Missed Annual],"ND",[% No Deal CY]),'DMS Dealer Mapping'[Dealer SG Code]="${code}")`);
+    const fim=await dax(`EVALUATE TOPN(5,FILTER(SUMMARIZECOLUMNS('DMS VIN'[Finance Manager Name],'DMS Dealer Mapping'[Dealer SG Code],"RDR",[RDR Total CY],"MSS",[SG Contracts CY TAM Missed],"SOW",[SG Contracts CY % of TAM]),'DMS Dealer Mapping'[Dealer SG Code]="${code}"),[SG Contracts CY TAM Missed],DESC)`);
+    const k=kt[0]||{},g=ga[0]||{};
     const rpm=k['Dealers Local[RPM]']||'Unknown RPM';
-    const sow=g['[SOW]']||0;
-    const missed=g['[Missed]']||0;
-    const atg=k['[ATG]']||0;
-    const yoyChg=k['[PLY]']>0?((k['[PCY]']-k['[PLY]'])/k['[PLY]']*100).toFixed(1):null;
-
-    // Build priorities
+    const sow=g['[SOW]']||0,missed=g['[MSS]']||0,atg=k['[ATG]']||0;
+    const yoyChg=k['[PLY]']>0?((k['[COV]']-k['[PLY]'])/k['[PLY]']*100).toFixed(1):null;
     const priorities=[];
-    if(sow<0.3)priorities.push({p:1,text:`Share of Wallet is critically low at ${fmt(sow,'pct')} — RPM should focus on converting more deals to SG products across all F&I managers`});
-    if(missed>50)priorities.push({p:1,text:`${fmt(missed)} contracts missed in this period (${fmt(g['[MissedAnn]'])} annualized) — significant revenue opportunity for both the dealer and SG`});
-    if(atg<0.8)priorities.push({p:2,text:`Target attainment at ${fmt(atg,'pct')} — below 80%. Review product mix and pricing strategy with F&I team`});
-    if((g['[NoDeal]']||0)>0.3)priorities.push({p:2,text:`${fmt(g['[NoDeal]'],'pct')} of deals have no back-end product — coach F&I managers on presenting products on every deal`});
-    if(yoyChg&&parseFloat(yoyChg)<0)priorities.push({p:1,text:`Volume down ${Math.abs(yoyChg)}% vs last year — diagnose root cause: market, competition, or F&I execution`});
-    if(priorities.length===0)priorities.push({p:3,text:`Dealer performance is on track — focus on maintaining current execution and identifying incremental growth opportunities`});
-
-    // F&I focus
-    const fimFocus=fim.map((f,i)=>`<div class="gp-item">
-      <div class="gp-priority pri-${i<2?1:2}">${i+1}</div>
-      <div class="gp-text"><strong>${f['DMS VIN[Finance Manager Name]']||'Unknown'}</strong> — ${fmt(f['[RDR]'])} vehicle sales, ${fmt(f['[Missed]'])} missed contracts, SOW: ${fmt(f['[SOW]'],'pct')}</div>
-    </div>`).join('');
-
-    document.getElementById('p4-content').innerHTML=`
-      <div class="gp-card">
-        <div class="gp-dealer-name">${dealerName}</div>
-        <div class="gp-dealer-meta">SG Code: ${code} · RPM: ${rpm}</div>
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">
-          <div class="kpi-card ${sow>=0.5?'':'red'}"><div class="kpi-lbl">Share of Wallet</div><div class="kpi-val">${fmt(sow,'pct')}</div></div>
-          <div class="kpi-card ${missed>50?'red':'yellow'}"><div class="kpi-lbl">Missed Contracts</div><div class="kpi-val">${fmt(missed)}</div></div>
-          <div class="kpi-card ${atg>=1?'green':'yellow'}"><div class="kpi-lbl">% of Target</div><div class="kpi-val">${fmt(atg,'pct')}</div></div>
-          <div class="kpi-card"><div class="kpi-lbl">YoY Volume</div><div class="kpi-val" style="color:${yoyChg&&parseFloat(yoyChg)<0?'var(--red)':'var(--green)'}">${yoyChg?`${parseFloat(yoyChg)>=0?'+':''}${yoyChg}%`:'—'}</div></div>
-        </div>
-        <div class="gp-section">
-          <div class="gp-section-title">🎯 Priority Actions for ${rpm}</div>
-          ${priorities.sort((a,b)=>a.p-b.p).map(p=>`<div class="gp-item">
-            <div class="gp-priority pri-${p.p}">${p.p}</div>
-            <div class="gp-text">${p.text}</div>
-          </div>`).join('')}
-        </div>
-        ${fim.length?`<div class="gp-section">
-          <div class="gp-section-title">👥 F&I Manager Focus — Top Opportunities</div>
-          ${fimFocus}
-        </div>`:''}
-      </div>`;
-  }catch(e){document.getElementById('p4-content').innerHTML=`<div class="empty-state" style="color:var(--red)">${e.message}</div>`;}
+    if(sow<0.3)priorities.push({p:1,text:`Share of Wallet is critically low at ${fmt(sow,'pct')} — focus on converting more deals to SG products`});
+    if(missed>50)priorities.push({p:1,text:`${fmt(missed)} contracts missed (${fmt(g['[MSSA]'])} annualized) — significant revenue opportunity`});
+    if(atg<0.8)priorities.push({p:2,text:`Target attainment at ${fmt(atg,'pct')} — below 80%, review product mix with F&I team`});
+    if((g['[ND]']||0)>0.3)priorities.push({p:2,text:`${fmt(g['[ND]'],'pct')} of deals have no back-end product — coach F&I managers`});
+    if(yoyChg&&parseFloat(yoyChg)<0)priorities.push({p:1,text:`Volume down ${Math.abs(yoyChg)}% vs last year — diagnose root cause`});
+    if(!priorities.length)priorities.push({p:3,text:`Performance is on track — focus on maintaining execution and finding incremental growth`});
+    document.getElementById('p4-content').innerHTML=`<div class="gp-card">
+      <div class="gp-name">${name}</div>
+      <div class="gp-meta">SG Code: ${code} · RPM: ${rpm}</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
+        <div class="kpi-card ${sow>=0.5?'green':'red'}"><div class="kpi-lbl">Share of Wallet</div><div class="kpi-val">${fmt(sow,'pct')}</div></div>
+        <div class="kpi-card ${missed>50?'red':'yellow'}"><div class="kpi-lbl">Missed Contracts</div><div class="kpi-val">${fmt(missed)}</div></div>
+        <div class="kpi-card ${atg>=1?'green':'yellow'}"><div class="kpi-lbl">% of Target</div><div class="kpi-val">${fmt(atg,'pct')}</div></div>
+        <div class="kpi-card"><div class="kpi-lbl">YoY Volume</div><div class="kpi-val" style="color:${yoyChg&&parseFloat(yoyChg)<0?'var(--red)':'var(--green)'}">${yoyChg?`${parseFloat(yoyChg)>=0?'+':''}${yoyChg}%`:'—'}</div></div>
+      </div>
+      <div class="gp-section-title">Priority Actions for ${rpm}</div>
+      ${priorities.sort((a,b)=>a.p-b.p).map(p=>`<div class="gp-item"><div class="gp-priority pri-${p.p}">${p.p}</div><div class="gp-text">${p.text}</div></div>`).join('')}
+      ${fim.length?`<div class="gp-section-title">F&I Manager Focus</div>${fim.map((f,i)=>`<div class="gp-item"><div class="gp-priority pri-${i<2?1:2}">${i+1}</div><div class="gp-text"><strong>${f['DMS VIN[Finance Manager Name]']||'Unknown'}</strong> — ${fmt(f['[RDR]'])} vehicle sales, ${fmt(f['[MSS]'])} missed contracts, SOW: ${fmt(f['[SOW]'],'pct')}</div></div>`).join('')}`:''}
+    </div>`;
+  }catch(e){document.getElementById('p4-content').innerHTML=`<div class="empty" style="color:var(--red)">${e.message}</div>`;}
 }
 
 // ── LOAD ALL ───────────────────────────────────────────────────────────
 async function loadAllPages(){
   await Promise.all([loadPage1(),loadPage2(),loadPage3()]);
+  document.getElementById('last-refresh').textContent='Updated '+new Date().toLocaleTimeString();
 }
 
 // ── INIT ───────────────────────────────────────────────────────────────
 async function init(){
   try{
-    setLoad('Authenticating with Power BI...');
+    setLoad('Authenticating...');
     TOKEN=await getToken();
-    setLoad('Loading filter options...');
-    await loadFilterOptions();
-    setLoad('Loading dashboard data...');
+    setLoad('Loading filters...');
+    await loadFilters();
+    setLoad('Loading data...');
     await loadAllPages();
-    document.getElementById('last-refresh').textContent='Updated '+new Date().toLocaleTimeString();
     document.getElementById('loading-screen').style.display='none';
     document.getElementById('app').style.display='flex';
-  }catch(e){
-    showError(`${e.message}. Make sure the Service Principal has access to the workspace.`);
-  }
+  }catch(e){showError(e.message+'\n\nMake sure the Cloudflare Worker is running and the service principal has workspace access.');}
 }
 init();
 </script>

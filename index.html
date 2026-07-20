@@ -142,15 +142,15 @@ tbody tr:hover td{background:var(--surface2)}
 .section-err{padding:12px 16px;font-size:11px;color:var(--red);background:var(--red-bg);border-radius:6px;font-family:monospace;white-space:pre-wrap;word-break:break-all;margin:8px}
 
 /* PAGE 1 SIDE BY SIDE */
-.p1-grid{display:grid;grid-template-columns:1fr 2fr;gap:16px;align-items:start}
+.p1-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
 .p1-kt-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
-.p1-ga-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.p1-ga-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .p1-kt .kpi-section,.p1-ga .kpi-section{padding:8px;gap:6px}
 .p1-kt .kpi-card,.p1-ga .kpi-card{padding:10px}
 .p1-kt .kpi-val,.p1-ga .kpi-val{font-size:15px}
 .p1-kt .kpi-lbl,.p1-ga .kpi-lbl{font-size:10px;margin-bottom:4px}
 
-@media(max-width:1200px){.p1-grid{grid-template-columns:1fr}.p1-kt-grid{grid-template-columns:repeat(3,1fr)}.p1-ga-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:1200px){.p1-grid{grid-template-columns:1fr}.p1-kt-grid{grid-template-columns:repeat(3,1fr)}.p1-ga-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:900px){.two-col,.three-col{grid-template-columns:1fr}.filter-panel{gap:8px}}
 </style>
 </head>
@@ -216,7 +216,6 @@ tbody tr:hover td{background:var(--surface2)}
         <div class="section-label">KPI Teams</div>
         <div class="p1-kt-grid">
 
-          <!-- Dealers -->
           <div>
             <div class="section-sub">Dealers</div>
             <div class="kpi-section" style="grid-template-columns:1fr;border-radius:0 0 8px 8px" id="p1-dealers">
@@ -226,7 +225,6 @@ tbody tr:hover td{background:var(--surface2)}
             </div>
           </div>
 
-          <!-- GA -->
           <div>
             <div class="section-sub">GA</div>
             <div class="kpi-section" style="grid-template-columns:1fr;border-radius:0 0 8px 8px" id="p1-kt-ga">
@@ -235,7 +233,6 @@ tbody tr:hover td{background:var(--surface2)}
             </div>
           </div>
 
-          <!-- Production -->
           <div>
             <div class="section-sub">Production</div>
             <div class="kpi-section" style="grid-template-columns:1fr;border-radius:0 0 8px 8px" id="p1-production">
@@ -245,9 +242,8 @@ tbody tr:hover td{background:var(--surface2)}
             </div>
           </div>
 
-          <!-- Target -->
           <div>
-            <div class="section-sub">Target</div>
+            <div class="section-sub">Internal Target</div>
             <div class="kpi-section" style="grid-template-columns:1fr;border-radius:0 0 8px 8px" id="p1-target">
               <div class="kpi-card"><div class="kpi-lbl">Target Coverages</div><div class="skeleton"></div></div>
               <div class="kpi-card"><div class="kpi-lbl">Target Achieved</div><div class="skeleton"></div></div>
@@ -255,7 +251,6 @@ tbody tr:hover td{background:var(--surface2)}
             </div>
           </div>
 
-          <!-- Expenses -->
           <div>
             <div class="section-sub">Expenses</div>
             <div class="kpi-section" style="grid-template-columns:1fr;border-radius:0 0 8px 8px" id="p1-activity">
@@ -265,15 +260,14 @@ tbody tr:hover td{background:var(--surface2)}
             </div>
           </div>
 
-        </div><!-- end p1-kt-grid -->
-      </div><!-- end p1-kt -->
+        </div>
+      </div>
 
       <!-- GA RIGHT -->
       <div class="p1-ga">
         <div class="section-label">Growth Accelerator</div>
         <div class="p1-ga-grid">
 
-          <!-- Total -->
           <div>
             <div class="section-sub">Total</div>
             <div class="kpi-section" style="grid-template-columns:1fr;border-radius:0 0 8px 8px" id="p1-ga-pen">
@@ -284,7 +278,6 @@ tbody tr:hover td{background:var(--surface2)}
             </div>
           </div>
 
-          <!-- PVR -->
           <div>
             <div class="section-sub">PVR</div>
             <div class="kpi-section" style="grid-template-columns:1fr;border-radius:0 0 8px 8px" id="p1-ga-pvr">
@@ -294,39 +287,30 @@ tbody tr:hover td{background:var(--surface2)}
             </div>
           </div>
 
-          <!-- SG -->
           <div>
-            <div class="section-sub">SG</div>
+            <div class="section-sub">SG Share</div>
             <div class="kpi-section" style="grid-template-columns:1fr;border-radius:0 0 8px 8px" id="p1-ga-sow">
               <div class="kpi-card blue"><div class="kpi-lbl">RDRs</div><div class="skeleton"></div></div>
-              <div class="kpi-card blue"><div class="kpi-lbl">SG Share Contracts</div><div class="skeleton"></div></div>
+              <div class="kpi-card blue"><div class="kpi-lbl">SG Contracts</div><div class="skeleton"></div></div>
               <div class="kpi-card blue"><div class="kpi-lbl">SG Pen</div><div class="skeleton"></div></div>
               <div class="kpi-card blue"><div class="kpi-lbl">SG Share %</div><div class="skeleton"></div></div>
             </div>
           </div>
 
-          <!-- Missed Contracts -->
           <div>
-            <div class="section-sub">Missed Contracts</div>
-            <div class="kpi-section" style="grid-template-columns:1fr;border-radius:0 0 8px 8px" id="p1-ga-missed-con">
+            <div class="section-sub">Missed</div>
+            <div class="kpi-section" style="grid-template-columns:1fr;border-radius:0 0 8px 8px" id="p1-ga-missed">
               <div class="kpi-card red"><div class="kpi-lbl">Contracts Missed</div><div class="skeleton"></div></div>
-              <div class="kpi-card red"><div class="kpi-lbl">Contracts Missed Annualized</div><div class="skeleton"></div></div>
-            </div>
-          </div>
-
-          <!-- Missed Admin -->
-          <div>
-            <div class="section-sub">Missed Admin</div>
-            <div class="kpi-section" style="grid-template-columns:1fr;border-radius:0 0 8px 8px" id="p1-ga-missed-adm">
               <div class="kpi-card red"><div class="kpi-lbl">SG Admin Missed</div><div class="skeleton"></div></div>
+              <div class="kpi-card red"><div class="kpi-lbl">Contracts Missed Annualized</div><div class="skeleton"></div></div>
               <div class="kpi-card red"><div class="kpi-lbl">SG Admin Missed Annualized</div><div class="skeleton"></div></div>
             </div>
           </div>
 
-        </div><!-- end p1-ga-grid -->
-      </div><!-- end p1-ga -->
+        </div>
+      </div>
 
-    </div><!-- end p1-grid -->
+    </div>
 
     <div class="section-label" style="margin-top:8px">GA &#x2014; Growth Accelerator Breakdown</div>
     <div class="three-col">
@@ -846,28 +830,32 @@ async function loadPage1(){
   function gaRender(id,html){document.getElementById(id).innerHTML=html;}
   function gaErr(id,e){document.getElementById(id).innerHTML=sectionErr(e.message);}
 
-  // All GA filters — Deals Exclude pre-computed column covers sale type + bad FI names
-  // Coverage Category = Back End for contract/PVR measures
+  // RDR filter — Deals Exclude only (sale type + bad FI names)
+  const stfRDR=`,'DMS VIN'[Deals Exclude]="Include"`;
+  // Contract/PVR filter — Deals Exclude + Back End coverage
   const stf=`,'DMS VIN'[Deals Exclude]="Include",'DMS Coverage Mapping'[Coverage Category]="Back End"`;
   const dealsFilter=`FILTER('DMS VIN','DMS VIN'[Deals Exclude]="Include"),`;
+  let _gaRDR=null; // shared between penetration and SG sections
+
   // Penetration
   dax(`EVALUATE ROW(
-    "RDR",CALCULATE([RDR Total CY 2]${g2}${stf}),
+    "RDR",CALCULATE([RDR Total CY 2]${g2}${stfRDR}),
     "CON",CALCULATE([Contracts CY BE]${g2}${stf}),
     "PEN",CALCULATE([Contract Pen CY BE]${g2}${stf})
   )`).then(r=>{
     const gp=r[0]||{};
+    _gaRDR=gp['[RDR]']; // store for SG section
     gaRender('p1-ga-pen',`
-      <div class="kpi-card green"><div class="kpi-lbl">Total RDRs</div><div class="kpi-val">${fmt(gp['[RDR]'])}</div></div>
+      <div class="kpi-card green"><div class="kpi-lbl">RDRs</div><div class="kpi-val">${fmt(gp['[RDR]'])}</div></div>
       <div class="kpi-card green"><div class="kpi-lbl">Contracts</div><div class="kpi-val">${fmt(gp['[CON]'])}</div></div>
       <div class="kpi-card green"><div class="kpi-lbl">Penetration</div><div class="kpi-val">${fmt(gp['[PEN]'],'pct')}</div></div>
-      <div class="kpi-card green" id="p1-ga-nd"><div class="kpi-lbl">% with no Product</div><div class="skeleton"></div></div>`);
-    dax(`EVALUATE ROW("ND",CALCULATE([% No Deal CY]${g2}${stf}))`).then(r2=>{
+      <div class="kpi-card green" id="p1-ga-nd"><div class="kpi-lbl">% with No Deal</div><div class="skeleton"></div></div>`);
+    dax(`EVALUATE ROW("ND",CALCULATE([% No Deal CY]${g2}${stfRDR}))`).then(r2=>{
       const el=document.getElementById('p1-ga-nd');
-      if(el)el.innerHTML=`<div class="kpi-lbl">% with no Product</div><div class="kpi-val">${fmt((r2[0]||{})['[ND]'],'pct')}</div>`;
+      if(el)el.innerHTML=`<div class="kpi-lbl">% with No Deal</div><div class="kpi-val">${fmt((r2[0]||{})['[ND]'],'pct')}</div>`;
     }).catch(e=>{
       const el=document.getElementById('p1-ga-nd');
-      if(el)el.innerHTML=`<div class="kpi-lbl">% with no Product</div><div class="kpi-sub" style="color:var(--red);font-size:10px">${e.message}</div>`;
+      if(el)el.innerHTML=`<div class="kpi-lbl">% with No Deal</div><div class="kpi-sub" style="color:var(--red);font-size:10px">${e.message}</div>`;
     });
   }).catch(e=>gaErr('p1-ga-pen',e));
 
@@ -892,8 +880,8 @@ async function loadPage1(){
   )`).then(r=>{
     const gs=r[0]||{};
     gaRender('p1-ga-sow',`
-      <div class="kpi-card blue"><div class="kpi-lbl">RDRs</div><div class="kpi-val">${fmt(gs['[SGC]'])}</div></div>
-      <div class="kpi-card blue"><div class="kpi-lbl">SG Share Contracts</div><div class="kpi-val">${fmt(gs['[SGC]'])}</div></div>
+      <div class="kpi-card blue"><div class="kpi-lbl">RDRs</div><div class="kpi-val">${fmt(_gaRDR)}</div></div>
+      <div class="kpi-card blue"><div class="kpi-lbl">SG Contracts</div><div class="kpi-val">${fmt(gs['[SGC]'])}</div></div>
       <div class="kpi-card blue"><div class="kpi-lbl">SG Pen</div><div class="kpi-val">${fmt(gs['[SGP]'],'pct')}</div></div>
       <div class="kpi-card blue"><div class="kpi-lbl">SG Share %</div><div class="kpi-val">${fmt(gs['[SGCP]'],'pct')}</div></div>`);
   }).catch(e=>gaErr('p1-ga-sow',e));
@@ -907,11 +895,10 @@ async function loadPage1(){
     "PM"  ,CALCULATE([SG Pen CY TAM Missed]${g2}${stf})
   )`).then(r=>{
     const gm=r[0]||{};
-    gaRender('p1-ga-missed-con',`
+    gaRender('p1-ga-missed',`
       <div class="kpi-card red"><div class="kpi-lbl">Contracts Missed</div><div class="kpi-val">${fmt(gm['[MSS]'])}</div></div>
-      <div class="kpi-card red"><div class="kpi-lbl">Contracts Missed Annualized</div><div class="kpi-val">${fmt(gm['[MSSA]'])}</div></div>`);
-    gaRender('p1-ga-missed-adm',`
       <div class="kpi-card red"><div class="kpi-lbl">SG Admin Missed</div><div class="kpi-val">${fmt(gm['[ADM]'],'cur')}</div></div>
+      <div class="kpi-card red"><div class="kpi-lbl">Contracts Missed Annualized</div><div class="kpi-val">${fmt(gm['[MSSA]'])}</div></div>
       <div class="kpi-card red"><div class="kpi-lbl">SG Admin Missed Annualized</div><div class="kpi-val">${fmt(gm['[ADMA]'],'cur')}</div></div>`);
   }).catch(e=>gaErr('p1-ga-missed',e));
 

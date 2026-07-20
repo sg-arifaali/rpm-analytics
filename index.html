@@ -862,8 +862,8 @@ async function loadPage1(){
       <div class="kpi-card red"><div class="kpi-lbl">Pen Missed</div><div class="kpi-val">${fmt(gm['[PM]'],'pct')}</div></div>`);
   }).catch(e=>gaErr('p1-ga-missed',e));
 
-  // Breakdown tables — filters MUST come before measures in SUMMARIZECOLUMNS
-  const scFilters=`'DMS VIN'[Sale Type Group] IN {"Lease","Finance","Cash/OSL"},'DMS Coverage Mapping'[Coverage Category]="Back End",`;
+  // Breakdown tables — SUMMARIZECOLUMNS requires FILTER() for table-level filters
+  const scFilters=`FILTER('DMS VIN','DMS VIN'[Sale Type Group] IN {"Lease","Finance","Cash/OSL"}),FILTER('DMS Coverage Mapping','DMS Coverage Mapping'[Coverage Category]="Back End"),`;
   dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[N/U],${scf}${scFilters}"RDR",[RDR Total CY 2],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY 2] DESC`)
     .then(r=>gaRender('p1-cond-tbl',breakdownTable(r,'DMS VIN[N/U]')))
     .catch(e=>gaRender('p1-cond-tbl',sectionErr(e.message)));

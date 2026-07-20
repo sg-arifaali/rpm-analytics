@@ -145,6 +145,7 @@ tbody tr:hover td{background:var(--surface2)}
 .p1-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
 .p1-kt-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
 .p1-ga-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.p1-kt .section-sub,.p1-ga .section-sub{text-transform:none;letter-spacing:0;font-size:11px}
 .p1-kt .kpi-section,.p1-ga .kpi-section{padding:8px;gap:6px}
 .p1-kt .kpi-card,.p1-ga .kpi-card{padding:10px}
 .p1-kt .kpi-val,.p1-ga .kpi-val{font-size:15px}
@@ -229,7 +230,7 @@ tbody tr:hover td{background:var(--surface2)}
           </div>
 
           <div>
-            <div class="section-sub">GA</div>
+            <div class="section-sub">Dealers in GA</div>
             <div class="kpi-section" style="grid-template-columns:1fr;border-radius:0 0 8px 8px" id="p1-kt-ga">
               <div class="kpi-card"><div class="kpi-lbl">Dealers in GA</div><div class="skeleton"></div></div>
               <div class="kpi-card"><div class="kpi-lbl">% in GA</div><div class="skeleton"></div></div>
@@ -296,7 +297,7 @@ tbody tr:hover td{background:var(--surface2)}
               <div class="kpi-card blue"><div class="kpi-lbl">RDRs</div><div class="skeleton"></div></div>
               <div class="kpi-card blue"><div class="kpi-lbl">SG Contracts</div><div class="skeleton"></div></div>
               <div class="kpi-card blue"><div class="kpi-lbl">SG Pen</div><div class="skeleton"></div></div>
-              <div class="kpi-card blue"><div class="kpi-lbl">SG Share %</div><div class="skeleton"></div></div>
+              <div class="kpi-card blue"><div class="kpi-lbl">SG Contracts Share %</div><div class="skeleton"></div></div>
             </div>
           </div>
 
@@ -852,9 +853,8 @@ async function loadPage1(){
       <div class="kpi-card"><div class="kpi-lbl">Pen</div><div class="kpi-val">${fmt(k['[PEN]'],'pct')}</div></div>`;
     document.getElementById('p1-target').innerHTML=`
       <div class="kpi-card"><div class="kpi-lbl">Target Coverages</div><div class="kpi-val">${fmt(k['[TGT]'])}</div></div>
-      <div class="kpi-card"><div class="kpi-lbl">Coverages</div><div class="kpi-val">${fmt(k['[COV]'])}</div></div>
-      <div class="kpi-card red"><div class="kpi-lbl">Missed Coverages</div><div class="kpi-val">${fmt(k['[ATN]'])}</div></div>
-      <div class="kpi-card ${(k['[ATG]']||0)>=1?'green':'yellow'}"><div class="kpi-lbl">Target Achieved</div><div class="kpi-val">${fmt(k['[ATG]'],'pct')}</div></div>`;
+      <div class="kpi-card ${(k['[ATG]']||0)>=1?'green':'yellow'}"><div class="kpi-lbl">Target Achieved</div><div class="kpi-val">${fmt(k['[ATG]'],'pct')}</div></div>
+      <div class="kpi-card red"><div class="kpi-lbl">Missed Coverages</div><div class="kpi-val">${fmt(k['[ATN]'])}</div></div>`;
   }catch(e){
     console.error('KT Production/Target:',e);
     document.getElementById('p1-production').innerHTML=sectionErr(e.message);
@@ -922,7 +922,7 @@ async function loadPage1(){
       <div class="kpi-card blue"><div class="kpi-lbl">RDRs</div><div class="kpi-val">${fmt(_gaRDR)}</div></div>
       <div class="kpi-card blue"><div class="kpi-lbl">SG Contracts</div><div class="kpi-val">${fmt(gs['[SGC]'])}</div></div>
       <div class="kpi-card blue"><div class="kpi-lbl">SG Pen</div><div class="kpi-val">${fmt(gs['[SGP]'],'pct')}</div></div>
-      <div class="kpi-card blue"><div class="kpi-lbl">SG Share %</div><div class="kpi-val">${fmt(gs['[SGCP]'],'pct')}</div></div>`);
+      <div class="kpi-card blue"><div class="kpi-lbl">SG Contracts Share %</div><div class="kpi-val">${fmt(gs['[SGCP]'],'pct')}</div></div>`);
   }).catch(e=>gaErr('p1-ga-sow',e));
 
   // Missed Opportunity

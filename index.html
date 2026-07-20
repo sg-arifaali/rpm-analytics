@@ -195,6 +195,9 @@ tbody tr:hover td{background:var(--surface2)}
     <div class="fg"><label>State</label><div class="ms-wrap" id="ms-state"></div></div>
     <div class="fg"><label>Dealer Name</label><div class="ms-wrap" id="ms-dealername"></div></div>
     <div class="filter-divider"></div>
+    <div class="fg"><label>Product Group</label><div class="ms-wrap" id="ms-prodgroup"></div></div>
+    <div class="fg"><label>Product Type</label><div class="ms-wrap" id="ms-prodtype"></div></div>
+    <div class="filter-divider"></div>
     <div class="fg"><label>Year</label><div class="ms-wrap" id="ms-year"></div></div>
     <div class="fg"><label>Month</label><div class="ms-wrap" id="ms-month"></div></div>
     <button class="btn-clear-all" onclick="clearFilters()">Clear All</button>
@@ -400,8 +403,8 @@ const STF = "FILTER('DMS VIN','DMS VIN'[Sale Type Group]=\"Lease\"||'DMS VIN'[Sa
 
 // ── STATE ──────────────────────────────────────────────────────────────
 let TOKEN = null;
-const F  = {brandGroup:[],brand:[],acctMgr:[],rpm:[],dealerCat:[],dealerGroup:[],oemRegion:[],state:[],dealerName:[],year:'',month:[]};
-const FD = {years:[],months:{},brandGroups:[],brands:{},dealers:[],dealerRows:[]};
+const F  = {brandGroup:[],brand:[],acctMgr:[],rpm:[],dealerCat:[],dealerGroup:[],oemRegion:[],state:[],dealerName:[],prodGroup:[],prodType:[],year:'',month:[]};
+const FD = {years:[],months:{},brandGroups:[],brands:{},dealers:[],dealerRows:[],prodTypes:{}};
 const MS = {};
 
 // ── UTILS ──────────────────────────────────────────────────────────────
@@ -521,6 +524,8 @@ function buildKTFilters(){
   const oe=inFilter("'Dealers Local'[OEM Region]",F.oemRegion);if(oe)c.push(oe);
   const st=inFilter("'Dealers Local'[State]",F.state);if(st)c.push(st);
   const dn=inFilter("'Dealers Local'[Dealer Name]",F.dealerName);if(dn)c.push(dn);
+  const pg=inFilter("'Product Type Local'[Product Group]",F.prodGroup);if(pg)c.push(pg);
+  const pt=inFilter("'Product Type Local'[Product Type]",F.prodType);if(pt)c.push(pt);
   return c.filter(Boolean);
 }
 
@@ -577,6 +582,18 @@ function toggleMSItem(id,value,checked){
   const cascadeTriggers=['ms-brandgroup','ms-brand','ms-acctmgr','ms-rpm'];
   if(cascadeTriggers.includes(id))cascadeFilters(id);
   if(id==='ms-year')onYearChange();
+  if(id==='ms-prodgroup'){
+    // Cascade Product Group → Product Type
+    const selPGs=getMSVals('ms-prodgroup');
+    const types=selPGs.length
+      ?[...new Set(selPGs.flatMap(pg=>FD.prodTypes[pg]||[]))].sort()
+      :[...new Set(Object.values(FD.prodTypes).flat())].sort();
+    const isOpen=document.getElementById('ms-prodtype-dd')?.classList.contains('open');
+    const prev=getMSVals('ms-prodtype');
+    if(!isOpen) populateMS('ms-prodtype',types.map(v=>({value:v,label:v})));
+    MS['ms-prodtype'].sel=new Set(prev.filter(v=>types.includes(v)));
+    updateMSBtn('ms-prodtype');
+  }
   applyFilters();
 }
 function cascadeFilters(triggerId){
@@ -628,6 +645,14 @@ function clearMS(id){
   MS[id].sel.clear();renderMS(id,MS[id].opts);updateMSBtn(id);
   const cascadeTriggers=['ms-brandgroup','ms-brand','ms-acctmgr','ms-rpm'];
   if(cascadeTriggers.includes(id))cascadeFilters(id);
+  if(id==='ms-prodgroup'){
+    // Restore full product type list when group is cleared
+    const allTypes=[...new Set(Object.values(FD.prodTypes).flat())].sort();
+    const isOpen=document.getElementById('ms-prodtype-dd')?.classList.contains('open');
+    if(!isOpen) populateMS('ms-prodtype',allTypes.map(v=>({value:v,label:v})));
+    MS['ms-prodtype'].sel=new Set([...MS['ms-prodtype'].sel].filter(v=>allTypes.includes(v)));
+    updateMSBtn('ms-prodtype');
+  }
   applyFilters();
 }
 function updateMSBtn(id){
@@ -661,19 +686,19 @@ function applyFilters(){
   F.brandGroup=getMSVals('ms-brandgroup');F.brand=getMSVals('ms-brand');F.acctMgr=getMSVals('ms-acctmgr');
   F.rpm=getMSVals('ms-rpm');F.dealerCat=getMSVals('ms-dealercat');F.dealerGroup=getMSVals('ms-dealergroup');
   F.oemRegion=getMSVals('ms-oemregion');F.state=getMSVals('ms-state');F.dealerName=getMSVals('ms-dealername');
+  F.prodGroup=getMSVals('ms-prodgroup');F.prodType=getMSVals('ms-prodtype');
   F.month=getMSVals('ms-month');
-  // Debounce — wait 800ms after last filter change before hitting PBI
   clearTimeout(_applyTimer);
   _applyTimer=setTimeout(()=>loadAllPages(),1500);
 }
 function clearFilters(){
   ['ms-brandgroup','ms-brand','ms-acctmgr','ms-rpm','ms-dealercat','ms-dealergroup',
-   'ms-oemregion','ms-state','ms-dealername','ms-year','ms-month']
+   'ms-oemregion','ms-state','ms-dealername','ms-prodgroup','ms-prodtype','ms-year','ms-month']
     .forEach(id=>{if(MS[id]){MS[id].sel.clear();renderMS(id,MS[id].opts);updateMSBtn(id);}});
-  F.year='';F.month=[];
+  F.year='';F.month=[];F.prodGroup=[];F.prodType=[];
   F.brandGroup=[];F.brand=[];F.acctMgr=[];F.rpm=[];F.dealerCat=[];F.dealerGroup=[];F.oemRegion=[];F.state=[];F.dealerName=[];
-  // Restore all months when cleared
   populateMS('ms-month',[...new Set(Object.values(FD.months).flat())].map(m=>({value:m,label:m})));
+  populateMS('ms-prodtype',[...new Set(Object.values(FD.prodTypes).flat())].sort().map(v=>({value:v,label:v})));
   loadAllPages();
 }
 
@@ -684,8 +709,9 @@ async function loadFilters(){
   const phMap={'ms-brandgroup':'All Brand Groups','ms-brand':'All Brands','ms-acctmgr':'All AMs',
     'ms-rpm':'All RPMs','ms-dealercat':'All Categories','ms-dealergroup':'All Groups',
     'ms-oemregion':'All Regions','ms-state':'All States','ms-dealername':'All Dealers',
+    'ms-prodgroup':'All Product Groups','ms-prodtype':'All Product Types',
     'ms-year':'All Years','ms-month':'All Months'};
-  ['ms-brandgroup','ms-brand','ms-acctmgr','ms-rpm','ms-dealercat','ms-dealergroup','ms-oemregion','ms-state','ms-dealername','ms-year','ms-month']
+  ['ms-brandgroup','ms-brand','ms-acctmgr','ms-rpm','ms-dealercat','ms-dealergroup','ms-oemregion','ms-state','ms-dealername','ms-prodgroup','ms-prodtype','ms-year','ms-month']
     .forEach(id=>createMS(id,phMap[id]));
 
   // Fire all three queries in parallel — single round-trip wait instead of three
@@ -751,6 +777,19 @@ async function loadFilters(){
   populateMS('ms-dealername',FD.dealers.map(d=>({value:d.name,label:d.name})));
   const gpSel=document.getElementById('gp-dealer-select');
   gpSel.innerHTML='<option value="">— Select a dealer —</option>'+FD.dealers.map(d=>`<option value="${d.code}">${d.name} (${d.code})</option>`).join('');
+
+  // Product Group + Product Type from Product Type Local
+  const prodTypes=await dax(`EVALUATE SUMMARIZECOLUMNS('Product Type Local'[Product Group],'Product Type Local'[Product Type]) ORDER BY 'Product Type Local'[Product Group] ASC,'Product Type Local'[Product Type] ASC`);
+  const pgSet=new Set();
+  FD.prodTypes={};
+  prodTypes.forEach(r=>{
+    const pg=r['Product Type Local[Product Group]'];
+    const pt=r['Product Type Local[Product Type]'];
+    if(pg&&pg!=='null')pgSet.add(pg);
+    if(pg&&pt&&pt!=='null'){if(!FD.prodTypes[pg])FD.prodTypes[pg]=[];FD.prodTypes[pg].push(pt);}
+  });
+  populateMS('ms-prodgroup',[...pgSet].sort().map(v=>({value:v,label:v})));
+  populateMS('ms-prodtype',[...new Set(Object.values(FD.prodTypes).flat())].sort().map(v=>({value:v,label:v})));
 }
 
 // ── PAGE ABORT CONTROLLERS — cancel in-flight queries on re-load ───────

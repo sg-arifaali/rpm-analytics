@@ -806,7 +806,7 @@ async function loadPage1(){
   const c=ktf();
   const g=gaf();
 
-  // KT Dealers + Activity (includes new measures)
+  // KT — single query for all measures
   try{
     const kt=await dax(`EVALUATE ROW(
       "TD" ,CALCULATE([Total Dealers]${c}),
@@ -815,7 +815,13 @@ async function loadPage1(){
       "PGA",CALCULATE([Dealers in GA %]${c}),
       "VIS",CALCULATE([SF CL Sum Actual RPM]${c}),
       "EXP",CALCULATE([Expenses RPM]${c}),
-      "CPV",CALCULATE([$ per Visit RPM]${c})
+      "CPV",CALCULATE([$ per Visit RPM]${c}),
+      "RDR",CALCULATE([RDR for Pen CY]${c}),
+      "COV",CALCULATE([Products CY]${c}),
+      "PEN",CALCULATE([Product Pen CY]${c}),
+      "TGT",CALCULATE([Target total]${c}),
+      "ATN",CALCULATE([ATG Number]${c}),
+      "ATG",CALCULATE([ATG %]${c})
     )`);
     const k=kt[0]||{};
     const pctPart=k['[TD]']?k['[PD]']/k['[TD]']:null;
@@ -830,23 +836,6 @@ async function loadPage1(){
       <div class="kpi-card"><div class="kpi-lbl">Total Visits</div><div class="kpi-val">${fmt(k['[VIS]'])}</div></div>
       <div class="kpi-card"><div class="kpi-lbl">Expenses</div><div class="kpi-val">${fmt(k['[EXP]'],'cur')}</div></div>
       <div class="kpi-card"><div class="kpi-lbl">$ per Visit</div><div class="kpi-val">${fmt(k['[CPV]'],'cur')}</div></div>`;
-  }catch(e){
-    console.error('KT Dealers/Activity:',e);
-    document.getElementById('p1-dealers').innerHTML=sectionErr(e.message);
-    document.getElementById('p1-activity').innerHTML=sectionErr(e.message);
-  }
-
-  // KT Production + Target
-  try{
-    const kt2=await dax(`EVALUATE ROW(
-      "RDR",CALCULATE([RDR for Pen CY]${c}),
-      "COV",CALCULATE([Products CY]${c}),
-      "PEN",CALCULATE([Product Pen CY]${c}),
-      "TGT",CALCULATE([Target total]${c}),
-      "ATN",CALCULATE([ATG Number]${c}),
-      "ATG",CALCULATE([ATG %]${c})
-    )`);
-    const k=kt2[0]||{};
     document.getElementById('p1-production').innerHTML=`
       <div class="kpi-card"><div class="kpi-lbl">RDRs</div><div class="kpi-val">${fmt(k['[RDR]'])}</div></div>
       <div class="kpi-card"><div class="kpi-lbl">Coverages</div><div class="kpi-val">${fmt(k['[COV]'])}</div></div>
@@ -856,111 +845,122 @@ async function loadPage1(){
       <div class="kpi-card ${(k['[ATG]']||0)>=1?'green':'yellow'}"><div class="kpi-lbl">Target Achieved</div><div class="kpi-val">${fmt(k['[ATG]'],'pct')}</div></div>
       <div class="kpi-card red"><div class="kpi-lbl">Missed Coverages</div><div class="kpi-val">${fmt(k['[ATN]'])}</div></div>`;
   }catch(e){
-    console.error('KT Production/Target:',e);
-    document.getElementById('p1-production').innerHTML=sectionErr(e.message);
-    document.getElementById('p1-target').innerHTML=sectionErr(e.message);
+    console.error('KT error:',e);
+    ['p1-dealers','p1-kt-ga','p1-activity','p1-production','p1-target']
+      .forEach(id=>document.getElementById(id).innerHTML=sectionErr(e.message));
   }
 
-  // GA — all sections fire in parallel, each renders independently as it resolves
-  const g2=gaf(); // snapshot filters now before any async gaps
+  // GA — sequential to avoid saturating Snowflake connection
+  const g2=gaf();
   const scf=gafSC();
-
-  // Helper to render a section or show its error
   function gaRender(id,html){document.getElementById(id).innerHTML=html;}
   function gaErr(id,e){document.getElementById(id).innerHTML=sectionErr(e.message);}
-
-  // RDR filter — Deals Exclude only (sale type + bad FI names)
   const stfRDR=`,'DMS VIN'[Deals Exclude]="Include"`;
-  // Contract/PVR filter — Deals Exclude + Back End coverage
   const stf=`,'DMS VIN'[Deals Exclude]="Include",'DMS Coverage Mapping'[Coverage Category]="Back End"`;
   const dealsFilter=`FILTER('DMS VIN','DMS VIN'[Deals Exclude]="Include"),`;
-  let _gaRDR=null; // shared between penetration and SG sections
+  let _gaRDR=null;
 
-  // Penetration
-  dax(`EVALUATE ROW(
-    "RDR",CALCULATE([RDR Total CY 2]${g2}${stfRDR}),
-    "CON",CALCULATE([Contracts CY BE]${g2}${stf}),
-    "PEN",CALCULATE([Contract Pen CY BE]${g2}${stf})
-  )`).then(r=>{
-    const gp=r[0]||{};
-    _gaRDR=gp['[RDR]']; // store for SG section
-    gaRender('p1-ga-pen',`
-      <div class="kpi-card green"><div class="kpi-lbl">RDRs</div><div class="kpi-val">${fmt(gp['[RDR]'])}</div></div>
-      <div class="kpi-card green"><div class="kpi-lbl">Contracts</div><div class="kpi-val">${fmt(gp['[CON]'])}</div></div>
-      <div class="kpi-card green"><div class="kpi-lbl">Penetration</div><div class="kpi-val">${fmt(gp['[PEN]'],'pct')}</div></div>
-      <div class="kpi-card green" id="p1-ga-nd"><div class="kpi-lbl">% with No Deal</div><div class="skeleton"></div></div>`);
-    dax(`EVALUATE ROW("ND",CALCULATE([% No Deal CY]${g2}${stfRDR}))`).then(r2=>{
+  const delay=ms=>new Promise(res=>setTimeout(res,ms));
+
+  (async()=>{
+    // Penetration — highest priority
+    try{
+      const r=await dax(`EVALUATE ROW(
+        "RDR",CALCULATE([RDR Total CY 2]${g2}${stfRDR}),
+        "CON",CALCULATE([Contracts CY BE]${g2}${stf}),
+        "PEN",CALCULATE([Contract Pen CY BE]${g2}${stf})
+      )`);
+      const gp=r[0]||{};
+      _gaRDR=gp['[RDR]'];
+      gaRender('p1-ga-pen',`
+        <div class="kpi-card green"><div class="kpi-lbl">RDRs</div><div class="kpi-val">${fmt(gp['[RDR]'])}</div></div>
+        <div class="kpi-card green"><div class="kpi-lbl">Contracts</div><div class="kpi-val">${fmt(gp['[CON]'])}</div></div>
+        <div class="kpi-card green"><div class="kpi-lbl">Penetration</div><div class="kpi-val">${fmt(gp['[PEN]'],'pct')}</div></div>
+        <div class="kpi-card green" id="p1-ga-nd"><div class="kpi-lbl">% with No Deal</div><div class="skeleton"></div></div>`);
+    }catch(e){gaErr('p1-ga-pen',e);}
+
+    // PVR
+    try{
+      const r=await dax(`EVALUATE ROW(
+        "FR",CALCULATE([FR PVR Total CY]${g2}${stf}),
+        "PP",CALCULATE([Prod PVR Total CY]${g2}${stf}),
+        "BE",CALCULATE([BE PVR Total CY]${g2}${stf})
+      )`);
+      const gpv=r[0]||{};
+      gaRender('p1-ga-pvr',`
+        <div class="kpi-card orange"><div class="kpi-lbl">Finance Reserve</div><div class="kpi-val">${fmt(gpv['[FR]'],'cur')}</div></div>
+        <div class="kpi-card orange"><div class="kpi-lbl">Product PVR</div><div class="kpi-val">${fmt(gpv['[PP]'],'cur')}</div></div>
+        <div class="kpi-card orange"><div class="kpi-lbl">Total PVR</div><div class="kpi-val">${fmt(gpv['[BE]'],'cur')}</div></div>`);
+    }catch(e){gaErr('p1-ga-pvr',e);}
+
+    // SOW
+    try{
+      const r=await dax(`EVALUATE ROW(
+        "SGC" ,CALCULATE([SG Contracts CY]${g2}${stf}),
+        "SGCP",CALCULATE([SG Contracts CY % of TAM]${g2}${stf}),
+        "SGP" ,CALCULATE([SG Pen CY]${g2}${stf})
+      )`);
+      const gs=r[0]||{};
+      gaRender('p1-ga-sow',`
+        <div class="kpi-card blue"><div class="kpi-lbl">RDRs</div><div class="kpi-val">${fmt(_gaRDR)}</div></div>
+        <div class="kpi-card blue"><div class="kpi-lbl">SG Contracts</div><div class="kpi-val">${fmt(gs['[SGC]'])}</div></div>
+        <div class="kpi-card blue"><div class="kpi-lbl">SG Pen</div><div class="kpi-val">${fmt(gs['[SGP]'],'pct')}</div></div>
+        <div class="kpi-card blue"><div class="kpi-lbl">SG Contracts Share %</div><div class="kpi-val">${fmt(gs['[SGCP]'],'pct')}</div></div>`);
+    }catch(e){gaErr('p1-ga-sow',e);}
+
+    // Missed
+    try{
+      const r=await dax(`EVALUATE ROW(
+        "MSS" ,CALCULATE([SG Contracts CY TAM Missed]${g2}${stf}),
+        "MSSA",CALCULATE([SG Contracts CY TAM Missed Annual]${g2}${stf}),
+        "ADM" ,CALCULATE([SG Admin CY TAM Missed]${g2}${stf}),
+        "ADMA",CALCULATE([SG Admin CY TAM Missed Annual]${g2}${stf})
+      )`);
+      const gm=r[0]||{};
+      gaRender('p1-ga-missed',`
+        <div class="kpi-card red"><div class="kpi-lbl">Contracts Missed</div><div class="kpi-val">${fmt(gm['[MSS]'])}</div></div>
+        <div class="kpi-card red"><div class="kpi-lbl">SG Admin Missed</div><div class="kpi-val">${fmt(gm['[ADM]'],'cur')}</div></div>
+        <div class="kpi-card red"><div class="kpi-lbl">Contracts Missed Annualized</div><div class="kpi-val">${fmt(gm['[MSSA]'])}</div></div>
+        <div class="kpi-card red"><div class="kpi-lbl">SG Admin Missed Annualized</div><div class="kpi-val">${fmt(gm['[ADMA]'],'cur')}</div></div>`);
+    }catch(e){gaErr('p1-ga-missed',e);}
+
+    // % No Deal — lowest priority KPI card
+    try{
+      const r=await dax(`EVALUATE ROW("ND",CALCULATE([% No Deal CY]${g2}${stfRDR}))`);
       const el=document.getElementById('p1-ga-nd');
-      if(el)el.innerHTML=`<div class="kpi-lbl">% with No Deal</div><div class="kpi-val">${fmt((r2[0]||{})['[ND]'],'pct')}</div>`;
-    }).catch(e=>{
+      if(el)el.innerHTML=`<div class="kpi-lbl">% with No Deal</div><div class="kpi-val">${fmt((r[0]||{})['[ND]'],'pct')}</div>`;
+    }catch(e){
       const el=document.getElementById('p1-ga-nd');
       if(el)el.innerHTML=`<div class="kpi-lbl">% with No Deal</div><div class="kpi-sub" style="color:var(--red);font-size:10px">${e.message}</div>`;
-    });
-  }).catch(e=>gaErr('p1-ga-pen',e));
+    }
 
-  // PVR
-  dax(`EVALUATE ROW(
-    "FR",CALCULATE([FR PVR Total CY]${g2}${stf}),
-    "PP",CALCULATE([Prod PVR Total CY]${g2}${stf}),
-    "BE",CALCULATE([BE PVR Total CY]${g2}${stf})
-  )`).then(r=>{
-    const gpv=r[0]||{};
-    gaRender('p1-ga-pvr',`
-      <div class="kpi-card orange"><div class="kpi-lbl">Finance Reserve</div><div class="kpi-val">${fmt(gpv['[FR]'],'cur')}</div></div>
-      <div class="kpi-card orange"><div class="kpi-lbl">Product PVR</div><div class="kpi-val">${fmt(gpv['[PP]'],'cur')}</div></div>
-      <div class="kpi-card orange"><div class="kpi-lbl">Total PVR</div><div class="kpi-val">${fmt(gpv['[BE]'],'cur')}</div></div>`);
-  }).catch(e=>gaErr('p1-ga-pvr',e));
+    // Batch 2: Breakdown tables — lower priority, fire after KPI cards complete
+    try{
+      const r=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[N/U],${scf}${dealsFilter}"RDR",[RDR Total CY 2],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY 2] DESC`);
+      gaRender('p1-cond-tbl',breakdownTable(r,'DMS VIN[N/U]'));
+    }catch(e){gaRender('p1-cond-tbl',sectionErr(e.message));}
 
-  // Share of Wallet
-  dax(`EVALUATE ROW(
-    "SGC" ,CALCULATE([SG Contracts CY]${g2}${stf}),
-    "SGCP",CALCULATE([SG Contracts CY % of TAM]${g2}${stf}),
-    "SGP" ,CALCULATE([SG Pen CY]${g2}${stf})
-  )`).then(r=>{
-    const gs=r[0]||{};
-    gaRender('p1-ga-sow',`
-      <div class="kpi-card blue"><div class="kpi-lbl">RDRs</div><div class="kpi-val">${fmt(_gaRDR)}</div></div>
-      <div class="kpi-card blue"><div class="kpi-lbl">SG Contracts</div><div class="kpi-val">${fmt(gs['[SGC]'])}</div></div>
-      <div class="kpi-card blue"><div class="kpi-lbl">SG Pen</div><div class="kpi-val">${fmt(gs['[SGP]'],'pct')}</div></div>
-      <div class="kpi-card blue"><div class="kpi-lbl">SG Contracts Share %</div><div class="kpi-val">${fmt(gs['[SGCP]'],'pct')}</div></div>`);
-  }).catch(e=>gaErr('p1-ga-sow',e));
+    try{
+      const r=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Sale Type Group],${scf}${dealsFilter}"RDR",[RDR Total CY 2],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY 2] DESC`);
+      gaRender('p1-saletype-tbl',breakdownTable(r,'DMS VIN[Sale Type Group]'));
+    }catch(e){gaRender('p1-saletype-tbl',sectionErr(e.message));}
 
-  // Missed Opportunity
-  dax(`EVALUATE ROW(
-    "MSS" ,CALCULATE([SG Contracts CY TAM Missed]${g2}${stf}),
-    "MSSA",CALCULATE([SG Contracts CY TAM Missed Annual]${g2}${stf}),
-    "ADM" ,CALCULATE([SG Admin CY TAM Missed]${g2}${stf}),
-    "ADMA",CALCULATE([SG Admin CY TAM Missed Annual]${g2}${stf}),
-    "PM"  ,CALCULATE([SG Pen CY TAM Missed]${g2}${stf})
-  )`).then(r=>{
-    const gm=r[0]||{};
-    gaRender('p1-ga-missed',`
-      <div class="kpi-card red"><div class="kpi-lbl">Contracts Missed</div><div class="kpi-val">${fmt(gm['[MSS]'])}</div></div>
-      <div class="kpi-card red"><div class="kpi-lbl">SG Admin Missed</div><div class="kpi-val">${fmt(gm['[ADM]'],'cur')}</div></div>
-      <div class="kpi-card red"><div class="kpi-lbl">Contracts Missed Annualized</div><div class="kpi-val">${fmt(gm['[MSSA]'])}</div></div>
-      <div class="kpi-card red"><div class="kpi-lbl">SG Admin Missed Annualized</div><div class="kpi-val">${fmt(gm['[ADMA]'],'cur')}</div></div>`);
-  }).catch(e=>gaErr('p1-ga-missed',e));
+    try{
+      const r=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Miles Group],${scf}${dealsFilter}"RDR",[RDR Total CY 2],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY 2] DESC`);
+      gaRender('p1-miles-tbl',breakdownTable(r,'DMS VIN[Miles Group]'));
+    }catch(e){gaRender('p1-miles-tbl',sectionErr(e.message));}
 
-  // Breakdown tables — filter using pre-computed Deals Exclude column (Import, no scan)
-  dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[N/U],${scf}${dealsFilter}"RDR",[RDR Total CY 2],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY 2] DESC`)
-    .then(r=>gaRender('p1-cond-tbl',breakdownTable(r,'DMS VIN[N/U]')))
-    .catch(e=>gaRender('p1-cond-tbl',sectionErr(e.message)));
+    try{
+      const r=await dax(`EVALUATE SUMMARIZECOLUMNS('Product Type Local'[Product Group],${scf}${dealsFilter}"TGT",[Target total],"PCY",[Products CY],"MISS",[ATG Number],"CON",[Contracts CY BE],"SGC",[SG Contracts CY],"MSS",[SG Contracts CY TAM Missed]) ORDER BY 'Product Type Local'[Product Group] ASC`);
+      gaRender('p1-prodtype-tbl',prodTypeTable(r));
+    }catch(e){gaRender('p1-prodtype-tbl',sectionErr(e.message));}
 
-  dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Sale Type Group],${scf}${dealsFilter}"RDR",[RDR Total CY 2],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY 2] DESC`)
-    .then(r=>gaRender('p1-saletype-tbl',breakdownTable(r,'DMS VIN[Sale Type Group]')))
-    .catch(e=>gaRender('p1-saletype-tbl',sectionErr(e.message)));
+    try{
+      const r=await dax(`EVALUATE TOPN(10,SUMMARIZECOLUMNS('DMS VIN'[Finance Manager Name],${scf}${dealsFilter}"RDR",[RDR Total CY 2],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"SOW",[SG Contracts CY % of TAM],"MSS",[SG Contracts CY TAM Missed]),[RDR Total CY 2],DESC)`);
+      gaRender('p1-fim-tbl',fimTable(r));
+    }catch(e){gaRender('p1-fim-tbl',sectionErr(e.message));}
 
-  dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Miles Group],${scf}${dealsFilter}"RDR",[RDR Total CY 2],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY 2] DESC`)
-    .then(r=>gaRender('p1-miles-tbl',breakdownTable(r,'DMS VIN[Miles Group]')))
-    .catch(e=>gaRender('p1-miles-tbl',sectionErr(e.message)));
-
-  dax(`EVALUATE SUMMARIZECOLUMNS('Product Type Local'[Product Group],${scf}${dealsFilter}"TGT",[Target total],"PCY",[Products CY],"MISS",[ATG Number],"CON",[Contracts CY BE],"SGC",[SG Contracts CY],"MSS",[SG Contracts CY TAM Missed]) ORDER BY 'Product Type Local'[Product Group] ASC`)
-    .then(r=>gaRender('p1-prodtype-tbl',prodTypeTable(r)))
-    .catch(e=>gaRender('p1-prodtype-tbl',sectionErr(e.message)));
-
-  dax(`EVALUATE TOPN(10,SUMMARIZECOLUMNS('DMS VIN'[Finance Manager Name],${scf}${dealsFilter}"RDR",[RDR Total CY 2],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"SOW",[SG Contracts CY % of TAM],"MSS",[SG Contracts CY TAM Missed]),[RDR Total CY 2],DESC)`)
-    .then(r=>gaRender('p1-fim-tbl',fimTable(r)))
-    .catch(e=>gaRender('p1-fim-tbl',sectionErr(e.message)));
+  })();
 }
 
 function prodTypeTable(rows){

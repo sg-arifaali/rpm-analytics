@@ -296,6 +296,10 @@ tbody tr:hover td{background:var(--surface2)}
       </div>
     </div>
     <div class="tbl-card">
+      <div class="tbl-hdr"><div class="tbl-title">By Product Type</div></div>
+      <div class="tbl-wrap"><div id="p1-prodtype-tbl"><div class="loading-inline"><div class="spinner"></div>Loading...</div></div></div>
+    </div>
+    <div class="tbl-card">
       <div class="tbl-hdr">
         <div class="tbl-title">Top 10 F&amp;I Managers by Vehicle Sales</div>
         <div class="tbl-sub">Ranked by RDR volume</div>
@@ -858,25 +862,72 @@ async function loadPage1(){
       <div class="kpi-card red"><div class="kpi-lbl">Pen Missed</div><div class="kpi-val">${fmt(gm['[PM]'],'pct')}</div></div>`);
   }).catch(e=>gaErr('p1-ga-missed',e));
 
-  // Breakdown tables — sale type filter via IN operator (folds to SQL WHERE)
-  const stfSC=`,'DMS VIN'[Sale Type Group] IN {"Lease","Finance","Cash/OSL"},'DMS Coverage Mapping'[Coverage Category]="Back End"`;
-  dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[N/U],${scf}"RDR",[RDR Total CY 2],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed],${stfSC.slice(1)}) ORDER BY [RDR Total CY 2] DESC`)
+  // Breakdown tables — filters MUST come before measures in SUMMARIZECOLUMNS
+  const scFilters=`'DMS VIN'[Sale Type Group] IN {"Lease","Finance","Cash/OSL"},'DMS Coverage Mapping'[Coverage Category]="Back End",`;
+  dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[N/U],${scf}${scFilters}"RDR",[RDR Total CY 2],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY 2] DESC`)
     .then(r=>gaRender('p1-cond-tbl',breakdownTable(r,'DMS VIN[N/U]')))
     .catch(e=>gaRender('p1-cond-tbl',sectionErr(e.message)));
 
-  dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Sale Type Group],${scf}"RDR",[RDR Total CY 2],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed],${stfSC.slice(1)}) ORDER BY [RDR Total CY 2] DESC`)
+  dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Sale Type Group],${scf}${scFilters}"RDR",[RDR Total CY 2],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY 2] DESC`)
     .then(r=>gaRender('p1-saletype-tbl',breakdownTable(r,'DMS VIN[Sale Type Group]')))
     .catch(e=>gaRender('p1-saletype-tbl',sectionErr(e.message)));
 
-  dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Miles Group],${scf}"RDR",[RDR Total CY 2],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed],${stfSC.slice(1)}) ORDER BY [RDR Total CY 2] DESC`)
+  dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Miles Group],${scf}${scFilters}"RDR",[RDR Total CY 2],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY 2] DESC`)
     .then(r=>gaRender('p1-miles-tbl',breakdownTable(r,'DMS VIN[Miles Group]')))
     .catch(e=>gaRender('p1-miles-tbl',sectionErr(e.message)));
 
-  dax(`EVALUATE TOPN(10,SUMMARIZECOLUMNS('DMS VIN'[Finance Manager Name],${scf}"RDR",[RDR Total CY 2],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"SOW",[SG Contracts CY % of TAM],"MSS",[SG Contracts CY TAM Missed],${stfSC.slice(1)}),[RDR Total CY 2],DESC)`)
+  dax(`EVALUATE SUMMARIZECOLUMNS('Product Type Local'[Product Group],${scf}${scFilters}"TGT",[Target total],"PCY",[Products CY],"MISS",[ATG Number],"CON",[Contracts CY BE],"SGC",[SG Contracts CY],"MSS",[SG Contracts CY TAM Missed]) ORDER BY 'Product Type Local'[Product Group] ASC`)
+    .then(r=>gaRender('p1-prodtype-tbl',prodTypeTable(r)))
+    .catch(e=>gaRender('p1-prodtype-tbl',sectionErr(e.message)));
+
+  dax(`EVALUATE TOPN(10,SUMMARIZECOLUMNS('DMS VIN'[Finance Manager Name],${scf}${scFilters}"RDR",[RDR Total CY 2],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"SOW",[SG Contracts CY % of TAM],"MSS",[SG Contracts CY TAM Missed]),[RDR Total CY 2],DESC)`)
     .then(r=>gaRender('p1-fim-tbl',fimTable(r)))
     .catch(e=>gaRender('p1-fim-tbl',sectionErr(e.message)));
 }
 
+function prodTypeTable(rows){
+  if(!rows.length)return'<div class="empty">No data</div>';
+  // Totals row
+  const tot={tgt:0,pcy:0,miss:0,con:0,sgc:0,mss:0};
+  rows.forEach(r=>{
+    tot.tgt +=(r['[TGT]']||0);
+    tot.pcy +=(r['[PCY]']||0);
+    tot.miss+=(r['[MISS]']||0);
+    tot.con +=(r['[CON]']||0);
+    tot.sgc +=(r['[SGC]']||0);
+    tot.mss +=(r['[MSS]']||0);
+  });
+  return`<table><thead><tr>
+    <th>Product Group</th>
+    <th class="td-num">Target Total</th>
+    <th class="td-num">Products CY</th>
+    <th class="td-num">Missed Target</th>
+    <th class="td-num">Contracts CY BE</th>
+    <th class="td-num">SG Contracts CY</th>
+    <th class="td-num">SG TAM Missed</th>
+  </tr></thead><tbody>${
+    rows.map(r=>{
+      const miss=r['[MISS]']||0;
+      return`<tr>
+        <td class="td-name">${r['Product Type Local[Product Group]']||'—'}</td>
+        <td class="td-num">${fmt(r['[TGT]'])}</td>
+        <td class="td-num">${fmt(r['[PCY]'])}</td>
+        <td class="td-num" style="color:${miss<0?'var(--red)':'var(--green)'}">${fmt(miss)}</td>
+        <td class="td-num">${fmt(r['[CON]'])}</td>
+        <td class="td-num">${fmt(r['[SGC]'])}</td>
+        <td class="td-num" style="color:var(--red)">${fmt(r['[MSS]'])}</td>
+      </tr>`;
+    }).join('')
+  }<tr style="font-weight:700;border-top:1px solid var(--border)">
+    <td class="td-name">Total</td>
+    <td class="td-num">${fmt(tot.tgt)}</td>
+    <td class="td-num">${fmt(tot.pcy)}</td>
+    <td class="td-num" style="color:${tot.miss<0?'var(--red)':'var(--green)'}">${fmt(tot.miss)}</td>
+    <td class="td-num">${fmt(tot.con)}</td>
+    <td class="td-num">${fmt(tot.sgc)}</td>
+    <td class="td-num" style="color:var(--red)">${fmt(tot.mss)}</td>
+  </tr></tbody></table>`;
+}
 function breakdownTable(rows,dim){
   if(!rows.length)return'<div class="empty">No data</div>';
   return`<table><thead><tr><th>Segment</th><th class="td-num">RDR</th><th class="td-num">Contracts</th><th class="td-num">Pen</th><th class="td-num">Missed</th></tr></thead><tbody>${

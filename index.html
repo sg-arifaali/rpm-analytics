@@ -283,11 +283,12 @@ tbody tr:hover td{background:var(--surface2)}
           </div>
 
           <div>
-            <div class="section-sub">PVR</div>
+            <div class="section-sub">PVR / Profit</div>
             <div class="kpi-section" style="grid-template-columns:1fr;border-radius:0 0 8px 8px" id="p1-ga-pvr">
               <div class="kpi-card orange"><div class="kpi-lbl">Finance Reserve</div><div class="skeleton"></div></div>
               <div class="kpi-card orange"><div class="kpi-lbl">Product PVR</div><div class="skeleton"></div></div>
               <div class="kpi-card orange"><div class="kpi-lbl">Total PVR</div><div class="skeleton"></div></div>
+              <div class="kpi-card orange"><div class="kpi-lbl">Profit / Contract</div><div class="skeleton"></div></div>
             </div>
           </div>
 
@@ -865,9 +866,9 @@ async function loadPage1(){
     // Penetration — highest priority
     try{
       const r=await dax(`EVALUATE ROW(
-        "RDR",CALCULATE([RDR Total CY 2]${g2}${stfRDR}),
-        "CON",CALCULATE([Contracts CY BE]${g2}${stf}),
-        "PEN",CALCULATE([Contract Pen CY BE]${g2}${stf})
+        "RDR",CALCULATE([RPM RDR Total CY]${g2}${stfRDR}),
+        "CON",CALCULATE([RPM Contracts CY BE]${g2}${stf}),
+        "PEN",CALCULATE([RPM Contract Pen CY BE]${g2}${stf})
       )`);
       const gp=r[0]||{};
       _gaRDR=gp['[RDR]'];
@@ -878,26 +879,28 @@ async function loadPage1(){
         <div class="kpi-card green" id="p1-ga-nd"><div class="kpi-lbl">% with No Deal</div><div class="skeleton"></div></div>`);
     }catch(e){gaErr('p1-ga-pen',e);}
 
-    // PVR
+    // PVR / Profit
     try{
       const r=await dax(`EVALUATE ROW(
-        "FR",CALCULATE([FR PVR Total CY]${g2}${stf}),
-        "PP",CALCULATE([Prod PVR Total CY]${g2}${stf}),
-        "BE",CALCULATE([BE PVR Total CY]${g2}${stf})
+        "FR",CALCULATE([RPM FR PVR Total CY]${g2}${stf}),
+        "PP",CALCULATE([RPM Prod PVR Total CY]${g2}${stf}),
+        "BE",CALCULATE([RPM BE PVR Total CY]${g2}${stf}),
+        "MK",CALCULATE([RPM Markup CY BE]${g2}${stf})
       )`);
       const gpv=r[0]||{};
       gaRender('p1-ga-pvr',`
         <div class="kpi-card orange"><div class="kpi-lbl">Finance Reserve</div><div class="kpi-val">${fmt(gpv['[FR]'],'cur')}</div></div>
         <div class="kpi-card orange"><div class="kpi-lbl">Product PVR</div><div class="kpi-val">${fmt(gpv['[PP]'],'cur')}</div></div>
-        <div class="kpi-card orange"><div class="kpi-lbl">Total PVR</div><div class="kpi-val">${fmt(gpv['[BE]'],'cur')}</div></div>`);
+        <div class="kpi-card orange"><div class="kpi-lbl">Total PVR</div><div class="kpi-val">${fmt(gpv['[BE]'],'cur')}</div></div>
+        <div class="kpi-card orange"><div class="kpi-lbl">Profit / Contract</div><div class="kpi-val">${fmt(gpv['[MK]'],'cur')}</div></div>`);
     }catch(e){gaErr('p1-ga-pvr',e);}
 
     // SOW
     try{
       const r=await dax(`EVALUATE ROW(
-        "SGC" ,CALCULATE([SG Contracts CY]${g2}${stf}),
-        "SGCP",CALCULATE([SG Contracts CY % of TAM]${g2}${stf}),
-        "SGP" ,CALCULATE([SG Pen CY]${g2}${stf})
+        "SGC" ,CALCULATE([RPM SG Contracts CY]${g2}${stf}),
+        "SGCP",CALCULATE([RPM SG Contracts CY % of TAM]${g2}${stf}),
+        "SGP" ,CALCULATE([RPM SG Pen CY]${g2}${stf})
       )`);
       const gs=r[0]||{};
       gaRender('p1-ga-sow',`
@@ -910,10 +913,10 @@ async function loadPage1(){
     // Missed
     try{
       const r=await dax(`EVALUATE ROW(
-        "MSS" ,CALCULATE([SG Contracts CY TAM Missed]${g2}${stf}),
-        "MSSA",CALCULATE([SG Contracts CY TAM Missed Annual]${g2}${stf}),
-        "ADM" ,CALCULATE([SG Admin CY TAM Missed]${g2}${stf}),
-        "ADMA",CALCULATE([SG Admin CY TAM Missed Annual]${g2}${stf})
+        "MSS" ,CALCULATE([RPM SG Contracts CY TAM Missed]${g2}${stf}),
+        "MSSA",CALCULATE([RPM SG Contracts CY TAM Missed Annual]${g2}${stf}),
+        "ADM" ,CALCULATE([RPM SG Admin CY TAM Missed]${g2}${stf}),
+        "ADMA",CALCULATE([RPM SG Admin CY TAM Missed Annual]${g2}${stf})
       )`);
       const gm=r[0]||{};
       gaRender('p1-ga-missed',`
@@ -925,7 +928,7 @@ async function loadPage1(){
 
     // % No Deal — lowest priority KPI card
     try{
-      const r=await dax(`EVALUATE ROW("ND",CALCULATE([% No Deal CY]${g2}${stfRDR}))`);
+      const r=await dax(`EVALUATE ROW("ND",CALCULATE([RPM % No Deal CY]${g2}${stfRDR}))`);
       const el=document.getElementById('p1-ga-nd');
       if(el)el.innerHTML=`<div class="kpi-lbl">% with No Deal</div><div class="kpi-val">${fmt((r[0]||{})['[ND]'],'pct')}</div>`;
     }catch(e){
@@ -935,27 +938,29 @@ async function loadPage1(){
 
     // Breakdown tables — measures handle filtering internally
     try{
-      const r=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[N/U],${scf}"RDR",[RDR Total CY 2],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY 2] DESC`);
+      const r=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[N/U],${scf}"RDR",[RPM RDR Total CY],"CON",[RPM Contracts CY BE],"PEN",[RPM Contract Pen CY BE],"MSS",[RPM SG Contracts CY TAM Missed]) ORDER BY [RPM RDR Total CY] DESC`);
       gaRender('p1-cond-tbl',breakdownTable(r,'DMS VIN[N/U]'));
     }catch(e){gaRender('p1-cond-tbl',sectionErr(e.message));}
 
     try{
-      const r=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Sale Type Group],${scf}"RDR",[RDR Total CY 2],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY 2] DESC`);
+      const r=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Sale Type Group],${scf}"RDR",[RPM RDR Total CY],"CON",[RPM Contracts CY BE],"PEN",[RPM Contract Pen CY BE],"MSS",[RPM SG Contracts CY TAM Missed]) ORDER BY [RPM RDR Total CY] DESC`);
       gaRender('p1-saletype-tbl',breakdownTable(r,'DMS VIN[Sale Type Group]'));
     }catch(e){gaRender('p1-saletype-tbl',sectionErr(e.message));}
 
     try{
-      const r=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Miles Group],${scf}"RDR",[RDR Total CY 2],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY 2] DESC`);
+      const r=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Miles Group],${scf}"RDR",[RPM RDR Total CY],"CON",[RPM Contracts CY BE],"PEN",[RPM Contract Pen CY BE],"MSS",[RPM SG Contracts CY TAM Missed]) ORDER BY [RPM RDR Total CY] DESC`);
       gaRender('p1-miles-tbl',breakdownTable(r,'DMS VIN[Miles Group]'));
     }catch(e){gaRender('p1-miles-tbl',sectionErr(e.message));}
 
     try{
-      const r=await dax(`EVALUATE SUMMARIZECOLUMNS('Product Type Local'[Product Group],${scf}"TGT",[Target total],"PCY",[Products CY],"MISS",[ATG Number],"CON",[Contracts CY BE],"SGC",[SG Contracts CY],"MSS",[SG Contracts CY TAM Missed]) ORDER BY 'Product Type Local'[Product Group] ASC`);
+      // Product Group needs its own filter context — scf uses ALL() which can override Product Type Local filters
+      const pgFilters=buildKTFilters().filter(f=>!f.includes('ALL(')).map(f=>f+',').join('');
+      const r=await dax(`EVALUATE SUMMARIZECOLUMNS('Product Type Local'[Product Group],${pgFilters}"TGT",[Target total],"PCY",[Products CY],"MISS",[ATG Number],"CON",[RPM Contracts CY BE],"SGC",[RPM SG Contracts CY],"MSS",[RPM SG Contracts CY TAM Missed]) ORDER BY 'Product Type Local'[Product Group] ASC`);
       gaRender('p1-prodtype-tbl',prodTypeTable(r));
     }catch(e){gaRender('p1-prodtype-tbl',sectionErr(e.message));}
 
     try{
-      const r=await dax(`EVALUATE TOPN(10,SUMMARIZECOLUMNS('DMS VIN'[Finance Manager Name],${scf}"RDR",[RDR Total CY 2],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"SOW",[SG Contracts CY % of TAM],"MSS",[SG Contracts CY TAM Missed]),[RDR Total CY 2],DESC)`);
+      const r=await dax(`EVALUATE TOPN(10,SUMMARIZECOLUMNS('DMS VIN'[Finance Manager Name],${scf}"RDR",[RPM RDR Total CY],"CON",[RPM Contracts CY BE],"PEN",[RPM Contract Pen CY BE],"SOW",[RPM SG Contracts CY % of TAM],"MSS",[RPM SG Contracts CY TAM Missed]),[RPM RDR Total CY],DESC)`);
       gaRender('p1-fim-tbl',fimTable(r));
     }catch(e){gaRender('p1-fim-tbl',sectionErr(e.message));}
 
@@ -1033,9 +1038,9 @@ async function loadPage2(){
       "RDR" ,[RDR for Pen CY],
       "ATG" ,[ATG %],
       "VIS" ,[SF CL Sum Actual RPM],
-      "MSS" ,[SG Contracts CY TAM Missed],
-      "SOW" ,[SG Contracts CY % of TAM],
-      "MSSA",[SG Contracts CY TAM Missed Annual]
+      "MSS" ,[RPM SG Contracts CY TAM Missed],
+      "SOW" ,[RPM SG Contracts CY % of TAM],
+      "MSSA",[RPM SG Contracts CY TAM Missed Annual]
     ) ORDER BY [Products CY] DESC`);
     document.getElementById('p2-sub').textContent=`${rows.length} dealers`;
     document.getElementById('p2-tbl').innerHTML=`<table><thead><tr>
@@ -1163,13 +1168,13 @@ async function generateGameplan(){
     ),'Dealers Local'[Dealer SG Code]="${code}")`);
     const ga=await dax(`EVALUATE FILTER(SUMMARIZECOLUMNS(
       'DMS Dealer Mapping'[Dealer SG Code],
-      "CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"SOW",[SG Contracts CY % of TAM],
-      "MSS",[SG Contracts CY TAM Missed],"MSSA",[SG Contracts CY TAM Missed Annual],"ND",[% No Deal CY]
+      "CON",[RPM Contracts CY BE],"PEN",[RPM Contract Pen CY BE],"SOW",[RPM SG Contracts CY % of TAM],
+      "MSS",[RPM SG Contracts CY TAM Missed],"MSSA",[RPM SG Contracts CY TAM Missed Annual],"ND",[RPM % No Deal CY]
     ),'DMS Dealer Mapping'[Dealer SG Code]="${code}")`);
     const fim=await dax(`EVALUATE TOPN(5,FILTER(SUMMARIZECOLUMNS(
       'DMS VIN'[Finance Manager Name],'DMS Dealer Mapping'[Dealer SG Code],
-      "RDR",[RDR Total CY 2],"MSS",[SG Contracts CY TAM Missed],"SOW",[SG Contracts CY % of TAM]
-    ),'DMS Dealer Mapping'[Dealer SG Code]="${code}"),[SG Contracts CY TAM Missed],DESC)`);
+      "RDR",[RPM RDR Total CY],"MSS",[RPM SG Contracts CY TAM Missed],"SOW",[RPM SG Contracts CY % of TAM]
+    ),'DMS Dealer Mapping'[Dealer SG Code]="${code}"),[RPM SG Contracts CY TAM Missed],DESC)`);
     const k=kt[0]||{},g=ga[0]||{};
     const rpm=k['Dealers Local[RPM]']||'Unknown RPM';
     const sow=g['[SOW]']||0,missed=g['[MSS]']||0,atg=k['[ATG]']||0;

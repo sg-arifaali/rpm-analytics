@@ -141,6 +141,16 @@ tbody tr:hover td{background:var(--surface2)}
 /* Inline section error — visible in the card without killing the page */
 .section-err{padding:12px 16px;font-size:11px;color:var(--red);background:var(--red-bg);border-radius:6px;font-family:monospace;white-space:pre-wrap;word-break:break-all;margin:8px}
 
+/* PAGE 1 SIDE BY SIDE */
+.p1-grid{display:grid;grid-template-columns:1fr 2fr;gap:16px;align-items:start}
+.p1-kt-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.p1-ga-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.p1-kt .kpi-section,.p1-ga .kpi-section{padding:8px;gap:6px}
+.p1-kt .kpi-card,.p1-ga .kpi-card{padding:10px}
+.p1-kt .kpi-val,.p1-ga .kpi-val{font-size:15px}
+.p1-kt .kpi-lbl,.p1-ga .kpi-lbl{font-size:10px;margin-bottom:4px}
+
+@media(max-width:1200px){.p1-grid{grid-template-columns:1fr}.p1-kt-grid{grid-template-columns:repeat(3,1fr)}.p1-ga-grid{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:900px){.two-col,.three-col{grid-template-columns:1fr}.filter-panel{gap:8px}}
 </style>
 </head>
@@ -199,86 +209,124 @@ tbody tr:hover td{background:var(--surface2)}
 
   <!-- PAGE 1 -->
   <div class="page active" id="p1">
-    <div class="section-label">KT &#x2014; KPI Teams Internal Performance</div>
-    <div class="two-col">
-      <div>
-        <div class="section-sub">Dealers</div>
-        <div class="kpi-section cols-2" id="p1-dealers">
-          <div class="kpi-card"><div class="kpi-lbl">Total Dealers</div><div class="skeleton"></div></div>
-          <div class="kpi-card"><div class="kpi-lbl">Participating Dealers</div><div class="skeleton"></div></div>
-          <div class="kpi-card"><div class="kpi-lbl">Dealers in GA</div><div class="skeleton"></div></div>
-          <div class="kpi-card"><div class="kpi-lbl">% in GA</div><div class="skeleton"></div></div>
-        </div>
-      </div>
-      <div>
-        <div class="section-sub">Activity</div>
-        <div class="kpi-section cols-3" id="p1-activity">
-          <div class="kpi-card"><div class="kpi-lbl">Total Visits</div><div class="skeleton"></div></div>
-          <div class="kpi-card"><div class="kpi-lbl">Expenses RPM</div><div class="skeleton"></div></div>
-          <div class="kpi-card"><div class="kpi-lbl">$ per Visit</div><div class="skeleton"></div></div>
-        </div>
-      </div>
-    </div>
-    <div class="two-col">
-      <div>
-        <div class="section-sub">Production</div>
-        <div class="kpi-section cols-3" id="p1-production">
-          <div class="kpi-card"><div class="kpi-lbl">Total RDRs</div><div class="skeleton"></div></div>
-          <div class="kpi-card"><div class="kpi-lbl">Coverages</div><div class="skeleton"></div></div>
-          <div class="kpi-card"><div class="kpi-lbl">Penetration</div><div class="skeleton"></div></div>
-        </div>
-      </div>
-      <div>
-        <div class="section-sub">Target</div>
-        <div class="kpi-section cols-4" id="p1-target">
-          <div class="kpi-card"><div class="kpi-lbl">Target Coverages</div><div class="skeleton"></div></div>
-          <div class="kpi-card"><div class="kpi-lbl">Coverages</div><div class="skeleton"></div></div>
-          <div class="kpi-card red"><div class="kpi-lbl">Missed Coverages</div><div class="skeleton"></div></div>
-          <div class="kpi-card"><div class="kpi-lbl">Target Achieved</div><div class="skeleton"></div></div>
-        </div>
-      </div>
-    </div>
+    <div class="p1-grid">
 
-    <div class="section-label" style="margin-top:8px">GA &#x2014; Growth Accelerator Market View</div>
-    <div class="two-col">
-      <div>
-        <div class="section-sub">Penetration</div>
-        <div class="kpi-section cols-2" id="p1-ga-pen">
-          <div class="kpi-card green"><div class="kpi-lbl">Total RDRs</div><div class="skeleton"></div></div>
-          <div class="kpi-card green"><div class="kpi-lbl">Contracts</div><div class="skeleton"></div></div>
-          <div class="kpi-card green"><div class="kpi-lbl">Penetration</div><div class="skeleton"></div></div>
-          <div class="kpi-card green"><div class="kpi-lbl">% with no Product</div><div class="skeleton"></div></div>
-        </div>
-      </div>
-      <div>
-        <div class="section-sub">PVR</div>
-        <div class="kpi-section cols-3" id="p1-ga-pvr">
-          <div class="kpi-card orange"><div class="kpi-lbl">Finance Reserve</div><div class="skeleton"></div></div>
-          <div class="kpi-card orange"><div class="kpi-lbl">Product PVR</div><div class="skeleton"></div></div>
-          <div class="kpi-card orange"><div class="kpi-lbl">Total PVR</div><div class="skeleton"></div></div>
-        </div>
-      </div>
-    </div>
-    <div class="two-col">
-      <div>
-        <div class="section-sub">Share of Wallet</div>
-        <div class="kpi-section cols-3" id="p1-ga-sow">
-          <div class="kpi-card blue"><div class="kpi-lbl">SG Share Contracts</div><div class="skeleton"></div></div>
-          <div class="kpi-card blue"><div class="kpi-lbl">SG Share %</div><div class="skeleton"></div></div>
-          <div class="kpi-card blue"><div class="kpi-lbl">SG Pen</div><div class="skeleton"></div></div>
-        </div>
-      </div>
-      <div>
-        <div class="section-sub">Missed Opportunity</div>
-        <div class="kpi-section" style="grid-template-columns:repeat(3,1fr)" id="p1-ga-missed">
-          <div class="kpi-card red"><div class="kpi-lbl">Contracts Missed</div><div class="skeleton"></div></div>
-          <div class="kpi-card red"><div class="kpi-lbl">Contracts Missed Annualized</div><div class="skeleton"></div></div>
-          <div class="kpi-card red"><div class="kpi-lbl">SG Admin Missed</div><div class="skeleton"></div></div>
-          <div class="kpi-card red"><div class="kpi-lbl">SG Admin Missed Annualized</div><div class="skeleton"></div></div>
-          <div class="kpi-card red"><div class="kpi-lbl">Pen Missed</div><div class="skeleton"></div></div>
-        </div>
-      </div>
-    </div>
+      <!-- KT LEFT -->
+      <div class="p1-kt">
+        <div class="section-label">KPI Teams</div>
+        <div class="p1-kt-grid">
+
+          <!-- Dealers -->
+          <div>
+            <div class="section-sub">Dealers</div>
+            <div class="kpi-section" style="grid-template-columns:1fr;border-radius:0 0 8px 8px" id="p1-dealers">
+              <div class="kpi-card"><div class="kpi-lbl">Total Dealers</div><div class="skeleton"></div></div>
+              <div class="kpi-card"><div class="kpi-lbl">Participating Dealers</div><div class="skeleton"></div></div>
+              <div class="kpi-card"><div class="kpi-lbl">% Participating</div><div class="skeleton"></div></div>
+            </div>
+          </div>
+
+          <!-- GA -->
+          <div>
+            <div class="section-sub">GA</div>
+            <div class="kpi-section" style="grid-template-columns:1fr;border-radius:0 0 8px 8px" id="p1-kt-ga">
+              <div class="kpi-card"><div class="kpi-lbl">Dealers in GA</div><div class="skeleton"></div></div>
+              <div class="kpi-card"><div class="kpi-lbl">% in GA</div><div class="skeleton"></div></div>
+            </div>
+          </div>
+
+          <!-- Production -->
+          <div>
+            <div class="section-sub">Production</div>
+            <div class="kpi-section" style="grid-template-columns:1fr;border-radius:0 0 8px 8px" id="p1-production">
+              <div class="kpi-card"><div class="kpi-lbl">RDRs</div><div class="skeleton"></div></div>
+              <div class="kpi-card"><div class="kpi-lbl">Coverages</div><div class="skeleton"></div></div>
+              <div class="kpi-card"><div class="kpi-lbl">Pen</div><div class="skeleton"></div></div>
+            </div>
+          </div>
+
+          <!-- Target -->
+          <div>
+            <div class="section-sub">Target</div>
+            <div class="kpi-section" style="grid-template-columns:1fr;border-radius:0 0 8px 8px" id="p1-target">
+              <div class="kpi-card"><div class="kpi-lbl">Target Coverages</div><div class="skeleton"></div></div>
+              <div class="kpi-card"><div class="kpi-lbl">Target Achieved</div><div class="skeleton"></div></div>
+              <div class="kpi-card red"><div class="kpi-lbl">Missed Coverages</div><div class="skeleton"></div></div>
+            </div>
+          </div>
+
+          <!-- Expenses -->
+          <div>
+            <div class="section-sub">Expenses</div>
+            <div class="kpi-section" style="grid-template-columns:1fr;border-radius:0 0 8px 8px" id="p1-activity">
+              <div class="kpi-card"><div class="kpi-lbl">Total Visits</div><div class="skeleton"></div></div>
+              <div class="kpi-card"><div class="kpi-lbl">Expenses</div><div class="skeleton"></div></div>
+              <div class="kpi-card"><div class="kpi-lbl">$ per Visit</div><div class="skeleton"></div></div>
+            </div>
+          </div>
+
+        </div><!-- end p1-kt-grid -->
+      </div><!-- end p1-kt -->
+
+      <!-- GA RIGHT -->
+      <div class="p1-ga">
+        <div class="section-label">Growth Accelerator</div>
+        <div class="p1-ga-grid">
+
+          <!-- Total -->
+          <div>
+            <div class="section-sub">Total</div>
+            <div class="kpi-section" style="grid-template-columns:1fr;border-radius:0 0 8px 8px" id="p1-ga-pen">
+              <div class="kpi-card green"><div class="kpi-lbl">RDRs</div><div class="skeleton"></div></div>
+              <div class="kpi-card green"><div class="kpi-lbl">Contracts</div><div class="skeleton"></div></div>
+              <div class="kpi-card green"><div class="kpi-lbl">Penetration</div><div class="skeleton"></div></div>
+              <div class="kpi-card green" id="p1-ga-nd"><div class="kpi-lbl">% with No Deal</div><div class="skeleton"></div></div>
+            </div>
+          </div>
+
+          <!-- PVR -->
+          <div>
+            <div class="section-sub">PVR</div>
+            <div class="kpi-section" style="grid-template-columns:1fr;border-radius:0 0 8px 8px" id="p1-ga-pvr">
+              <div class="kpi-card orange"><div class="kpi-lbl">Finance Reserve</div><div class="skeleton"></div></div>
+              <div class="kpi-card orange"><div class="kpi-lbl">Product PVR</div><div class="skeleton"></div></div>
+              <div class="kpi-card orange"><div class="kpi-lbl">Total PVR</div><div class="skeleton"></div></div>
+            </div>
+          </div>
+
+          <!-- SG -->
+          <div>
+            <div class="section-sub">SG</div>
+            <div class="kpi-section" style="grid-template-columns:1fr;border-radius:0 0 8px 8px" id="p1-ga-sow">
+              <div class="kpi-card blue"><div class="kpi-lbl">RDRs</div><div class="skeleton"></div></div>
+              <div class="kpi-card blue"><div class="kpi-lbl">SG Share Contracts</div><div class="skeleton"></div></div>
+              <div class="kpi-card blue"><div class="kpi-lbl">SG Pen</div><div class="skeleton"></div></div>
+              <div class="kpi-card blue"><div class="kpi-lbl">SG Share %</div><div class="skeleton"></div></div>
+            </div>
+          </div>
+
+          <!-- Missed Contracts -->
+          <div>
+            <div class="section-sub">Missed Contracts</div>
+            <div class="kpi-section" style="grid-template-columns:1fr;border-radius:0 0 8px 8px" id="p1-ga-missed-con">
+              <div class="kpi-card red"><div class="kpi-lbl">Contracts Missed</div><div class="skeleton"></div></div>
+              <div class="kpi-card red"><div class="kpi-lbl">Contracts Missed Annualized</div><div class="skeleton"></div></div>
+            </div>
+          </div>
+
+          <!-- Missed Admin -->
+          <div>
+            <div class="section-sub">Missed Admin</div>
+            <div class="kpi-section" style="grid-template-columns:1fr;border-radius:0 0 8px 8px" id="p1-ga-missed-adm">
+              <div class="kpi-card red"><div class="kpi-lbl">SG Admin Missed</div><div class="skeleton"></div></div>
+              <div class="kpi-card red"><div class="kpi-lbl">SG Admin Missed Annualized</div><div class="skeleton"></div></div>
+            </div>
+          </div>
+
+        </div><!-- end p1-ga-grid -->
+      </div><!-- end p1-ga -->
+
+    </div><!-- end p1-grid -->
 
     <div class="section-label" style="margin-top:8px">GA &#x2014; Growth Accelerator Breakdown</div>
     <div class="three-col">
@@ -296,7 +344,7 @@ tbody tr:hover td{background:var(--surface2)}
       </div>
     </div>
     <div class="tbl-card">
-      <div class="tbl-hdr"><div class="tbl-title">By Product Type</div></div>
+      <div class="tbl-hdr"><div class="tbl-title">By Product Group</div></div>
       <div class="tbl-wrap"><div id="p1-prodtype-tbl"><div class="loading-inline"><div class="spinner"></div>Loading...</div></div></div>
     </div>
     <div class="tbl-card">
@@ -746,14 +794,17 @@ async function loadPage1(){
       "CPV",CALCULATE([$ per Visit RPM]${c})
     )`);
     const k=kt[0]||{};
+    const pctPart=k['[TD]']?k['[PD]']/k['[TD]']:null;
     document.getElementById('p1-dealers').innerHTML=`
       <div class="kpi-card"><div class="kpi-lbl">Total Dealers</div><div class="kpi-val">${fmt(k['[TD]'])}</div></div>
       <div class="kpi-card"><div class="kpi-lbl">Participating Dealers</div><div class="kpi-val">${fmt(k['[PD]'])}</div></div>
+      <div class="kpi-card"><div class="kpi-lbl">% Participating</div><div class="kpi-val">${fmt(pctPart,'pct')}</div></div>`;
+    document.getElementById('p1-kt-ga').innerHTML=`
       <div class="kpi-card"><div class="kpi-lbl">Dealers in GA</div><div class="kpi-val">${fmt(k['[DGA]'])}</div></div>
       <div class="kpi-card"><div class="kpi-lbl">% in GA</div><div class="kpi-val">${fmt(k['[PGA]'],'pct')}</div></div>`;
     document.getElementById('p1-activity').innerHTML=`
       <div class="kpi-card"><div class="kpi-lbl">Total Visits</div><div class="kpi-val">${fmt(k['[VIS]'])}</div></div>
-      <div class="kpi-card"><div class="kpi-lbl">Expenses RPM</div><div class="kpi-val">${fmt(k['[EXP]'],'cur')}</div></div>
+      <div class="kpi-card"><div class="kpi-lbl">Expenses</div><div class="kpi-val">${fmt(k['[EXP]'],'cur')}</div></div>
       <div class="kpi-card"><div class="kpi-lbl">$ per Visit</div><div class="kpi-val">${fmt(k['[CPV]'],'cur')}</div></div>`;
   }catch(e){
     console.error('KT Dealers/Activity:',e);
@@ -773,9 +824,9 @@ async function loadPage1(){
     )`);
     const k=kt2[0]||{};
     document.getElementById('p1-production').innerHTML=`
-      <div class="kpi-card"><div class="kpi-lbl">Total RDRs</div><div class="kpi-val">${fmt(k['[RDR]'])}</div></div>
+      <div class="kpi-card"><div class="kpi-lbl">RDRs</div><div class="kpi-val">${fmt(k['[RDR]'])}</div></div>
       <div class="kpi-card"><div class="kpi-lbl">Coverages</div><div class="kpi-val">${fmt(k['[COV]'])}</div></div>
-      <div class="kpi-card"><div class="kpi-lbl">Penetration</div><div class="kpi-val">${fmt(k['[PEN]'],'pct')}</div></div>`;
+      <div class="kpi-card"><div class="kpi-lbl">Pen</div><div class="kpi-val">${fmt(k['[PEN]'],'pct')}</div></div>`;
     document.getElementById('p1-target').innerHTML=`
       <div class="kpi-card"><div class="kpi-lbl">Target Coverages</div><div class="kpi-val">${fmt(k['[TGT]'])}</div></div>
       <div class="kpi-card"><div class="kpi-lbl">Coverages</div><div class="kpi-val">${fmt(k['[COV]'])}</div></div>
@@ -841,9 +892,10 @@ async function loadPage1(){
   )`).then(r=>{
     const gs=r[0]||{};
     gaRender('p1-ga-sow',`
+      <div class="kpi-card blue"><div class="kpi-lbl">RDRs</div><div class="kpi-val">${fmt(gs['[SGC]'])}</div></div>
       <div class="kpi-card blue"><div class="kpi-lbl">SG Share Contracts</div><div class="kpi-val">${fmt(gs['[SGC]'])}</div></div>
-      <div class="kpi-card blue"><div class="kpi-lbl">SG Share %</div><div class="kpi-val">${fmt(gs['[SGCP]'],'pct')}</div></div>
-      <div class="kpi-card blue"><div class="kpi-lbl">SG Pen</div><div class="kpi-val">${fmt(gs['[SGP]'],'pct')}</div></div>`);
+      <div class="kpi-card blue"><div class="kpi-lbl">SG Pen</div><div class="kpi-val">${fmt(gs['[SGP]'],'pct')}</div></div>
+      <div class="kpi-card blue"><div class="kpi-lbl">SG Share %</div><div class="kpi-val">${fmt(gs['[SGCP]'],'pct')}</div></div>`);
   }).catch(e=>gaErr('p1-ga-sow',e));
 
   // Missed Opportunity
@@ -855,12 +907,12 @@ async function loadPage1(){
     "PM"  ,CALCULATE([SG Pen CY TAM Missed]${g2}${stf})
   )`).then(r=>{
     const gm=r[0]||{};
-    gaRender('p1-ga-missed',`
+    gaRender('p1-ga-missed-con',`
       <div class="kpi-card red"><div class="kpi-lbl">Contracts Missed</div><div class="kpi-val">${fmt(gm['[MSS]'])}</div></div>
-      <div class="kpi-card red"><div class="kpi-lbl">Contracts Missed Annualized</div><div class="kpi-val">${fmt(gm['[MSSA]'])}</div></div>
+      <div class="kpi-card red"><div class="kpi-lbl">Contracts Missed Annualized</div><div class="kpi-val">${fmt(gm['[MSSA]'])}</div></div>`);
+    gaRender('p1-ga-missed-adm',`
       <div class="kpi-card red"><div class="kpi-lbl">SG Admin Missed</div><div class="kpi-val">${fmt(gm['[ADM]'],'cur')}</div></div>
-      <div class="kpi-card red"><div class="kpi-lbl">SG Admin Missed Annualized</div><div class="kpi-val">${fmt(gm['[ADMA]'],'cur')}</div></div>
-      <div class="kpi-card red"><div class="kpi-lbl">Pen Missed</div><div class="kpi-val">${fmt(gm['[PM]'],'pct')}</div></div>`);
+      <div class="kpi-card red"><div class="kpi-lbl">SG Admin Missed Annualized</div><div class="kpi-val">${fmt(gm['[ADMA]'],'cur')}</div></div>`);
   }).catch(e=>gaErr('p1-ga-missed',e));
 
   // Breakdown tables — filter using pre-computed Deals Exclude column (Import, no scan)

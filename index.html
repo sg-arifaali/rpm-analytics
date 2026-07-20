@@ -795,9 +795,10 @@ async function loadPage1(){
   function gaRender(id,html){document.getElementById(id).innerHTML=html;}
   function gaErr(id,e){document.getElementById(id).innerHTML=sectionErr(e.message);}
 
-  // Sale type + Coverage Category filters — fold to SQL WHERE clauses
-  const stf=`,'DMS VIN'[Sale Type Group] IN {"Lease","Finance","Cash/OSL"},'DMS Coverage Mapping'[Coverage Category]="Back End"`;
-
+  // All GA filters — Deals Exclude pre-computed column covers sale type + bad FI names
+  // Coverage Category = Back End for contract/PVR measures
+  const stf=`,'DMS VIN'[Deals Exclude]="Include",'DMS Coverage Mapping'[Coverage Category]="Back End"`;
+  const dealsFilter=`FILTER('DMS VIN','DMS VIN'[Deals Exclude]="Include"),`;
   // Penetration
   dax(`EVALUATE ROW(
     "RDR",CALCULATE([RDR Total CY 2]${g2}${stf}),
@@ -862,25 +863,24 @@ async function loadPage1(){
       <div class="kpi-card red"><div class="kpi-lbl">Pen Missed</div><div class="kpi-val">${fmt(gm['[PM]'],'pct')}</div></div>`);
   }).catch(e=>gaErr('p1-ga-missed',e));
 
-  // Breakdown tables — SUMMARIZECOLUMNS requires FILTER() for table-level filters
-  const scFilters=`FILTER('DMS VIN','DMS VIN'[Sale Type Group] IN {"Lease","Finance","Cash/OSL"}),FILTER('DMS Coverage Mapping','DMS Coverage Mapping'[Coverage Category]="Back End"),`;
-  dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[N/U],${scf}${scFilters}"RDR",[RDR Total CY 2],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY 2] DESC`)
+  // Breakdown tables — filter using pre-computed Deals Exclude column (Import, no scan)
+  dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[N/U],${scf}${dealsFilter}"RDR",[RDR Total CY 2],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY 2] DESC`)
     .then(r=>gaRender('p1-cond-tbl',breakdownTable(r,'DMS VIN[N/U]')))
     .catch(e=>gaRender('p1-cond-tbl',sectionErr(e.message)));
 
-  dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Sale Type Group],${scf}${scFilters}"RDR",[RDR Total CY 2],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY 2] DESC`)
+  dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Sale Type Group],${scf}${dealsFilter}"RDR",[RDR Total CY 2],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY 2] DESC`)
     .then(r=>gaRender('p1-saletype-tbl',breakdownTable(r,'DMS VIN[Sale Type Group]')))
     .catch(e=>gaRender('p1-saletype-tbl',sectionErr(e.message)));
 
-  dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Miles Group],${scf}${scFilters}"RDR",[RDR Total CY 2],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY 2] DESC`)
+  dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Miles Group],${scf}${dealsFilter}"RDR",[RDR Total CY 2],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY 2] DESC`)
     .then(r=>gaRender('p1-miles-tbl',breakdownTable(r,'DMS VIN[Miles Group]')))
     .catch(e=>gaRender('p1-miles-tbl',sectionErr(e.message)));
 
-  dax(`EVALUATE SUMMARIZECOLUMNS('Product Type Local'[Product Group],${scf}${scFilters}"TGT",[Target total],"PCY",[Products CY],"MISS",[ATG Number],"CON",[Contracts CY BE],"SGC",[SG Contracts CY],"MSS",[SG Contracts CY TAM Missed]) ORDER BY 'Product Type Local'[Product Group] ASC`)
+  dax(`EVALUATE SUMMARIZECOLUMNS('Product Type Local'[Product Group],${scf}${dealsFilter}"TGT",[Target total],"PCY",[Products CY],"MISS",[ATG Number],"CON",[Contracts CY BE],"SGC",[SG Contracts CY],"MSS",[SG Contracts CY TAM Missed]) ORDER BY 'Product Type Local'[Product Group] ASC`)
     .then(r=>gaRender('p1-prodtype-tbl',prodTypeTable(r)))
     .catch(e=>gaRender('p1-prodtype-tbl',sectionErr(e.message)));
 
-  dax(`EVALUATE TOPN(10,SUMMARIZECOLUMNS('DMS VIN'[Finance Manager Name],${scf}${scFilters}"RDR",[RDR Total CY 2],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"SOW",[SG Contracts CY % of TAM],"MSS",[SG Contracts CY TAM Missed]),[RDR Total CY 2],DESC)`)
+  dax(`EVALUATE TOPN(10,SUMMARIZECOLUMNS('DMS VIN'[Finance Manager Name],${scf}${dealsFilter}"RDR",[RDR Total CY 2],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"SOW",[SG Contracts CY % of TAM],"MSS",[SG Contracts CY TAM Missed]),[RDR Total CY 2],DESC)`)
     .then(r=>gaRender('p1-fim-tbl',fimTable(r)))
     .catch(e=>gaRender('p1-fim-tbl',sectionErr(e.message)));
 }

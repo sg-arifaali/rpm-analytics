@@ -857,7 +857,6 @@ async function loadPage1(){
   function gaErr(id,e){document.getElementById(id).innerHTML=sectionErr(e.message);}
   const stfRDR=`,'DMS VIN'[Deals Exclude]="Include"`;
   const stf=`,'DMS VIN'[Deals Exclude]="Include",'DMS Coverage Mapping'[Coverage Category]="Back End"`;
-  const dealsFilter=`FILTER('DMS VIN','DMS VIN'[Deals Exclude]="Include"),`;
   let _gaRDR=null;
 
   const delay=ms=>new Promise(res=>setTimeout(res,ms));
@@ -934,29 +933,29 @@ async function loadPage1(){
       if(el)el.innerHTML=`<div class="kpi-lbl">% with No Deal</div><div class="kpi-sub" style="color:var(--red);font-size:10px">${e.message}</div>`;
     }
 
-    // Batch 2: Breakdown tables — lower priority, fire after KPI cards complete
+    // Breakdown tables — measures handle filtering internally
     try{
-      const r=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[N/U],${scf}${dealsFilter}"RDR",[RDR Total CY 2],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY 2] DESC`);
+      const r=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[N/U],${scf}"RDR",[RDR Total CY 2],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY 2] DESC`);
       gaRender('p1-cond-tbl',breakdownTable(r,'DMS VIN[N/U]'));
     }catch(e){gaRender('p1-cond-tbl',sectionErr(e.message));}
 
     try{
-      const r=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Sale Type Group],${scf}${dealsFilter}"RDR",[RDR Total CY 2],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY 2] DESC`);
+      const r=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Sale Type Group],${scf}"RDR",[RDR Total CY 2],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY 2] DESC`);
       gaRender('p1-saletype-tbl',breakdownTable(r,'DMS VIN[Sale Type Group]'));
     }catch(e){gaRender('p1-saletype-tbl',sectionErr(e.message));}
 
     try{
-      const r=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Miles Group],${scf}${dealsFilter}"RDR",[RDR Total CY 2],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY 2] DESC`);
+      const r=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Miles Group],${scf}"RDR",[RDR Total CY 2],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"MSS",[SG Contracts CY TAM Missed]) ORDER BY [RDR Total CY 2] DESC`);
       gaRender('p1-miles-tbl',breakdownTable(r,'DMS VIN[Miles Group]'));
     }catch(e){gaRender('p1-miles-tbl',sectionErr(e.message));}
 
     try{
-      const r=await dax(`EVALUATE SUMMARIZECOLUMNS('Product Type Local'[Product Group],${scf}${dealsFilter}"TGT",[Target total],"PCY",[Products CY],"MISS",[ATG Number],"CON",[Contracts CY BE],"SGC",[SG Contracts CY],"MSS",[SG Contracts CY TAM Missed]) ORDER BY 'Product Type Local'[Product Group] ASC`);
+      const r=await dax(`EVALUATE SUMMARIZECOLUMNS('Product Type Local'[Product Group],${scf}"TGT",[Target total],"PCY",[Products CY],"MISS",[ATG Number],"CON",[Contracts CY BE],"SGC",[SG Contracts CY],"MSS",[SG Contracts CY TAM Missed]) ORDER BY 'Product Type Local'[Product Group] ASC`);
       gaRender('p1-prodtype-tbl',prodTypeTable(r));
     }catch(e){gaRender('p1-prodtype-tbl',sectionErr(e.message));}
 
     try{
-      const r=await dax(`EVALUATE TOPN(10,SUMMARIZECOLUMNS('DMS VIN'[Finance Manager Name],${scf}${dealsFilter}"RDR",[RDR Total CY 2],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"SOW",[SG Contracts CY % of TAM],"MSS",[SG Contracts CY TAM Missed]),[RDR Total CY 2],DESC)`);
+      const r=await dax(`EVALUATE TOPN(10,SUMMARIZECOLUMNS('DMS VIN'[Finance Manager Name],${scf}"RDR",[RDR Total CY 2],"CON",[Contracts CY BE],"PEN",[Contract Pen CY BE],"SOW",[SG Contracts CY % of TAM],"MSS",[SG Contracts CY TAM Missed]),[RDR Total CY 2],DESC)`);
       gaRender('p1-fim-tbl',fimTable(r));
     }catch(e){gaRender('p1-fim-tbl',sectionErr(e.message));}
 

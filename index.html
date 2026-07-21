@@ -885,7 +885,7 @@ async function loadPage1(){
         "FR",CALCULATE([RPM FR PVR Total CY]${g2}${stf}),
         "PP",CALCULATE([RPM Prod PVR Total CY]${g2}${stf}),
         "BE",CALCULATE([RPM BE PVR Total CY]${g2}${stf}),
-        "MK",CALCULATE([RPM Markup CY BE]${g2}${stf})
+        "MK",CALCULATE([RPM Markup Total CY BE]${g2}${stf})
       )`);
       const gpv=r[0]||{};
       gaRender('p1-ga-pvr',`

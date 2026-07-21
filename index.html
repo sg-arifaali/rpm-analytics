@@ -947,9 +947,12 @@ async function loadPage1(){
     }catch(e){gaRender('p1-miles-tbl',sectionErr(e.message));}
 
     try{
-      // Product Group needs its own filter context — scf uses ALL() which can override Product Type Local filters
-      const pgFilters=buildKTFilters().filter(f=>!f.includes('ALL(')).map(f=>f+',').join('');
-      const r=await dax(`EVALUATE SUMMARIZECOLUMNS('Product Type Local'[Product Group],${pgFilters}"TGT",[Target total],"PCY",[Products CY],"MISS",[ATG Number],"CON",[RPM Contracts CY BE],"SGC",[RPM SG Contracts CY],"MSS",[RPM SG Contracts CY TAM Missed]) ORDER BY 'Product Type Local'[Product Group] ASC`);
+      // Build filters for Product Group — use KEEPFILTERS approach for date, direct conditions for dealers
+      const selYears=getMSVals('ms-year');
+      const pgDateF=selYears.length?`FILTER('Business Dates Local','Business Dates Local'[Reporting Year] IN {${selYears.join(',')}}),`:'';
+      const pgMonthF=F.month&&F.month.length?`FILTER('Business Dates Local',${F.month.map(m=>`'Business Dates Local'[Reporting MonthYear]="${m}"`).join('||')}),`:'';
+      const pgDealerFilters=buildKTFilters().filter(f=>!f.includes('Business Dates')).map(f=>f+',').join('');
+      const r=await dax(`EVALUATE SUMMARIZECOLUMNS('Product Type Local'[Product Group],${pgDateF}${pgMonthF}${pgDealerFilters}"TGT",[Target total],"PCY",[Products CY],"MISS",[ATG Number],"CON",[RPM Contracts CY BE],"SGC",[RPM SG Contracts CY],"MSS",[RPM SG Contracts CY TAM Missed]) ORDER BY 'Product Type Local'[Product Group] ASC`);
       gaRender('p1-prodtype-tbl',prodTypeTable(r));
     }catch(e){gaRender('p1-prodtype-tbl',sectionErr(e.message));}
 

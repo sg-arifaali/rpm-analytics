@@ -866,9 +866,9 @@ async function loadPage1(){
     // Penetration — highest priority
     try{
       const r=await dax(`EVALUATE ROW(
-        "RDR",CALCULATE([RPM RDR Total CY]${g2}${stfRDR}),
-        "CON",CALCULATE([RPM Contracts CY BE]${g2}${stf}),
-        "PEN",CALCULATE([RPM Contract Pen CY BE]${g2}${stf})
+        "RDR",CALCULATE([RPM RDR Total CY]${g2}),
+        "CON",CALCULATE([RPM Contracts CY BE]${g2}),
+        "PEN",CALCULATE([RPM Contract Pen CY BE]${g2})
       )`);
       const gp=r[0]||{};
       _gaRDR=gp['[RDR]'];
@@ -882,10 +882,10 @@ async function loadPage1(){
     // PVR / Profit
     try{
       const r=await dax(`EVALUATE ROW(
-        "FR",CALCULATE([RPM FR PVR Total CY]${g2}${stf}),
-        "PP",CALCULATE([RPM Prod PVR Total CY]${g2}${stf}),
-        "BE",CALCULATE([RPM BE PVR Total CY]${g2}${stf}),
-        "MK",CALCULATE([RPM Markup Total CY BE]${g2}${stf})
+        "FR",CALCULATE([RPM FR PVR Total CY]${g2}),
+        "PP",CALCULATE([RPM Prod PVR Total CY]${g2}),
+        "BE",CALCULATE([RPM BE PVR Total CY]${g2}),
+        "MK",CALCULATE([RPM Avg Contract Markup CY BE]${g2})
       )`);
       const gpv=r[0]||{};
       gaRender('p1-ga-pvr',`
@@ -898,9 +898,9 @@ async function loadPage1(){
     // SOW
     try{
       const r=await dax(`EVALUATE ROW(
-        "SGC" ,CALCULATE([RPM SG Contracts CY]${g2}${stf}),
-        "SGCP",CALCULATE([RPM SG Contracts CY % of TAM]${g2}${stf}),
-        "SGP" ,CALCULATE([RPM SG Pen CY]${g2}${stf})
+        "SGC" ,CALCULATE([RPM SG Contracts CY]${g2}),
+        "SGCP",CALCULATE([RPM SG Contracts CY % of TAM]${g2}),
+        "SGP" ,CALCULATE([RPM SG Pen CY]${g2})
       )`);
       const gs=r[0]||{};
       gaRender('p1-ga-sow',`
@@ -913,10 +913,10 @@ async function loadPage1(){
     // Missed
     try{
       const r=await dax(`EVALUATE ROW(
-        "MSS" ,CALCULATE([RPM SG Contracts CY TAM Missed]${g2}${stf}),
-        "MSSA",CALCULATE([RPM SG Contracts CY TAM Missed Annual]${g2}${stf}),
-        "ADM" ,CALCULATE([RPM SG Admin CY TAM Missed]${g2}${stf}),
-        "ADMA",CALCULATE([RPM SG Admin CY TAM Missed Annual]${g2}${stf})
+        "MSS" ,CALCULATE([RPM SG Contracts CY TAM Missed]${g2}),
+        "MSSA",CALCULATE([RPM SG Contracts CY TAM Missed Annual]${g2}),
+        "ADM" ,CALCULATE([RPM SG Admin CY TAM Missed]${g2}),
+        "ADMA",CALCULATE([RPM SG Admin CY TAM Missed Annual]${g2})
       )`);
       const gm=r[0]||{};
       gaRender('p1-ga-missed',`
@@ -928,7 +928,7 @@ async function loadPage1(){
 
     // % No Deal — lowest priority KPI card
     try{
-      const r=await dax(`EVALUATE ROW("ND",CALCULATE([RPM % No Deal CY]${g2}${stfRDR}))`);
+      const r=await dax(`EVALUATE ROW("ND",CALCULATE([RPM % No Deal CY]${g2}))`);
       const el=document.getElementById('p1-ga-nd');
       if(el)el.innerHTML=`<div class="kpi-lbl">% with No Deal</div><div class="kpi-val">${fmt((r[0]||{})['[ND]'],'pct')}</div>`;
     }catch(e){

@@ -306,9 +306,7 @@ tbody tr:hover td{background:var(--surface2)}
             <div class="section-sub">Missed</div>
             <div class="kpi-section" style="grid-template-columns:1fr;border-radius:0 0 8px 8px" id="p1-ga-missed">
               <div class="kpi-card red"><div class="kpi-lbl">Contracts Missed</div><div class="skeleton"></div></div>
-              <div class="kpi-card red"><div class="kpi-lbl">SG Admin Missed</div><div class="skeleton"></div></div>
               <div class="kpi-card red"><div class="kpi-lbl">Contracts Missed Annualized</div><div class="skeleton"></div></div>
-              <div class="kpi-card red"><div class="kpi-lbl">SG Admin Missed Annualized</div><div class="skeleton"></div></div>
             </div>
           </div>
 
@@ -914,16 +912,12 @@ async function loadPage1(){
     try{
       const r=await dax(`EVALUATE ROW(
         "MSS" ,CALCULATE([RPM SG Contracts CY TAM Missed]${g2}),
-        "MSSA",CALCULATE([RPM SG Contracts CY TAM Missed Annual]${g2}),
-        "ADM" ,CALCULATE([RPM SG Admin CY TAM Missed]${g2}),
-        "ADMA",CALCULATE([RPM SG Admin CY TAM Missed Annual]${g2})
+        "MSSA",CALCULATE([RPM SG Contracts CY TAM Missed Annual]${g2})
       )`);
       const gm=r[0]||{};
       gaRender('p1-ga-missed',`
         <div class="kpi-card red"><div class="kpi-lbl">Contracts Missed</div><div class="kpi-val">${fmt(gm['[MSS]'])}</div></div>
-        <div class="kpi-card red"><div class="kpi-lbl">SG Admin Missed</div><div class="kpi-val">${fmt(gm['[ADM]'],'cur')}</div></div>
-        <div class="kpi-card red"><div class="kpi-lbl">Contracts Missed Annualized</div><div class="kpi-val">${fmt(gm['[MSSA]'])}</div></div>
-        <div class="kpi-card red"><div class="kpi-lbl">SG Admin Missed Annualized</div><div class="kpi-val">${fmt(gm['[ADMA]'],'cur')}</div></div>`);
+        <div class="kpi-card red"><div class="kpi-lbl">Contracts Missed Annualized</div><div class="kpi-val">${fmt(gm['[MSSA]'])}</div></div>`);
     }catch(e){gaErr('p1-ga-missed',e);}
 
     // % No Deal — lowest priority KPI card

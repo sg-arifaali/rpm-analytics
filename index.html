@@ -1041,46 +1041,69 @@ async function loadPage2(){
   try{
     const c=ktf();
     const rows=await dax(`EVALUATE SUMMARIZECOLUMNS(
-      'Dealers Local'[Dealer SG Code],'Dealers Local'[Dealer Name],'Dealers Local'[RPM],
-      'Dealers Local'[Brand Group],'Dealers Local'[State]${c},
+      'Dealers Local'[Dealer SG Code],'Dealers Local'[Dealer Name],
+      'Dealers Local'[Brand Group]${c},
       "PCY" ,[Products CY],
       "PLY" ,[Products LY],
       "PEN" ,[Product Pen CY],
-      "ADM" ,[SG Admin CY],
       "RDR" ,[RDR for Pen CY],
       "ATG" ,[ATG %],
       "VIS" ,[SF CL Sum Actual RPM],
+      "DGA" ,[Dealers in GA],
       "MSS" ,[RPM SG Contracts CY TAM Missed],
       "SOW" ,[RPM SG Contracts CY % of TAM],
-      "MSSA",[RPM SG Contracts CY TAM Missed Annual]
+      "TD"  ,[Total Dealers]
     ) ORDER BY [Products CY] DESC`);
     document.getElementById('p2-sub').textContent=`${rows.length} dealers`;
+
+    // Grand totals
+    const tot={rdr:0,pcy:0,ply:0,vis:0,mss:0,td:0,dga:0};
+    rows.forEach(r=>{
+      tot.rdr+=(r['[RDR]']||0);tot.pcy+=(r['[PCY]']||0);tot.ply+=(r['[PLY]']||0);
+      tot.vis+=(r['[VIS]']||0);tot.mss+=(r['[MSS]']||0);
+      tot.td +=(r['[TD]'] ||0);tot.dga+=(r['[DGA]']||0);
+    });
+    const totPen=tot.rdr?tot.pcy/tot.rdr:null;
+
     document.getElementById('p2-tbl').innerHTML=`<table><thead><tr>
-      <th>SG Code</th><th>Dealer Name</th><th>RPM</th><th>Brand Group</th><th>State</th>
-      <th class="td-num">RDR</th><th class="td-num">Coverages</th><th class="td-num">YoY</th>
-      <th class="td-num">Pen</th><th class="td-num">% Target</th><th class="td-num">SG Admin</th>
-      <th class="td-num">Visits</th><th class="td-num">Missed</th><th class="td-num">SOW</th><th class="td-num">Annlzd Missed</th>
+      <th>SG Code</th><th>Dealer Name</th><th>Brand Group</th>
+      <th class="td-num">Dealer Count</th><th class="td-num">Dealer in GA</th>
+      <th class="td-num">RDRs</th><th class="td-num">Coverages</th><th class="td-num">YoY</th>
+      <th class="td-num">Pen</th><th class="td-num">% Target</th>
+      <th class="td-num">Visits</th><th class="td-num">GA-Missed</th><th class="td-num">SOW</th>
     </tr></thead><tbody>${rows.slice(0,200).map(r=>{
       const code=r['Dealers Local[Dealer SG Code]']||'—';
       const atg=r['[ATG]']||0;
       return`<tr onclick="loadVI('${code.replace(/'/g,"\\'")}','${(r['Dealers Local[Dealer Name]']||'').replace(/'/g,"\\'")}')">
         <td class="td-name" style="cursor:pointer;color:var(--accent)">${code}</td>
         <td>${r['Dealers Local[Dealer Name]']||'—'}</td>
-        <td>${r['Dealers Local[RPM]']||'—'}</td>
         <td>${r['Dealers Local[Brand Group]']||'—'}</td>
-        <td>${r['Dealers Local[State]']||'—'}</td>
+        <td class="td-num">${fmt(r['[TD]'])}</td>
+        <td class="td-num">${fmt(r['[DGA]'])}</td>
         <td class="td-num">${fmt(r['[RDR]'])}</td>
         <td class="td-num">${fmt(r['[PCY]'])}</td>
-        <td class="td-num">${yoy(r['[PCY]'],r['[PLY]'])}</td>
+        <td class="td-num" style="color:${(r['[PCY]']||0)>=(r['[PLY]']||0)?'var(--green)':'var(--red)'}">${r['[PLY]']?fmt((r['[PCY]']||0)-(r['[PLY]']||0)):'—'}</td>
         <td class="td-num">${fmt(r['[PEN]'],'pct')}</td>
         <td class="td-num"><span class="badge ${atg>=1?'bg-green':atg>=0.8?'bg-yellow':'bg-red'}">${fmt(atg,'pct')}</span></td>
-        <td class="td-num">${fmt(r['[ADM]'],'cur')}</td>
         <td class="td-num">${fmt(r['[VIS]'])}</td>
-        <td class="td-num" style="color:var(--red)">${fmt(r['[MSS]'])}</td>
-        <td class="td-num">${sowBadge(r['[SOW]']||0)}</td>
-        <td class="td-num">${fmt(r['[MSSA]'])}</td>
+        <td class="td-num" style="color:var(--red)">${r['[DGA]']?fmt(r['[MSS]']):'<span style="color:var(--text2);font-size:10px">N/A</span>'}</td>
+        <td class="td-num">${r['[DGA]']?sowBadge(r['[SOW]']||0):'<span style="color:var(--text2);font-size:10px">N/A</span>'}</td>
       </tr>`;
-    }).join('')}</tbody></table>`;
+    }).join('')}
+    <tr style="font-weight:700;border-top:2px solid var(--border);background:var(--surface2)">
+      <td></td><td class="td-name">Total</td><td></td>
+      <td class="td-num">${fmt(tot.td)}</td>
+      <td class="td-num">${fmt(tot.dga)}</td>
+      <td class="td-num">${fmt(tot.rdr)}</td>
+      <td class="td-num">${fmt(tot.pcy)}</td>
+      <td class="td-num" style="color:${tot.pcy>=tot.ply?'var(--green)':'var(--red)'}">${tot.ply?fmt(tot.pcy-tot.ply):'—'}</td>
+      <td class="td-num">${fmt(totPen,'pct')}</td>
+      <td class="td-num">—</td>
+      <td class="td-num">${fmt(tot.vis)}</td>
+      <td class="td-num" style="color:var(--red)">${fmt(tot.mss)}</td>
+      <td class="td-num">—</td>
+    </tr>
+    </tbody></table>`;
   }catch(e){
     console.error('Page2:',e);
     document.getElementById('p2-tbl').innerHTML=`<div class="empty" style="color:var(--red)">${e.message}</div>`;
@@ -1094,25 +1117,27 @@ async function loadVI(code,name){
     const rows=await dax(`EVALUATE FILTER(SUMMARIZECOLUMNS(
       'Dealers Local'[Dealer SG Code],
       "M3PV" ,[3 Mon Pre Visit Prod],"M2PV",[2 Mon Pre Visit Prod],"M1PV",[1 Mon Pre Visit Prod],
-      "M1POV",[1 Mon Post Visit Prod],"M2POV",[2 Mon Post Visit Prod],"M3POV",[3 Mon Post Visit Prod],
-      "M3PA" ,[3 Mon Pre Visit SG Admin],"M2PA",[2 Mon Pre Visit SG Admin],"M1PA",[1 Mon Pre Visit SG Admin],
-      "M1POA",[1 Mon Post Visit SG Admin],"M2POA",[2 Mon Post Visit SG Admin],"M3POA",[3 Mon Post Visit SG Admin]
+      "M1POV",[1 Mon Post Visit Prod],"M2POV",[2 Mon Post Visit Prod],"M3POV",[3 Mon Post Visit Prod]
     ),'Dealers Local'[Dealer SG Code]="${code}")`);
     if(!rows.length){document.getElementById('p2-vi-content').innerHTML='<div class="empty">No visit data for this dealer</div>';return;}
     const r=rows[0];
     const months=[
-      {l:'M-3',v:r['[M3PV]'],a:r['[M3PA]'],vis:false},
-      {l:'M-2',v:r['[M2PV]'],a:r['[M2PA]'],vis:false},
-      {l:'M-1',v:r['[M1PV]'],a:r['[M1PA]'],vis:false},
-      {l:'M0', v:null,a:null,vis:true},
-      {l:'M+1',v:r['[M1POV]'],a:r['[M1POA]'],vis:false},
-      {l:'M+2',v:r['[M2POV]'],a:r['[M2POA]'],vis:false},
-      {l:'M+3',v:r['[M3POV]'],a:r['[M3POA]'],vis:false},
+      {l:'M-3',v:r['[M3PV]'],vis:false},
+      {l:'M-2',v:r['[M2PV]'],vis:false},
+      {l:'M-1',v:r['[M1PV]'],vis:false},
+      {l:'M0', v:null,vis:true},
+      {l:'M+1',v:r['[M1POV]'],vis:false},
+      {l:'M+2',v:r['[M2POV]'],vis:false},
+      {l:'M+3',v:r['[M3POV]'],vis:false},
     ];
     document.getElementById('p2-vi-content').innerHTML=`<div class="vi-grid">${months.map(m=>`<div class="vi-month ${m.vis?'visit-month':''}">
       <div class="vi-month-label">${m.l}</div>
-      ${m.vis?'<div class="vi-month-val" style="color:var(--accent);font-size:11px">Visit</div>':
-        `<div class="vi-month-val">${fmt(m.v)}</div><div class="vi-month-sub">${fmt(m.a,'cur')}</div>`}
+      ${m.vis
+        ?'<div class="vi-month-val" style="color:var(--accent);font-size:11px">Visit</div>'
+        :m.v==null
+          ?'<div class="vi-month-val" style="color:var(--text2);font-size:11px">N/A</div>'
+          :`<div class="vi-month-val">${fmt(m.v)}</div>`
+      }
     </div>`).join('')}</div>`;
   }catch(e){document.getElementById('p2-vi-content').innerHTML=`<div class="empty" style="color:var(--red)">${e.message}</div>`;}
 }

@@ -287,7 +287,7 @@ tbody tr:hover td{background:var(--surface2)}
             <div class="kpi-section" style="grid-template-columns:1fr;border-radius:0 0 8px 8px" id="p1-ga-pvr">
               <div class="kpi-card orange"><div class="kpi-lbl">Finance Reserve</div><div class="skeleton"></div></div>
               <div class="kpi-card orange"><div class="kpi-lbl">Product PVR</div><div class="skeleton"></div></div>
-              <div class="kpi-card orange"><div class="kpi-lbl">Total PVR</div><div class="skeleton"></div></div>
+              <div class="kpi-card orange"><div class="kpi-lbl">Finance PVR</div><div class="skeleton"></div></div>
               <div class="kpi-card orange"><div class="kpi-lbl">Profit / Contract</div><div class="skeleton"></div></div>
             </div>
           </div>
@@ -315,10 +315,17 @@ tbody tr:hover td{background:var(--surface2)}
 
     </div>
 
+
     <div class="section-label" style="margin-top:8px">GA &#x2014; Growth Accelerator Breakdown</div>
-    <div class="tbl-card">
-      <div class="tbl-hdr"><div class="tbl-title">Product View (GA &amp; KPI)</div></div>
-      <div class="tbl-wrap"><div id="p1-prodtype-tbl"><div class="loading-inline"><div class="spinner"></div>Loading...</div></div></div>
+    <div class="two-col">
+      <div class="tbl-card">
+        <div class="tbl-hdr"><div class="tbl-title">Product View (GA &amp; KPI)</div></div>
+        <div class="tbl-wrap"><div id="p1-prodtype-tbl"><div class="loading-inline"><div class="spinner"></div>Loading...</div></div></div>
+      </div>
+      <div class="tbl-card">
+        <div class="tbl-hdr"><div class="tbl-title">Top F&amp;I Managers by Vehicle Sale (GA)</div></div>
+        <div class="tbl-wrap"><div id="p1-fim-tbl"><div class="loading-inline"><div class="spinner"></div>Loading...</div></div></div>
+      </div>
     </div>
     <div class="three-col">
       <div class="tbl-card">
@@ -333,12 +340,6 @@ tbody tr:hover td{background:var(--surface2)}
         <div class="tbl-hdr"><div class="tbl-title">Miles at Delivery (GA)</div></div>
         <div class="tbl-wrap"><div id="p1-miles-tbl"><div class="loading-inline"><div class="spinner"></div>Loading...</div></div></div>
       </div>
-    </div>
-    <div class="tbl-card">
-      <div class="tbl-hdr">
-        <div class="tbl-title">Top F&amp;I Managers by Vehicle Sale (GA)</div>
-      </div>
-      <div class="tbl-wrap"><div id="p1-fim-tbl"><div class="loading-inline"><div class="spinner"></div>Loading...</div></div></div>
     </div>
   </div>
 
@@ -608,7 +609,6 @@ function cascadeFilters(triggerId){
   if(selAM.length)  rows=rows.filter(r=>selAM.includes(r.am));
   if(selRPM.length) rows=rows.filter(r=>selRPM.includes(r.rpm));
 
-  // Helper: update dependent dropdown without touching it if open
   function updateDep(id,vals){
     if(!MS[id])return;
     const isOpen=document.getElementById(id+'-dd')?.classList.contains('open');
@@ -618,10 +618,19 @@ function cascadeFilters(triggerId){
     updateMSBtn(id);
   }
 
-  // Brand — driven by Brand Group only
-  if(triggerId==='ms-brandgroup'){
-    const brandRows=selBGs.length?FD.dealerRows.filter(r=>selBGs.includes(r.bg)):FD.dealerRows;
+  // Brand — driven by Brand Group + RPM
+  if(triggerId==='ms-brandgroup'||triggerId==='ms-rpm'){
+    let brandRows=FD.dealerRows;
+    if(selBGs.length) brandRows=brandRows.filter(r=>selBGs.includes(r.bg));
+    if(selRPM.length) brandRows=brandRows.filter(r=>selRPM.includes(r.rpm));
     updateDep('ms-brand',[...new Set(brandRows.map(r=>r.br).filter(Boolean))].sort());
+  }
+
+  // Brand Group — driven by RPM
+  if(triggerId==='ms-rpm'){
+    let bgRows=FD.dealerRows;
+    if(selRPM.length) bgRows=bgRows.filter(r=>selRPM.includes(r.rpm));
+    updateDep('ms-brandgroup',[...new Set(bgRows.map(r=>r.bg).filter(Boolean))].sort());
   }
 
   // RPM — driven by Brand Group + Brand + AM
@@ -634,7 +643,7 @@ function cascadeFilters(triggerId){
     updateDep('ms-acctmgr',[...new Set(rows.map(r=>r.am).filter(Boolean))].sort());
   }
 
-  // Remaining dependents — driven by everything selected
+  // Remaining dependents
   updateDep('ms-dealergroup',[...new Set(rows.map(r=>r.grp).filter(Boolean))].sort());
   updateDep('ms-oemregion',  [...new Set(rows.map(r=>r.oem).filter(Boolean))].sort());
   updateDep('ms-state',      [...new Set(rows.map(r=>r.st).filter(Boolean))].sort());
@@ -888,7 +897,7 @@ async function loadPage1(){
       gaRender('p1-ga-pvr',`
         <div class="kpi-card orange"><div class="kpi-lbl">Finance Reserve</div><div class="kpi-val">${fmt(gpv['[FR]'],'cur')}</div></div>
         <div class="kpi-card orange"><div class="kpi-lbl">Product PVR</div><div class="kpi-val">${fmt(gpv['[PP]'],'cur')}</div></div>
-        <div class="kpi-card orange"><div class="kpi-lbl">Total PVR</div><div class="kpi-val">${fmt(gpv['[BE]'],'cur')}</div></div>
+        <div class="kpi-card orange"><div class="kpi-lbl">Finance PVR</div><div class="kpi-val">${fmt(gpv['[BE]'],'cur')}</div></div>
         <div class="kpi-card orange"><div class="kpi-lbl">Profit / Contract</div><div class="kpi-val">${fmt(gpv['[MK]'],'cur')}</div></div>`);
     }catch(e){gaErr('p1-ga-pvr',e);}
 
@@ -951,12 +960,12 @@ async function loadPage1(){
       const pgDateF=selYears.length?`FILTER('Business Dates Local','Business Dates Local'[Reporting Year] IN {${selYears.join(',')}}),`:'';
       const pgMonthF=F.month&&F.month.length?`FILTER('Business Dates Local',${F.month.map(m=>`'Business Dates Local'[Reporting MonthYear]="${m}"`).join('||')}),`:'';
       const pgDealerFilters=buildKTFilters().filter(f=>!f.includes('Business Dates')).map(f=>f+',').join('');
-      const r=await dax(`EVALUATE SUMMARIZECOLUMNS('Product Type Local'[Product Group],${pgDateF}${pgMonthF}${pgDealerFilters}"TGT",[Target total],"PCY",[Products CY],"MISS",[ATG Number],"CON",[RPM Contracts CY BE],"SGC",[RPM SG Contracts CY],"MSS",[RPM SG Contracts CY TAM Missed]) ORDER BY 'Product Type Local'[Product Group] ASC`);
+      const r=await dax(`EVALUATE SUMMARIZECOLUMNS('Product Type Local'[Product Group],${pgDateF}${pgMonthF}${pgDealerFilters}"TGT",[Target total],"PCY",[Products CY],"MISS",[ATG Number],"CON",[RPM Contracts CY BE],"SGC",[RPM SG Contracts CY],"MSS",[RPM SG Contracts CY TAM Missed],"MK",[RPM Avg Contract Markup CY BE]) ORDER BY 'Product Type Local'[Product Group] ASC`);
       gaRender('p1-prodtype-tbl',prodTypeTable(r));
     }catch(e){gaRender('p1-prodtype-tbl',sectionErr(e.message));}
 
     try{
-      const r=await dax(`EVALUATE TOPN(10,SUMMARIZECOLUMNS('DMS VIN'[Finance Manager Name],${scf}"RDR",[RPM RDR Total CY],"CON",[RPM Contracts CY BE],"PEN",[RPM Contract Pen CY BE],"SOW",[RPM SG Contracts CY % of TAM],"MSS",[RPM SG Contracts CY TAM Missed]),[RPM RDR Total CY],DESC)`);
+      const r=await dax(`EVALUATE TOPN(10,SUMMARIZECOLUMNS('DMS VIN'[Finance Manager Name],${scf}"RDR",[RPM RDR Total CY],"CON",[RPM Contracts CY BE],"PEN",[RPM Contract Pen CY BE],"PVR",[RPM BE PVR Total CY],"FR",[RPM FR PVR Total CY],"ND",[RPM % No Deal CY],"SOW",[RPM SG Contracts CY % of TAM],"MSS",[RPM SG Contracts CY TAM Missed]),[RPM RDR Total CY],DESC)`);
       gaRender('p1-fim-tbl',fimTable(r));
     }catch(e){gaRender('p1-fim-tbl',sectionErr(e.message));}
 
@@ -976,6 +985,7 @@ function prodTypeTable(rows){
     <th class="td-num">KPI Coverages</th>
     <th class="td-num">KPI Missed</th>
     <th class="td-num">GA Contracts</th>
+    <th class="td-num">Profit / Contract</th>
     <th class="td-num">SG Remit</th>
     <th class="td-num">GA Missed</th>
   </tr></thead><tbody>${
@@ -987,6 +997,7 @@ function prodTypeTable(rows){
         <td class="td-num">${fmt(r['[PCY]'])}</td>
         <td class="td-num" style="color:${miss<0?'var(--red)':'var(--green)'}">${fmt(miss)}</td>
         <td class="td-num">${fmt(r['[CON]'])}</td>
+        <td class="td-num">${fmt(r['[MK]'],'cur')}</td>
         <td class="td-num">${fmt(r['[SGC]'])}</td>
         <td class="td-num" style="color:var(--red)">${fmt(r['[MSS]'])}</td>
       </tr>`;
@@ -997,9 +1008,11 @@ function prodTypeTable(rows){
     <td class="td-num">${fmt(tot.pcy)}</td>
     <td class="td-num" style="color:${tot.miss<0?'var(--red)':'var(--green)'}">${fmt(tot.miss)}</td>
     <td class="td-num">${fmt(tot.con)}</td>
+    <td class="td-num">—</td>
     <td class="td-num">${fmt(tot.sgc)}</td>
     <td class="td-num" style="color:var(--red)">${fmt(tot.mss)}</td>
   </tr></tbody></table>`;
+}
 }
 function breakdownTable(rows,dim,segLabel='Segment'){
   if(!rows.length)return'<div class="empty">No data</div>';
@@ -1016,23 +1029,40 @@ function breakdownTable(rows,dim,segLabel='Segment'){
     <td class="td-num">${fmt(totPen,'pct')}</td>
     <td class="td-num" style="color:var(--red)">${fmt(tot.mss)}</td>
   </tr></tbody></table>`;
-}
 function fimTable(rows){
   if(!rows.length)return'<div class="empty">No data</div>';
   const tot={rdr:0,con:0,mss:0};
   rows.forEach(r=>{tot.rdr+=(r['[RDR]']||0);tot.con+=(r['[CON]']||0);tot.mss+=(r['[MSS]']||0);});
   const totPen=tot.rdr?tot.con/tot.rdr:null;
-  return`<table><thead><tr><th>#</th><th>F&amp;I Manager</th><th class="td-num">RDRs</th><th class="td-num">Contracts</th><th class="td-num">Pen</th><th class="td-num">Share of Wallet</th><th class="td-num">Missed</th></tr></thead><tbody>${
-    rows.map((r,i)=>`<tr><td style="color:var(--text2);font-weight:700">${i+1}</td><td class="td-name">${r['DMS VIN[Finance Manager Name]']||'—'}</td><td class="td-num">${fmt(r['[RDR]'])}</td><td class="td-num">${fmt(r['[CON]'])}</td><td class="td-num">${fmt(r['[PEN]'],'pct')}</td><td class="td-num">${sowBadge(r['[SOW]']||0)}</td><td class="td-num" style="color:var(--red);font-weight:700">${fmt(r['[MSS]'])}</td></tr>`).join('')
+  return`<table><thead><tr>
+    <th>#</th><th>F&amp;I Manager</th>
+    <th class="td-num">RDRs</th><th class="td-num">Contracts</th><th class="td-num">Pen</th>
+    <th class="td-num">Finance PVR</th><th class="td-num">% No Deal</th><th class="td-num">Finance Reserve</th>
+    <th class="td-num">Share of Wallet</th><th class="td-num">Missed</th>
+  </tr></thead><tbody>${
+    rows.map((r,i)=>`<tr>
+      <td style="color:var(--text2);font-weight:700">${i+1}</td>
+      <td class="td-name">${r['DMS VIN[Finance Manager Name]']||'—'}</td>
+      <td class="td-num">${fmt(r['[RDR]'])}</td>
+      <td class="td-num">${fmt(r['[CON]'])}</td>
+      <td class="td-num">${fmt(r['[PEN]'],'pct')}</td>
+      <td class="td-num">${fmt(r['[PVR]'],'cur')}</td>
+      <td class="td-num">${fmt(r['[ND]'],'pct')}</td>
+      <td class="td-num">${fmt(r['[FR]'],'cur')}</td>
+      <td class="td-num">${sowBadge(r['[SOW]']||0)}</td>
+      <td class="td-num" style="color:var(--red);font-weight:700">${fmt(r['[MSS]'])}</td>
+    </tr>`).join('')
   }
   <tr style="font-weight:700;border-top:1px solid var(--border)">
     <td></td><td class="td-name">Total</td>
     <td class="td-num">${fmt(tot.rdr)}</td>
     <td class="td-num">${fmt(tot.con)}</td>
     <td class="td-num">${fmt(totPen,'pct')}</td>
+    <td class="td-num">—</td><td class="td-num">—</td><td class="td-num">—</td>
     <td class="td-num">—</td>
     <td class="td-num" style="color:var(--red);font-weight:700">${fmt(tot.mss)}</td>
   </tr></tbody></table>`;
+}
 }
 
 // ── PAGE 2 ─────────────────────────────────────────────────────────────

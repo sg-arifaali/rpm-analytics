@@ -1177,11 +1177,11 @@ async function loadSummary(code, name){
         'Salesforce Event'[Time Scheduled Group],
         'Salesforce Event'[Time Spent],
         'Salesforce Event'[Internal_Notes__c],
+        'Salesforce Checklist'[Activity],
         'Salesforce Checklist'[Act Value],
         'Dealers Local'[Dealer SG Code]
       ),
       'Dealers Local'[Dealer SG Code]="${code}"
-        && 'Salesforce Checklist'[Activity]="Meeting_Recap_Comments__c"
     ) ORDER BY 'Salesforce Event'[ActivityDate] DESC`);
 
     if(!notes.length){
@@ -1201,7 +1201,8 @@ async function loadSummary(code, name){
         recap:     []
       };
       const av=r['Salesforce Checklist[Act Value]'];
-      if(av&&av!=='null') events[date].recap.push(av);
+      const activity=r['Salesforce Checklist[Activity]'];
+      if(av&&av!=='null'&&activity==='Meeting_Recap_Comments__c') events[date].recap.push(av);
     });
 
     const visitText=Object.values(events).map(e=>{

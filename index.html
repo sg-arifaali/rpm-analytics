@@ -316,29 +316,34 @@ tbody tr:hover td{background:var(--surface2)}
     </div>
 
 
+
     <div class="section-label" style="margin-top:8px">GA &#x2014; Growth Accelerator Breakdown</div>
-    <div class="two-col">
-      <div class="tbl-card">
-        <div class="tbl-hdr"><div class="tbl-title">Product View (GA &amp; KPI)</div></div>
-        <div class="tbl-wrap"><div id="p1-prodtype-tbl"><div class="loading-inline"><div class="spinner"></div>Loading...</div></div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start">
+      <!-- Left: 3 stacked tables -->
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div class="tbl-card">
+          <div class="tbl-hdr"><div class="tbl-title">Vehicle Condition (GA)</div></div>
+          <div class="tbl-wrap"><div id="p1-cond-tbl"><div class="loading-inline"><div class="spinner"></div>Loading...</div></div></div>
+        </div>
+        <div class="tbl-card">
+          <div class="tbl-hdr"><div class="tbl-title">Sale Type (GA)</div></div>
+          <div class="tbl-wrap"><div id="p1-saletype-tbl"><div class="loading-inline"><div class="spinner"></div>Loading...</div></div></div>
+        </div>
+        <div class="tbl-card">
+          <div class="tbl-hdr"><div class="tbl-title">Miles at Delivery (GA)</div></div>
+          <div class="tbl-wrap"><div id="p1-miles-tbl"><div class="loading-inline"><div class="spinner"></div>Loading...</div></div></div>
+        </div>
       </div>
-      <div class="tbl-card">
-        <div class="tbl-hdr"><div class="tbl-title">Top F&amp;I Managers by Vehicle Sale (GA)</div></div>
-        <div class="tbl-wrap"><div id="p1-fim-tbl"><div class="loading-inline"><div class="spinner"></div>Loading...</div></div></div>
-      </div>
-    </div>
-    <div class="three-col">
-      <div class="tbl-card">
-        <div class="tbl-hdr"><div class="tbl-title">Vehicle Condition (GA)</div></div>
-        <div class="tbl-wrap"><div id="p1-cond-tbl"><div class="loading-inline"><div class="spinner"></div>Loading...</div></div></div>
-      </div>
-      <div class="tbl-card">
-        <div class="tbl-hdr"><div class="tbl-title">Sale Type (GA)</div></div>
-        <div class="tbl-wrap"><div id="p1-saletype-tbl"><div class="loading-inline"><div class="spinner"></div>Loading...</div></div></div>
-      </div>
-      <div class="tbl-card">
-        <div class="tbl-hdr"><div class="tbl-title">Miles at Delivery (GA)</div></div>
-        <div class="tbl-wrap"><div id="p1-miles-tbl"><div class="loading-inline"><div class="spinner"></div>Loading...</div></div></div>
+      <!-- Right: Product View + Top F&I stacked -->
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div class="tbl-card">
+          <div class="tbl-hdr"><div class="tbl-title">Product View (KPI &amp; GA)</div></div>
+          <div class="tbl-wrap"><div id="p1-prodtype-tbl"><div class="loading-inline"><div class="spinner"></div>Loading...</div></div></div>
+        </div>
+        <div class="tbl-card">
+          <div class="tbl-hdr"><div class="tbl-title">Top F&amp;I Managers by Vehicle Sale (GA)</div></div>
+          <div class="tbl-wrap"><div id="p1-fim-tbl"><div class="loading-inline"><div class="spinner"></div>Loading...</div></div></div>
+        </div>
       </div>
     </div>
   </div>
@@ -940,17 +945,17 @@ async function loadPage1(){
 
     // Breakdown tables — measures handle filtering internally
     try{
-      const r=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[N/U],${scf}"RDR",[RPM RDR Total CY],"CON",[RPM Contracts CY BE],"PEN",[RPM Contract Pen CY BE],"MSS",[RPM SG Contracts CY TAM Missed]) ORDER BY [RPM RDR Total CY] DESC`);
+      const r=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[N/U],${scf}"RDR",[RPM RDR Total CY],"CON",[RPM Contracts CY BE],"PEN",[RPM Contract Pen CY BE],"PVR",[RPM BE PVR Total CY],"MSS",[RPM SG Contracts CY TAM Missed]) ORDER BY [RPM RDR Total CY] DESC`);
       gaRender('p1-cond-tbl',breakdownTable(r,'DMS VIN[N/U]','Condition'));
     }catch(e){gaRender('p1-cond-tbl',sectionErr(e.message));}
 
     try{
-      const r=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Sale Type Group],${scf}"RDR",[RPM RDR Total CY],"CON",[RPM Contracts CY BE],"PEN",[RPM Contract Pen CY BE],"MSS",[RPM SG Contracts CY TAM Missed]) ORDER BY [RPM RDR Total CY] DESC`);
+      const r=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Sale Type Group],${scf}"RDR",[RPM RDR Total CY],"CON",[RPM Contracts CY BE],"PEN",[RPM Contract Pen CY BE],"PVR",[RPM BE PVR Total CY],"MSS",[RPM SG Contracts CY TAM Missed]) ORDER BY [RPM RDR Total CY] DESC`);
       gaRender('p1-saletype-tbl',breakdownTable(r,'DMS VIN[Sale Type Group]','Sale Type'));
     }catch(e){gaRender('p1-saletype-tbl',sectionErr(e.message));}
 
     try{
-      const r=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Miles Group],${scf}"RDR",[RPM RDR Total CY],"CON",[RPM Contracts CY BE],"PEN",[RPM Contract Pen CY BE],"MSS",[RPM SG Contracts CY TAM Missed]) ORDER BY [RPM RDR Total CY] DESC`);
+      const r=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Miles Group],${scf}"RDR",[RPM RDR Total CY],"CON",[RPM Contracts CY BE],"PEN",[RPM Contract Pen CY BE],"PVR",[RPM BE PVR Total CY],"MSS",[RPM SG Contracts CY TAM Missed]) ORDER BY [RPM RDR Total CY] DESC`);
       gaRender('p1-miles-tbl',breakdownTable(r,'DMS VIN[Miles Group]','Miles'));
     }catch(e){gaRender('p1-miles-tbl',sectionErr(e.message));}
 
@@ -1015,29 +1020,30 @@ function prodTypeTable(rows){
 }
 function breakdownTable(rows,dim,segLabel='Segment'){
   if(!rows.length)return'<div class="empty">No data</div>';
-  const tot={rdr:0,con:0,mss:0};
-  rows.forEach(r=>{tot.rdr+=(r['[RDR]']||0);tot.con+=(r['[CON]']||0);tot.mss+=(r['[MSS]']||0);});
+  const tot={rdr:0,con:0,pvr:0,mss:0};
+  rows.forEach(r=>{tot.rdr+=(r['[RDR]']||0);tot.con+=(r['[CON]']||0);tot.pvr+=(r['[PVR]']||0);tot.mss+=(r['[MSS]']||0);});
   const totPen=tot.rdr?tot.con/tot.rdr:null;
-  return`<table><thead><tr><th>${segLabel}</th><th class="td-num">RDRs</th><th class="td-num">Contracts</th><th class="td-num">Pen</th><th class="td-num">Missed</th></tr></thead><tbody>${
-    rows.map(r=>`<tr><td class="td-name">${r[dim]||'—'}</td><td class="td-num">${fmt(r['[RDR]'])}</td><td class="td-num">${fmt(r['[CON]'])}</td><td class="td-num">${fmt(r['[PEN]'],'pct')}</td><td class="td-num" style="color:var(--red)">${fmt(r['[MSS]'])}</td></tr>`).join('')
+  return`<table><thead><tr><th>${segLabel}</th><th class="td-num">RDRs</th><th class="td-num">Contracts</th><th class="td-num">Pen</th><th class="td-num">Finance PVR</th><th class="td-num">Missed</th></tr></thead><tbody>${
+    rows.map(r=>`<tr><td class="td-name">${r[dim]||'—'}</td><td class="td-num">${fmt(r['[RDR]'])}</td><td class="td-num">${fmt(r['[CON]'])}</td><td class="td-num">${fmt(r['[PEN]'],'pct')}</td><td class="td-num">${fmt(r['[PVR]'],'cur')}</td><td class="td-num" style="color:var(--red)">${fmt(r['[MSS]'])}</td></tr>`).join('')
   }
   <tr style="font-weight:700;border-top:1px solid var(--border)">
     <td class="td-name">Total</td>
     <td class="td-num">${fmt(tot.rdr)}</td>
     <td class="td-num">${fmt(tot.con)}</td>
     <td class="td-num">${fmt(totPen,'pct')}</td>
+    <td class="td-num">${fmt(tot.pvr,'cur')}</td>
     <td class="td-num" style="color:var(--red)">${fmt(tot.mss)}</td>
   </tr></tbody></table>`;
 }
 function fimTable(rows){
   if(!rows.length)return'<div class="empty">No data</div>';
-  const tot={rdr:0,con:0,mss:0};
-  rows.forEach(r=>{tot.rdr+=(r['[RDR]']||0);tot.con+=(r['[CON]']||0);tot.mss+=(r['[MSS]']||0);});
+  const tot={rdr:0,con:0,pvr:0,mss:0};
+  rows.forEach(r=>{tot.rdr+=(r['[RDR]']||0);tot.con+=(r['[CON]']||0);tot.pvr+=(r['[PVR]']||0);tot.mss+=(r['[MSS]']||0);});
   const totPen=tot.rdr?tot.con/tot.rdr:null;
   return`<table><thead><tr>
     <th>#</th><th>F&amp;I Manager</th>
     <th class="td-num">RDRs</th><th class="td-num">Contracts</th><th class="td-num">Pen</th>
-    <th class="td-num">Finance PVR</th><th class="td-num">% No Deal</th><th class="td-num">Finance Reserve</th>
+    <th class="td-num">% No Deal</th><th class="td-num">Finance PVR</th><th class="td-num">Finance Reserve</th>
     <th class="td-num">Share of Wallet</th><th class="td-num">Missed</th>
   </tr></thead><tbody>${
     rows.map((r,i)=>`<tr>
@@ -1046,14 +1052,25 @@ function fimTable(rows){
       <td class="td-num">${fmt(r['[RDR]'])}</td>
       <td class="td-num">${fmt(r['[CON]'])}</td>
       <td class="td-num">${fmt(r['[PEN]'],'pct')}</td>
-      <td class="td-num">${fmt(r['[PVR]'],'cur')}</td>
       <td class="td-num">${fmt(r['[ND]'],'pct')}</td>
+      <td class="td-num">${fmt(r['[PVR]'],'cur')}</td>
       <td class="td-num">${fmt(r['[FR]'],'cur')}</td>
       <td class="td-num">${sowBadge(r['[SOW]']||0)}</td>
       <td class="td-num" style="color:var(--red);font-weight:700">${fmt(r['[MSS]'])}</td>
     </tr>`).join('')
   }
   <tr style="font-weight:700;border-top:1px solid var(--border)">
+    <td></td><td class="td-name">Total</td>
+    <td class="td-num">${fmt(tot.rdr)}</td>
+    <td class="td-num">${fmt(tot.con)}</td>
+    <td class="td-num">${fmt(totPen,'pct')}</td>
+    <td class="td-num">—</td>
+    <td class="td-num">${fmt(tot.pvr,'cur')}</td>
+    <td class="td-num">—</td>
+    <td class="td-num">—</td>
+    <td class="td-num" style="color:var(--red);font-weight:700">${fmt(tot.mss)}</td>
+  </tr></tbody></table>`;
+}
     <td></td><td class="td-name">Total</td>
     <td class="td-num">${fmt(tot.rdr)}</td>
     <td class="td-num">${fmt(tot.con)}</td>

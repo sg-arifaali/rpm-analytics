@@ -1116,17 +1116,19 @@ async function loadPage2(){
 
     document.getElementById('p2-tbl').innerHTML=`<table><thead><tr>
       <th>SG Code</th><th>Dealer Name</th>
-      <th class="td-num">Dealer Count</th><th class="td-num">Dealer in GA</th>
+      <th class="td-num">Dealer in GA</th>
       <th class="td-num">RDRs</th><th class="td-num">Coverages</th><th class="td-num">YoY</th>
       <th class="td-num">Pen</th><th class="td-num">% Target</th>
       <th class="td-num">Visits</th><th class="td-num">GA-Missed</th><th class="td-num">SOW</th>
+      <th>Visit Summary</th>
     </tr></thead><tbody>${rows.slice(0,200).map(r=>{
       const code=r['Dealers Local[Dealer SG Code]']||'—';
       const atg=r['[ATG]']||0;
-      return`<tr onclick="loadVI('${code.replace(/'/g,"\\'")}','${(r['Dealers Local[Dealer Name]']||'').replace(/'/g,"\\'")}')">
-        <td class="td-name" style="cursor:pointer;color:var(--accent)">${code}</td>
+      return`<tr>
+        <td class="td-name" style="cursor:pointer;color:var(--accent)" onclick="loadVI('${code.replace(/'/g,"\\'")}','${(r['Dealers Local[Dealer Name]']||'').replace(/'/g,"\\'")}')">
+          ${code}
+        </td>
         <td>${r['Dealers Local[Dealer Name]']||'—'}</td>
-        <td class="td-num">${fmt(r['[TD]'])}</td>
         <td class="td-num">${fmt(r['[DGA]'])}</td>
         <td class="td-num">${fmt(r['[RDR]'])}</td>
         <td class="td-num">${fmt(r['[PCY]'])}</td>
@@ -1136,11 +1138,14 @@ async function loadPage2(){
         <td class="td-num">${fmt(r['[VIS]'])}</td>
         <td class="td-num" style="color:var(--red)">${r['[DGA]']?fmt(r['[MSS]']):'<span style="color:var(--text2);font-size:10px">N/A</span>'}</td>
         <td class="td-num">${r['[DGA]']?sowBadge(r['[SOW]']||0):'<span style="color:var(--text2);font-size:10px">N/A</span>'}</td>
+        <td id="summary-${code}" style="font-size:11px;color:var(--text2);max-width:300px;white-space:normal;cursor:pointer" 
+            onclick="loadSummary('${code.replace(/'/g,"\\'")}','${(r['Dealers Local[Dealer Name]']||'').replace(/'/g,"\\'")}')">
+          <span style="color:var(--accent)">Click to load</span>
+        </td>
       </tr>`;
     }).join('')}
     <tr style="font-weight:700;border-top:2px solid var(--border);background:var(--surface2)">
       <td></td><td class="td-name">Total</td>
-      <td class="td-num">${fmt(tot.td)}</td>
       <td class="td-num">${fmt(tot.dga)}</td>
       <td class="td-num">${fmt(tot.rdr)}</td>
       <td class="td-num">${fmt(tot.pcy)}</td>
@@ -1150,6 +1155,7 @@ async function loadPage2(){
       <td class="td-num">${fmt(tot.vis)}</td>
       <td class="td-num" style="color:var(--red)">${fmt(tot.mss)}</td>
       <td class="td-num">—</td>
+      <td></td>
     </tr>
     </tbody></table>`;
   }catch(e){
@@ -1157,6 +1163,76 @@ async function loadPage2(){
     document.getElementById('p2-tbl').innerHTML=`<div class="empty" style="color:var(--red)">${e.message}</div>`;
   }
 }
+
+async function loadSummary(code, name){
+  const el=document.getElementById(`summary-${code}`);
+  if(!el)return;
+  el.innerHTML='<span style="color:var(--accent)">⟳ Loading...</span>';
+
+  try{
+    // Fetch from Salesforce Event + Salesforce Checklist joined via Checklist Reference -> Id
+    const notes=await dax(`EVALUATE FILTER(
+      SUMMARIZECOLUMNS(
+        'Salesforce Event'[ActivityDate],
+        'Salesforce Event'[Time Scheduled Group],
+        'Salesforce Event'[Time Spent],
+        'Salesforce Event'[Internal_Notes__c],
+        'Salesforce Checklist'[Act_Value__c],
+        'Dealers Local'[Dealer SG Code]
+      ),
+      'Dealers Local'[Dealer SG Code]="${code}"
+        && 'Salesforce Checklist'[Activity]="Meeting_Recap_Comments__c"
+    ) ORDER BY 'Salesforce Event'[ActivityDate] DESC`);
+
+    if(!notes.length){
+      el.innerHTML='<span style="color:var(--text2);font-size:10px">No notes</span>';
+      return;
+    }
+
+    // Group by date — checklist may have multiple rows per event
+    const events={};
+    notes.forEach(r=>{
+      const date=r['Salesforce Event[ActivityDate]']||'';
+      if(!events[date]) events[date]={
+        date,
+        scheduled: r['Salesforce Event[Time Scheduled Group]']||'',
+        spent:     r['Salesforce Event[Time Spent]']||'',
+        notes:     r['Salesforce Event[Internal_Notes__c]']||'',
+        recap:     []
+      };
+      const av=r['Salesforce Checklist[Act_Value__c]'];
+      if(av&&av!=='null') events[date].recap.push(av);
+    });
+
+    const visitText=Object.values(events).map(e=>{
+      const parts=[`Date: ${e.date} | Scheduled: ${e.scheduled} | Time Spent: ${e.spent}`];
+      if(e.notes) parts.push(`Internal Notes: ${e.notes}`);
+      if(e.recap.length) parts.push(`Meeting Recap: ${e.recap.join(' ')}`);
+      return parts.join('\n');
+    }).join('\n\n');
+
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',
+        max_tokens:1000,
+        messages:[{
+          role:'user',
+          content:`You are summarizing RPM visit notes for dealer "${name}" (${Object.keys(events).length} visit(s)). Summarize in 2-3 sentences. Focus on: key topics discussed, action items, and relationship status. Be concise and professional.\n\n${visitText}`
+        }]
+      })
+    });
+
+    const d=await resp.json();
+    const summary=d.content?.[0]?.text||'Unable to generate summary';
+    el.innerHTML=`<span style="color:var(--text2);line-height:1.4">${summary}</span>`;
+
+  }catch(e){
+    el.innerHTML=`<span style="color:var(--red);font-size:10px">${e.message}</span>`;
+  }
+}
+
 
 async function loadVI(code,name){
   document.getElementById('p2-vi-title').textContent=`${name} (${code}) — M-3 to M+3`;

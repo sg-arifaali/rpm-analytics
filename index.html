@@ -1013,7 +1013,6 @@ function prodTypeTable(rows){
     <td class="td-num" style="color:var(--red)">${fmt(tot.mss)}</td>
   </tr></tbody></table>`;
 }
-}
 function breakdownTable(rows,dim,segLabel='Segment'){
   if(!rows.length)return'<div class="empty">No data</div>';
   const tot={rdr:0,con:0,mss:0};
@@ -1029,6 +1028,7 @@ function breakdownTable(rows,dim,segLabel='Segment'){
     <td class="td-num">${fmt(totPen,'pct')}</td>
     <td class="td-num" style="color:var(--red)">${fmt(tot.mss)}</td>
   </tr></tbody></table>`;
+}
 function fimTable(rows){
   if(!rows.length)return'<div class="empty">No data</div>';
   const tot={rdr:0,con:0,mss:0};
@@ -1062,7 +1062,6 @@ function fimTable(rows){
     <td class="td-num">—</td>
     <td class="td-num" style="color:var(--red);font-weight:700">${fmt(tot.mss)}</td>
   </tr></tbody></table>`;
-}
 }
 
 // ── PAGE 2 ─────────────────────────────────────────────────────────────

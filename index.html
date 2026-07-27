@@ -872,7 +872,7 @@ async function loadPage1(){
   function gaErr(id,e){document.getElementById(id).innerHTML=sectionErr(e.message);}
   const stfRDR=`,'DMS VIN'[Deals Exclude]="Include"`;
   const stf=`,'DMS VIN'[Deals Exclude]="Include",'DMS Coverage Mapping'[Coverage Category]="Back End"`;
-  let _gaRDR=null;
+  let _gaRDR=null, _gaFR=null, _gaPVR=null, _gaMK=null;
 
   const delay=ms=>new Promise(res=>setTimeout(res,ms));
 
@@ -902,6 +902,9 @@ async function loadPage1(){
         "MK",CALCULATE([RPM Avg Contract Markup CY BE]${g2})
       )`);
       const gpv=r[0]||{};
+      _gaFR=gpv['[FR]'];
+      _gaPVR=gpv['[BE]'];
+      _gaMK=gpv['[MK]'];
       gaRender('p1-ga-pvr',`
         <div class="kpi-card orange"><div class="kpi-lbl">Finance Reserve</div><div class="kpi-val">${fmt(gpv['[FR]'],'cur')}</div></div>
         <div class="kpi-card orange"><div class="kpi-lbl">Product PVR</div><div class="kpi-val">${fmt(gpv['[PP]'],'cur')}</div></div>
@@ -949,17 +952,17 @@ async function loadPage1(){
     // Breakdown tables — measures handle filtering internally
     try{
       const r=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[N/U],${scf}"RDR",[RPM RDR Total CY],"CON",[RPM Contracts CY BE],"PEN",[RPM Contract Pen CY BE],"PVR",[RPM BE PVR Total CY],"MSS",[RPM SG Contracts CY TAM Missed]) ORDER BY [RPM RDR Total CY] DESC`);
-      gaRender('p1-cond-tbl',breakdownTable(r,'DMS VIN[N/U]','Condition'));
+      gaRender('p1-cond-tbl',breakdownTable(r,'DMS VIN[N/U]','Condition',_gaFR,_gaPVR));
     }catch(e){gaRender('p1-cond-tbl',sectionErr(e.message));}
 
     try{
       const r=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Sale Type Group],${scf}"RDR",[RPM RDR Total CY],"CON",[RPM Contracts CY BE],"PEN",[RPM Contract Pen CY BE],"PVR",[RPM BE PVR Total CY],"MSS",[RPM SG Contracts CY TAM Missed]) ORDER BY [RPM RDR Total CY] DESC`);
-      gaRender('p1-saletype-tbl',breakdownTable(r,'DMS VIN[Sale Type Group]','Sale Type'));
+      gaRender('p1-saletype-tbl',breakdownTable(r,'DMS VIN[Sale Type Group]','Sale Type',_gaFR,_gaPVR));
     }catch(e){gaRender('p1-saletype-tbl',sectionErr(e.message));}
 
     try{
       const r=await dax(`EVALUATE SUMMARIZECOLUMNS('DMS VIN'[Miles Group],${scf}"RDR",[RPM RDR Total CY],"CON",[RPM Contracts CY BE],"PEN",[RPM Contract Pen CY BE],"PVR",[RPM BE PVR Total CY],"MSS",[RPM SG Contracts CY TAM Missed]) ORDER BY [RPM RDR Total CY] DESC`);
-      gaRender('p1-miles-tbl',breakdownTable(r,'DMS VIN[Miles Group]','Miles'));
+      gaRender('p1-miles-tbl',breakdownTable(r,'DMS VIN[Miles Group]','Miles',_gaFR,_gaPVR));
     }catch(e){gaRender('p1-miles-tbl',sectionErr(e.message));}
 
     try{
@@ -969,26 +972,24 @@ async function loadPage1(){
       const pgMonthF=F.month&&F.month.length?`FILTER('Business Dates Local',${F.month.map(m=>`'Business Dates Local'[Reporting MonthYear]="${m}"`).join('||')}),`:'';
       const pgDealerFilters=buildKTFilters().filter(f=>!f.includes('Business Dates')).map(f=>f+',').join('');
       const r=await dax(`EVALUATE SUMMARIZECOLUMNS('Product Type Local'[Product Group],${pgDateF}${pgMonthF}${pgDealerFilters}"TGT",[Target total],"PCY",[Products CY],"MISS",[ATG Number],"CON",[RPM Contracts CY BE],"SGC",[RPM SG Contracts CY],"MSS",[RPM SG Contracts CY TAM Missed],"MK",[RPM Avg Contract Markup CY BE]) ORDER BY 'Product Type Local'[Product Group] ASC`);
-      gaRender('p1-prodtype-tbl',prodTypeTable(r));
+      gaRender('p1-prodtype-tbl',prodTypeTable(r,_gaMK));
     }catch(e){gaRender('p1-prodtype-tbl',sectionErr(e.message));}
 
     try{
       const r=await dax(`EVALUATE TOPN(10,SUMMARIZECOLUMNS('DMS VIN'[Finance Manager Name],${scf}"RDR",[RPM RDR Total CY],"CON",[RPM Contracts CY BE],"PEN",[RPM Contract Pen CY BE],"PVR",[RPM BE PVR Total CY],"FR",[RPM FR PVR Total CY],"ND",[RPM % No Deal CY],"SGC",[RPM SG Contracts CY],"SOW",[RPM SG Contracts CY % of TAM],"MSS",[RPM SG Contracts CY TAM Missed]),[RPM RDR Total CY],DESC)`);
-      gaRender('p1-fim-tbl',fimTable(r));
+      gaRender('p1-fim-tbl',fimTable(r,_gaFR,_gaPVR));
     }catch(e){gaRender('p1-fim-tbl',sectionErr(e.message));}
 
   })();
 }
 
-function prodTypeTable(rows){
+function prodTypeTable(rows,tileMK=null){
   if(!rows.length)return'<div class="empty">No data</div>';
-  const tot={tgt:0,pcy:0,miss:0,con:0,sgc:0,mss:0,mk_total:0};
+  const tot={tgt:0,pcy:0,miss:0,con:0,sgc:0,mss:0};
   rows.forEach(r=>{
     tot.tgt +=(r['[TGT]']||0);tot.pcy +=(r['[PCY]']||0);tot.miss+=(r['[MISS]']||0);
     tot.con +=(r['[CON]']||0);tot.sgc +=(r['[SGC]']||0);tot.mss +=(r['[MSS]']||0);
-    tot.mk_total+=(r['[MK]']||0)*(r['[CON]']||0); // weighted sum for avg
   });
-  const totMK=tot.con?tot.mk_total/tot.con:null;
   return`<table><thead><tr>
     <th>Product Group</th>
     <th class="td-num">KPI Target</th>
@@ -1018,12 +1019,12 @@ function prodTypeTable(rows){
     <td class="td-num">${fmt(tot.pcy)}</td>
     <td class="td-num" style="color:${tot.miss<0?'var(--red)':'var(--green)'}">${fmt(tot.miss)}</td>
     <td class="td-num">${fmt(tot.con)}</td>
-    <td class="td-num">${fmt(totMK,'cur')}</td>
+    <td class="td-num">${fmt(tileMK,'cur')}</td>
     <td class="td-num">${fmt(tot.sgc)}</td>
     <td class="td-num" style="color:var(--red)">${fmt(tot.mss)}</td>
   </tr></tbody></table>`;
 }
-function breakdownTable(rows,dim,segLabel='Segment'){
+function breakdownTable(rows,dim,segLabel='Segment',tileFR=null,tilePVR=null){
   if(!rows.length)return'<div class="empty">No data</div>';
   const tot={rdr:0,con:0,mss:0};
   rows.forEach(r=>{tot.rdr+=(r['[RDR]']||0);tot.con+=(r['[CON]']||0);tot.mss+=(r['[MSS]']||0);});
@@ -1036,11 +1037,11 @@ function breakdownTable(rows,dim,segLabel='Segment'){
     <td class="td-num">${fmt(tot.rdr)}</td>
     <td class="td-num">${fmt(tot.con)}</td>
     <td class="td-num">${fmt(totPen,'pct')}</td>
-    <td class="td-num">—</td>
+    <td class="td-num">${fmt(tilePVR,'cur')}</td>
     <td class="td-num" style="color:var(--red)">${fmt(tot.mss)}</td>
   </tr></tbody></table>`;
 }
-function fimTable(rows){
+function fimTable(rows,tileFR=null,tilePVR=null){
   if(!rows.length)return'<div class="empty">No data</div>';
   const tot={rdr:0,con:0,mss:0,sgc:0,nd_count:0};
   rows.forEach(r=>{
@@ -1076,8 +1077,8 @@ function fimTable(rows){
     <td class="td-num">${fmt(tot.con)}</td>
     <td class="td-num">${fmt(totPen,'pct')}</td>
     <td class="td-num">${fmt(totND,'pct')}</td>
-    <td class="td-num">—</td>
-    <td class="td-num">—</td>
+    <td class="td-num">${fmt(tilePVR,'cur')}</td>
+    <td class="td-num">${fmt(tileFR,'cur')}</td>
     <td class="td-num">${totSOW!==null?sowBadge(totSOW):'—'}</td>
     <td class="td-num" style="color:var(--red);font-weight:700">${fmt(tot.mss)}</td>
   </tr></tbody></table>`;

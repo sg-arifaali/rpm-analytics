@@ -355,7 +355,7 @@ tbody tr:hover td{background:var(--surface2)}
   <div class="page" id="p2">
     <div class="tbl-card">
       <div class="tbl-hdr">
-        <div class="tbl-title">Dealer Performance &#x2014; KT + GA</div>
+        <div class="tbl-title">Dealer Performance (KPI &amp; GA)</div>
         <div class="tbl-sub" id="p2-sub">&#x2014;</div>
       </div>
       <div class="tbl-wrap"><div id="p2-tbl"><div class="loading-inline"><div class="spinner"></div>Loading...</div></div></div>
@@ -1177,7 +1177,7 @@ async function loadSummary(code, name){
         'Salesforce Event'[Time Scheduled Group],
         'Salesforce Event'[Time Spent],
         'Salesforce Event'[Internal_Notes__c],
-        'Salesforce Checklist'[Act_Value__c],
+        'Salesforce Checklist'[Act Value],
         'Dealers Local'[Dealer SG Code]
       ),
       'Dealers Local'[Dealer SG Code]="${code}"
@@ -1200,7 +1200,7 @@ async function loadSummary(code, name){
         notes:     r['Salesforce Event[Internal_Notes__c]']||'',
         recap:     []
       };
-      const av=r['Salesforce Checklist[Act_Value__c]'];
+      const av=r['Salesforce Checklist[Act Value]'];
       if(av&&av!=='null') events[date].recap.push(av);
     });
 

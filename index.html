@@ -360,13 +360,6 @@ tbody tr:hover td{background:var(--surface2)}
       </div>
       <div class="tbl-wrap"><div id="p2-tbl"><div class="loading-inline"><div class="spinner"></div>Loading...</div></div></div>
     </div>
-    <div class="section-label">Visit Impact &#x2014; M-3 to M+3</div>
-    <div class="tbl-card">
-      <div class="tbl-hdr">
-        <div class="tbl-title" id="p2-vi-title">Click a dealer row above to load visit impact</div>
-      </div>
-      <div id="p2-vi-content"><div class="empty">Select a dealer above</div></div>
-    </div>
   </div>
 
   <!-- PAGE 3 -->
@@ -389,14 +382,26 @@ tbody tr:hover td{background:var(--surface2)}
   <!-- PAGE 4 -->
   <div class="page" id="p4">
     <div class="tbl-card" style="padding:16px">
-      <div style="display:flex;gap:12px;align-items:center">
-        <select id="gp-dealer-select" style="flex:1;padding:9px 12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;outline:none">
-          <option value="">&#x2014; Select a dealer &#x2014;</option>
-        </select>
-        <button onclick="generateGameplan()" style="padding:9px 20px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer">Generate Gameplan</button>
+      <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+        <div class="fg">
+          <label>RPM</label>
+          <select id="gp-rpm-select" style="padding:9px 12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;outline:none;min-width:180px" onchange="onGpRpmChange()">
+            <option value="">— Select RPM —</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>State</label>
+          <select id="gp-state-select" style="padding:9px 12px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;outline:none;min-width:140px">
+            <option value="">— Select State —</option>
+          </select>
+        </div>
+        <button onclick="generateGameplans()" style="padding:9px 20px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer">
+          &#x1F3AF; Generate Gameplans
+        </button>
       </div>
+      <div id="gp-dealer-count" style="margin-top:8px;font-size:12px;color:var(--text2)"></div>
     </div>
-    <div id="p4-content"><div class="empty">Select a dealer and click Generate Gameplan</div></div>
+    <div id="p4-content"><div class="empty">Select an RPM and State, then click Generate Gameplans</div></div>
   </div>
 </div>
 
@@ -791,8 +796,7 @@ async function loadFilters(){
   populateMS('ms-state',[...s.st].sort().map(v=>({value:v,label:v})));
   populateMS('ms-oemregion',[...s.oem].sort().map(v=>({value:v,label:v})));
   populateMS('ms-dealername',FD.dealers.map(d=>({value:d.name,label:d.name})));
-  const gpSel=document.getElementById('gp-dealer-select');
-  gpSel.innerHTML='<option value="">— Select a dealer —</option>'+FD.dealers.map(d=>`<option value="${d.code}">${d.name} (${d.code})</option>`).join('');
+  initGameplanSelects();
 
   // Product Group + Product Type from Product Type Local
   const prodTypes=await dax(`EVALUATE SUMMARIZECOLUMNS('Product Type Local'[Product Group],'Product Type Local'[Product Type]) ORDER BY 'Product Type Local'[Product Group] ASC,'Product Type Local'[Product Type] ASC`);
@@ -1170,45 +1174,56 @@ async function loadSummary(code, name){
   el.innerHTML='<span style="color:var(--accent)">⟳ Loading...</span>';
 
   try{
-    // Fetch from Salesforce Event + Salesforce Checklist joined via Checklist Reference -> Id
-    const notes=await dax(`EVALUATE FILTER(
+    // Query 1 — Event data only (fast, single table)
+    const evRows=await dax(`EVALUATE FILTER(
       SUMMARIZECOLUMNS(
         'Salesforce Event'[ActivityDate],
         'Salesforce Event'[Time Scheduled Group],
         'Salesforce Event'[Time Spent],
         'Salesforce Event'[Internal_Notes__c],
-        'Salesforce Checklist'[Activity],
-        'Salesforce Checklist'[Act Value],
+        'Salesforce Event'[EventStoreNumber__c],
         'Dealers Local'[Dealer SG Code]
       ),
       'Dealers Local'[Dealer SG Code]="${code}"
     ) ORDER BY 'Salesforce Event'[ActivityDate] DESC`);
 
-    if(!notes.length){
-      el.innerHTML='<span style="color:var(--text2);font-size:10px">No notes</span>';
+    if(!evRows.length){
+      el.innerHTML='<span style="color:var(--text2);font-size:10px">No visits</span>';
       return;
     }
 
-    // Group by date — checklist may have multiple rows per event
-    const events={};
-    notes.forEach(r=>{
-      const date=r['Salesforce Event[ActivityDate]']||'';
-      if(!events[date]) events[date]={
-        date,
-        scheduled: r['Salesforce Event[Time Scheduled Group]']||'',
-        spent:     r['Salesforce Event[Time Spent]']||'',
-        notes:     r['Salesforce Event[Internal_Notes__c]']||'',
-        recap:     []
-      };
-      const av=r['Salesforce Checklist[Act Value]'];
-      const activity=r['Salesforce Checklist[Activity]'];
-      if(av&&av!=='null'&&activity==='Meeting_Recap_Comments__c') events[date].recap.push(av);
+    // Query 2 — Checklist recap comments (Meeting_Recap_Comments__c activity only)
+    const clRows=await dax(`EVALUATE FILTER(
+      SUMMARIZECOLUMNS(
+        'Salesforce Checklist'[Checklist_Reference__c],
+        'Salesforce Checklist'[Act Value]
+      ),
+      'Salesforce Checklist'[Activity]="Meeting_Recap_Comments__c"
+        && RELATED('Dealers Local'[Dealer SG Code])="${code}"
+    )`).catch(function(){return[];}); // non-fatal if checklist query fails
+
+    // Map checklist by reference id
+    const clMap={};
+    clRows.forEach(r=>{
+      const ref=r['Salesforce Checklist[Checklist_Reference__c]'];
+      const val=r['Salesforce Checklist[Act Value]'];
+      if(ref&&val&&val!=='null'){
+        if(!clMap[ref])clMap[ref]=[];
+        clMap[ref].push(val);
+      }
     });
 
-    const visitText=Object.values(events).map(e=>{
-      const parts=[`Date: ${e.date} | Scheduled: ${e.scheduled} | Time Spent: ${e.spent}`];
-      if(e.notes) parts.push(`Internal Notes: ${e.notes}`);
-      if(e.recap.length) parts.push(`Meeting Recap: ${e.recap.join(' ')}`);
+    // Build visit context
+    const visitText=evRows.map(r=>{
+      const date=r['Salesforce Event[ActivityDate]']||'';
+      const sched=r['Salesforce Event[Time Scheduled Group]']||'';
+      const spent=r['Salesforce Event[Time Spent]']||'';
+      const notes=r['Salesforce Event[Internal_Notes__c]']||'';
+      const ref=r['Salesforce Event[EventStoreNumber__c]']||'';
+      const recap=(clMap[ref]||[]).join(' ');
+      const parts=[`Date: ${date} | Scheduled: ${sched} | Time Spent: ${spent}`];
+      if(notes) parts.push(`Internal Notes: ${notes}`);
+      if(recap) parts.push(`Meeting Recap: ${recap}`);
       return parts.join('\n');
     }).join('\n\n');
 
@@ -1220,7 +1235,7 @@ async function loadSummary(code, name){
         max_tokens:1000,
         messages:[{
           role:'user',
-          content:`You are summarizing RPM visit notes for dealer "${name}" (${Object.keys(events).length} visit(s)). Summarize in 2-3 sentences. Focus on: key topics discussed, action items, and relationship status. Be concise and professional.\n\n${visitText}`
+          content:`Summarize these ${evRows.length} RPM visit(s) for dealer "${name}" in 2-3 sentences. Focus on key topics, action items, and relationship status. Be concise and professional.\n\n${visitText}`
         }]
       })
     });
@@ -1233,7 +1248,6 @@ async function loadSummary(code, name){
     el.innerHTML=`<span style="color:var(--red);font-size:10px">${e.message}</span>`;
   }
 }
-
 
 async function loadVI(code,name){
   document.getElementById('p2-vi-title').textContent=`${name} (${code}) — M-3 to M+3`;
@@ -1317,51 +1331,174 @@ async function loadPage3(){
 }
 
 // ── PAGE 4 ─────────────────────────────────────────────────────────────
-async function generateGameplan(){
-  const code=document.getElementById('gp-dealer-select').value;
-  if(!code){document.getElementById('p4-content').innerHTML='<div class="empty">Please select a dealer first</div>';return;}
-  const name=FD.dealers.find(d=>d.code===code)?.name||code;
-  document.getElementById('p4-content').innerHTML='<div class="loading-inline"><div class="spinner"></div>Analyzing dealer data...</div>';
+// Populate RPM and State dropdowns for gameplan page from FD cache
+function initGameplanSelects(){
+  const rpms=[...new Set(FD.dealerRows.map(r=>r.rpm).filter(Boolean))].sort();
+  const gpRpm=document.getElementById('gp-rpm-select');
+  if(gpRpm) rpms.forEach(r=>{const o=document.createElement('option');o.value=r;o.textContent=r;gpRpm.appendChild(o);});
+}
+
+function onGpRpmChange(){
+  const rpm=document.getElementById('gp-rpm-select').value;
+  const stateSel=document.getElementById('gp-state-select');
+  stateSel.innerHTML='<option value="">— Select State —</option>';
+  document.getElementById('gp-dealer-count').textContent='';
+  if(!rpm)return;
+  const states=[...new Set(FD.dealerRows.filter(r=>r.rpm===rpm).map(r=>r.st).filter(Boolean))].sort();
+  states.forEach(s=>{const o=document.createElement('option');o.value=s;o.textContent=s;stateSel.appendChild(o);});
+  stateSel.onchange=()=>{
+    const st=stateSel.value;
+    if(!st)return;
+    const dealers=FD.dealerRows.filter(r=>r.rpm===rpm&&r.st===st);
+    document.getElementById('gp-dealer-count').textContent=`${dealers.length} dealer(s) in ${st} for ${rpm}`;
+  };
+}
+
+async function generateGameplans(){
+  const rpm=document.getElementById('gp-rpm-select').value;
+  const state=document.getElementById('gp-state-select').value;
+  if(!rpm||!state){
+    document.getElementById('p4-content').innerHTML='<div class="empty">Please select both an RPM and a State</div>';
+    return;
+  }
+
+  // Get dealers for this RPM + State from cache
+  const dealers=FD.dealerRows.filter(r=>r.rpm===rpm&&r.st===state);
+  if(!dealers.length){
+    document.getElementById('p4-content').innerHTML='<div class="empty">No dealers found for this RPM and State</div>';
+    return;
+  }
+
+  document.getElementById('p4-content').innerHTML=`<div class="loading-inline"><div class="spinner"></div>Loading performance data for ${dealers.length} dealers...</div>`;
+
   try{
-    const kt=await dax(`EVALUATE FILTER(SUMMARIZECOLUMNS(
-      'Dealers Local'[Dealer SG Code],'Dealers Local'[RPM],
-      "COV",[Products CY],"PLY",[Products LY],"PEN",[Product Pen CY],
-      "ADM",[SG Admin CY],"ATG",[ATG %],"VIS",[SF CL Sum Actual RPM],"EXP",[Expenses RPM]
-    ),'Dealers Local'[Dealer SG Code]="${code}")`);
-    const ga=await dax(`EVALUATE FILTER(SUMMARIZECOLUMNS(
-      'DMS Dealer Mapping'[Dealer SG Code],
-      "CON",[RPM Contracts CY BE],"PEN",[RPM Contract Pen CY BE],"SOW",[RPM SG Contracts CY % of TAM],
-      "MSS",[RPM SG Contracts CY TAM Missed],"MSSA",[RPM SG Contracts CY TAM Missed Annual],"ND",[RPM % No Deal CY]
-    ),'DMS Dealer Mapping'[Dealer SG Code]="${code}")`);
-    const fim=await dax(`EVALUATE TOPN(5,FILTER(SUMMARIZECOLUMNS(
-      'DMS VIN'[Finance Manager Name],'DMS Dealer Mapping'[Dealer SG Code],
-      "RDR",[RPM RDR Total CY],"MSS",[RPM SG Contracts CY TAM Missed],"SOW",[RPM SG Contracts CY % of TAM]
-    ),'DMS Dealer Mapping'[Dealer SG Code]="${code}"),[RPM SG Contracts CY TAM Missed],DESC)`);
-    const k=kt[0]||{},g=ga[0]||{};
-    const rpm=k['Dealers Local[RPM]']||'Unknown RPM';
-    const sow=g['[SOW]']||0,missed=g['[MSS]']||0,atg=k['[ATG]']||0;
-    const yoyChg=k['[PLY]']>0?((k['[COV]']-k['[PLY]'])/k['[PLY]']*100).toFixed(1):null;
-    const priorities=[];
-    if(sow<0.3)priorities.push({p:1,text:`Share of Wallet critically low at ${fmt(sow,'pct')} — focus on converting more deals to SG products`});
-    if(missed>50)priorities.push({p:1,text:`${fmt(missed)} contracts missed (${fmt(g['[MSSA]'])} annualized) — significant revenue opportunity`});
-    if(atg<0.8)priorities.push({p:2,text:`Target attainment at ${fmt(atg,'pct')} — below 80%, review product mix with F&I team`});
-    if((g['[ND]']||0)>0.3)priorities.push({p:2,text:`${fmt(g['[ND]'],'pct')} of deals have no back-end product — coach F&I managers`});
-    if(yoyChg&&parseFloat(yoyChg)<0)priorities.push({p:1,text:`Volume down ${Math.abs(yoyChg)}% vs last year — diagnose root cause`});
-    if(!priorities.length)priorities.push({p:3,text:`Performance is on track — focus on maintaining execution and finding incremental growth`});
-    document.getElementById('p4-content').innerHTML=`<div class="gp-card">
-      <div class="gp-name">${name}</div>
-      <div class="gp-meta">SG Code: ${code} · RPM: ${rpm}</div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
-        <div class="kpi-card ${sow>=0.5?'green':'red'}"><div class="kpi-lbl">Share of Wallet</div><div class="kpi-val">${fmt(sow,'pct')}</div></div>
-        <div class="kpi-card ${missed>50?'red':'yellow'}"><div class="kpi-lbl">Missed Contracts</div><div class="kpi-val">${fmt(missed)}</div></div>
-        <div class="kpi-card ${atg>=1?'green':'yellow'}"><div class="kpi-lbl">% of Target</div><div class="kpi-val">${fmt(atg,'pct')}</div></div>
-        <div class="kpi-card"><div class="kpi-lbl">YoY Volume</div><div class="kpi-val" style="color:${yoyChg&&parseFloat(yoyChg)<0?'var(--red)':'var(--green)'}">${yoyChg?`${parseFloat(yoyChg)>=0?'+':''}${yoyChg}%`:'—'}</div></div>
+    const codes=dealers.map(d=>`"${d.name}"`).join(',');
+    const codeFilter=`FILTER(ALL('Dealers Local'),'Dealers Local'[RPM]="${rpm}"&&'Dealers Local'[State]="${state}")`;
+
+    // Fetch KT + GA performance for all dealers in this RPM+State at once
+    const [ktRows, gaRows] = await Promise.all([
+      dax(`EVALUATE SUMMARIZECOLUMNS(
+        'Dealers Local'[Dealer SG Code],'Dealers Local'[Dealer Name],
+        ${codeFilter},
+        "COV",[Products CY],"PLY",[Products LY],"PEN",[Product Pen CY],
+        "ATG",[ATG %],"VIS",[SF CL Sum Actual RPM],"RDR",[RDR for Pen CY]
+      ) ORDER BY [Products CY] DESC`),
+      dax(`EVALUATE SUMMARIZECOLUMNS(
+        'DMS Dealer Mapping'[Dealer SG Code],
+        ${codeFilter},
+        "CON",[RPM Contracts CY BE],"SOW",[RPM SG Contracts CY % of TAM],
+        "MSS",[RPM SG Contracts CY TAM Missed],"ND",[RPM % No Deal CY]
+      )`)
+    ]);
+
+    // Map GA data by dealer code
+    const gaMap={};
+    gaRows.forEach(r=>{ gaMap[r['DMS Dealer Mapping[Dealer SG Code]']]=r; });
+
+    // Calculate peer averages for context
+    const peer={cov:0,pen:0,sow:0,atg:0,n:ktRows.length};
+    ktRows.forEach(r=>{
+      peer.cov+=(r['[COV]']||0);
+      peer.pen+=(r['[PEN]']||0);
+      peer.atg+=(r['[ATG]']||0);
+    });
+    gaRows.forEach(r=>{ peer.sow+=(r['[SOW]']||0); });
+    peer.pen=peer.n?peer.pen/peer.n:0;
+    peer.atg=peer.n?peer.atg/peer.n:0;
+    peer.sow=gaRows.length?peer.sow/gaRows.length:0;
+
+    // Build HTML — one card per dealer
+    const cards=ktRows.map(r=>{
+      const code=r['Dealers Local[Dealer SG Code]']||'';
+      const name=r['Dealers Local[Dealer Name]']||code;
+      const g=gaMap[code]||{};
+      const cov=r['[COV]']||0, ply=r['[PLY]']||0;
+      const pen=r['[PEN]']||0, atg=r['[ATG]']||0;
+      const sow=g['[SOW]']||0, missed=g['[MSS]']||0;
+      const nd=g['[ND]']||0;
+      const yoy=ply?(cov-ply):null;
+
+      // Priority flags vs peers
+      const flags=[];
+      if(sow<peer.sow*0.8) flags.push({p:1,t:`SOW ${fmt(sow,'pct')} — below RPM avg (${fmt(peer.sow,'pct')})`});
+      if(missed>50) flags.push({p:1,t:`${fmt(missed)} contracts missed`});
+      if(atg<0.8) flags.push({p:2,t:`Target attainment ${fmt(atg,'pct')} — below 80%`});
+      if(nd>0.3) flags.push({p:2,t:`${fmt(nd,'pct')} deals with no product`});
+      if(yoy!==null&&yoy<0) flags.push({p:2,t:`Volume down ${fmt(Math.abs(yoy))} vs LY`});
+      if(pen>peer.pen) flags.push({p:3,t:`Pen ${fmt(pen,'pct')} — above RPM avg ✓`});
+      if(!flags.length) flags.push({p:3,t:'Performance on track — maintain execution'});
+
+      return`<div class="gp-card" style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:start">
+          <div>
+            <div class="gp-name">${name}</div>
+            <div class="gp-meta">SG Code: ${code} · ${state}</div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;text-align:center">
+            <div><div style="font-size:9px;color:var(--text2)">Coverages</div><div style="font-size:14px;font-weight:700">${fmt(cov)}</div></div>
+            <div><div style="font-size:9px;color:var(--text2)">Pen</div><div style="font-size:14px;font-weight:700">${fmt(pen,'pct')}</div></div>
+            <div><div style="font-size:9px;color:var(--text2)">% Target</div><div style="font-size:14px;font-weight:700;color:${atg>=1?'var(--green)':atg>=0.8?'var(--yellow)':'var(--red)'}">${fmt(atg,'pct')}</div></div>
+            <div><div style="font-size:9px;color:var(--text2)">SOW</div><div style="font-size:14px;font-weight:700;color:${sow>=0.5?'var(--green)':sow>=0.25?'var(--yellow)':'var(--red)'}">${fmt(sow,'pct')}</div></div>
+            <div><div style="font-size:9px;color:var(--text2)">Missed</div><div style="font-size:14px;font-weight:700;color:var(--red)">${fmt(missed)}</div></div>
+          </div>
+        </div>
+        <div style="margin-top:12px">
+          ${flags.sort((a,b)=>a.p-b.p).map(f=>`<div class="gp-item"><div class="gp-priority pri-${f.p}">${f.p}</div><div class="gp-text">${f.t}</div></div>`).join('')}
+        </div>
+        <div id="gp-ai-${code}" style="margin-top:8px;padding:8px;background:var(--surface2);border-radius:6px;font-size:12px;color:var(--text2)">
+          <span style="color:var(--accent);cursor:pointer" onclick="generateAIGameplan('${code}','${name.replace(/'/g,"\\'")}',${JSON.stringify({cov,ply,pen,atg,sow,missed,nd,peerPen:peer.pen,peerSow:peer.sow,peerAtg:peer.atg}).replace(/"/g,'&quot;')})">
+            ✨ Generate AI Gameplan
+          </span>
+        </div>
+      </div>`;
+    }).join('');
+
+    document.getElementById('p4-content').innerHTML=`
+      <div style="padding:8px 0 12px;display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:13px;font-weight:700">${rpm} — ${state} (${ktRows.length} dealers)</div>
+        <div style="font-size:11px;color:var(--text2)">Peer avg: Pen ${fmt(peer.pen,'pct')} | SOW ${fmt(peer.sow,'pct')} | Target ${fmt(peer.atg,'pct')}</div>
       </div>
-      <div class="gp-section-title">Priority Actions for ${rpm}</div>
-      ${priorities.sort((a,b)=>a.p-b.p).map(p=>`<div class="gp-item"><div class="gp-priority pri-${p.p}">${p.p}</div><div class="gp-text">${p.text}</div></div>`).join('')}
-      ${fim.length?`<div class="gp-section-title">F&amp;I Manager Focus</div>${fim.map((f,i)=>`<div class="gp-item"><div class="gp-priority pri-${i<2?1:2}">${i+1}</div><div class="gp-text"><strong>${f['DMS VIN[Finance Manager Name]']||'Unknown'}</strong> — ${fmt(f['[RDR]'])} vehicle sales, ${fmt(f['[MSS]'])} missed contracts, SOW: ${fmt(f['[SOW]'],'pct')}</div></div>`).join('')}`:''}
-    </div>`;
-  }catch(e){document.getElementById('p4-content').innerHTML=`<div class="empty" style="color:var(--red)">${e.message}</div>`;}
+      ${cards}`;
+
+  }catch(e){
+    document.getElementById('p4-content').innerHTML=`<div class="empty" style="color:var(--red)">${e.message}</div>`;
+  }
+}
+
+async function generateAIGameplan(code, name, metrics){
+  const el=document.getElementById(`gp-ai-${code}`);
+  if(!el)return;
+  el.innerHTML='<span style="color:var(--accent)">✨ Generating AI gameplan...</span>';
+
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-6',
+        max_tokens:600,
+        messages:[{
+          role:'user',
+          content:`You are an RPM (Relationship Performance Manager) coach at Safe-Guard Products. Generate a specific, actionable visit gameplan for dealer "${name}".
+
+Performance data:
+- Coverages CY: ${metrics.cov} (LY: ${metrics.ply}, YoY: ${metrics.ply?(metrics.cov-metrics.ply):0})
+- Penetration: ${(metrics.pen*100).toFixed(1)}% (RPM avg: ${(metrics.peerPen*100).toFixed(1)}%)
+- Target Attainment: ${(metrics.atg*100).toFixed(1)}%
+- Share of Wallet: ${(metrics.sow*100).toFixed(1)}% (RPM avg: ${(metrics.peerSow*100).toFixed(1)}%)
+- Missed Contracts: ${metrics.missed}
+- % No Back-End Product: ${(metrics.nd*100).toFixed(1)}%
+
+Provide 3-4 specific talking points and action items for the RPM's next visit. Be direct and practical. Format as bullet points.`
+        }]
+      })
+    });
+    const d=await resp.json();
+    const text=d.content?.[0]?.text||'Unable to generate gameplan';
+    el.innerHTML=`<div style="white-space:pre-wrap;line-height:1.6">${text}</div>`;
+  }catch(e){
+    el.innerHTML=`<span style="color:var(--red);font-size:11px">${e.message}</span>`;
+  }
 }
 
 // ── SORTABLE TABLES — click any column header to sort ─────────────────

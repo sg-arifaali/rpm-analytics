@@ -973,7 +973,7 @@ async function loadPage1(){
     }catch(e){gaRender('p1-prodtype-tbl',sectionErr(e.message));}
 
     try{
-      const r=await dax(`EVALUATE TOPN(10,SUMMARIZECOLUMNS('DMS VIN'[Finance Manager Name],${scf}"RDR",[RPM RDR Total CY],"CON",[RPM Contracts CY BE],"PEN",[RPM Contract Pen CY BE],"PVR",[RPM BE PVR Total CY],"FR",[RPM FR PVR Total CY],"ND",[RPM % No Deal CY],"NDC",[RPM No Deal Count CY],"SGC",[RPM SG Contracts CY],"SOW",[RPM SG Contracts CY % of TAM],"MSS",[RPM SG Contracts CY TAM Missed]),[RPM RDR Total CY],DESC)`);
+      const r=await dax(`EVALUATE TOPN(10,SUMMARIZECOLUMNS('DMS VIN'[Finance Manager Name],${scf}"RDR",[RPM RDR Total CY],"CON",[RPM Contracts CY BE],"PEN",[RPM Contract Pen CY BE],"PVR",[RPM BE PVR Total CY],"FR",[RPM FR PVR Total CY],"ND",[RPM % No Deal CY],"SGC",[RPM SG Contracts CY],"SOW",[RPM SG Contracts CY % of TAM],"MSS",[RPM SG Contracts CY TAM Missed]),[RPM RDR Total CY],DESC)`);
       gaRender('p1-fim-tbl',fimTable(r));
     }catch(e){gaRender('p1-fim-tbl',sectionErr(e.message));}
 
@@ -1025,8 +1025,8 @@ function prodTypeTable(rows){
 }
 function breakdownTable(rows,dim,segLabel='Segment'){
   if(!rows.length)return'<div class="empty">No data</div>';
-  const tot={rdr:0,con:0,pvr:0,mss:0};
-  rows.forEach(r=>{tot.rdr+=(r['[RDR]']||0);tot.con+=(r['[CON]']||0);tot.pvr+=(r['[PVR]']||0);tot.mss+=(r['[MSS]']||0);});
+  const tot={rdr:0,con:0,mss:0};
+  rows.forEach(r=>{tot.rdr+=(r['[RDR]']||0);tot.con+=(r['[CON]']||0);tot.mss+=(r['[MSS]']||0);});
   const totPen=tot.rdr?tot.con/tot.rdr:null;
   return`<table><thead><tr><th>${segLabel}</th><th class="td-num">RDRs</th><th class="td-num">Contracts</th><th class="td-num">Pen</th><th class="td-num">Finance PVR</th><th class="td-num">Missed</th></tr></thead><tbody>${
     rows.map(r=>`<tr><td class="td-name">${r[dim]||'—'}</td><td class="td-num">${fmt(r['[RDR]'])}</td><td class="td-num">${fmt(r['[CON]'])}</td><td class="td-num">${fmt(r['[PEN]'],'pct')}</td><td class="td-num">${fmt(r['[PVR]'],'cur')}</td><td class="td-num" style="color:var(--red)">${fmt(r['[MSS]'])}</td></tr>`).join('')
@@ -1036,20 +1036,20 @@ function breakdownTable(rows,dim,segLabel='Segment'){
     <td class="td-num">${fmt(tot.rdr)}</td>
     <td class="td-num">${fmt(tot.con)}</td>
     <td class="td-num">${fmt(totPen,'pct')}</td>
-    <td class="td-num">${fmt(tot.pvr,'cur')}</td>
+    <td class="td-num">—</td>
     <td class="td-num" style="color:var(--red)">${fmt(tot.mss)}</td>
   </tr></tbody></table>`;
 }
 function fimTable(rows){
   if(!rows.length)return'<div class="empty">No data</div>';
-  const tot={rdr:0,con:0,mss:0,ndc:0,sgc:0};
+  const tot={rdr:0,con:0,mss:0,sgc:0,nd_count:0};
   rows.forEach(r=>{
     tot.rdr+=(r['[RDR]']||0);tot.con+=(r['[CON]']||0);
-    tot.mss+=(r['[MSS]']||0);tot.ndc+=(r['[NDC]']||0);
-    tot.sgc+=(r['[SGC]']||0);
+    tot.mss+=(r['[MSS]']||0);tot.sgc+=(r['[SGC]']||0);
+    tot.nd_count+=((r['[RDR]']||0)*(r['[ND]']||0)); // RDRs × % No Deal = No Deal count
   });
   const totPen=tot.rdr?tot.con/tot.rdr:null;
-  const totND=tot.rdr?tot.ndc/tot.rdr:null;
+  const totND=tot.rdr?tot.nd_count/tot.rdr:null;
   const totSOW=tot.con?tot.sgc/tot.con:null;
   return`<table><thead><tr>
     <th>#</th><th>F&amp;I Manager</th>

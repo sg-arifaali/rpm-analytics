@@ -97,7 +97,10 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .tbl-wrap{overflow-x:auto;max-height:420px;overflow-y:auto}
 table{width:100%;border-collapse:collapse}
 thead{position:sticky;top:0;z-index:10}
-th{padding:8px 14px;text-align:left;font-size:10px;color:var(--accent);background:var(--surface2);border-bottom:1px solid var(--border);white-space:nowrap;font-weight:700}
+th{padding:8px 14px;text-align:left;font-size:10px;color:var(--accent);background:var(--surface2);border-bottom:1px solid var(--border);white-space:nowrap;font-weight:700;cursor:pointer;user-select:none}
+th:hover{color:var(--text)}
+th.sort-asc::after{content:' ▲';font-size:8px}
+th.sort-desc::after{content:' ▼';font-size:8px}
 td{padding:8px 14px;border-bottom:1px solid var(--bg);color:var(--text);white-space:nowrap}
 tr:last-child td{border-bottom:none}
 tbody tr:hover td{background:var(--surface2)}
@@ -1044,7 +1047,7 @@ function fimTable(rows){
     <th>#</th><th>F&amp;I Manager</th>
     <th class="td-num">RDRs</th><th class="td-num">Contracts</th><th class="td-num">Pen</th>
     <th class="td-num">% No Deal</th><th class="td-num">Finance PVR</th><th class="td-num">Finance Reserve</th>
-    <th class="td-num">Share of Wallet</th><th class="td-num">Missed</th>
+    <th class="td-num">SOW</th><th class="td-num">Missed</th>
   </tr></thead><tbody>${
     rows.map((r,i)=>`<tr>
       <td style="color:var(--text2);font-weight:700">${i+1}</td>
@@ -1103,7 +1106,7 @@ async function loadPage2(){
     const totPen=tot.rdr?tot.pcy/tot.rdr:null;
 
     document.getElementById('p2-tbl').innerHTML=`<table><thead><tr>
-      <th>SG Code</th><th>Dealer Name</th><th>Brand Group</th>
+      <th>SG Code</th><th>Dealer Name</th>
       <th class="td-num">Dealer Count</th><th class="td-num">Dealer in GA</th>
       <th class="td-num">RDRs</th><th class="td-num">Coverages</th><th class="td-num">YoY</th>
       <th class="td-num">Pen</th><th class="td-num">% Target</th>
@@ -1114,7 +1117,6 @@ async function loadPage2(){
       return`<tr onclick="loadVI('${code.replace(/'/g,"\\'")}','${(r['Dealers Local[Dealer Name]']||'').replace(/'/g,"\\'")}')">
         <td class="td-name" style="cursor:pointer;color:var(--accent)">${code}</td>
         <td>${r['Dealers Local[Dealer Name]']||'—'}</td>
-        <td>${r['Dealers Local[Brand Group]']||'—'}</td>
         <td class="td-num">${fmt(r['[TD]'])}</td>
         <td class="td-num">${fmt(r['[DGA]'])}</td>
         <td class="td-num">${fmt(r['[RDR]'])}</td>
@@ -1128,7 +1130,7 @@ async function loadPage2(){
       </tr>`;
     }).join('')}
     <tr style="font-weight:700;border-top:2px solid var(--border);background:var(--surface2)">
-      <td></td><td class="td-name">Total</td><td></td>
+      <td></td><td class="td-name">Total</td>
       <td class="td-num">${fmt(tot.td)}</td>
       <td class="td-num">${fmt(tot.dga)}</td>
       <td class="td-num">${fmt(tot.rdr)}</td>
@@ -1275,6 +1277,36 @@ async function generateGameplan(){
     </div>`;
   }catch(e){document.getElementById('p4-content').innerHTML=`<div class="empty" style="color:var(--red)">${e.message}</div>`;}
 }
+
+// ── SORTABLE TABLES — click any column header to sort ─────────────────
+document.addEventListener('click',e=>{
+  const th=e.target.closest('th');
+  if(!th)return;
+  const table=th.closest('table');
+  if(!table)return;
+  const tbody=table.querySelector('tbody');
+  if(!tbody)return;
+  const ths=[...th.closest('tr').querySelectorAll('th')];
+  const col=ths.indexOf(th);
+  const asc=th.classList.contains('sort-desc')||!th.classList.contains('sort-asc');
+  // Remove sort classes from all headers in this table
+  ths.forEach(h=>{h.classList.remove('sort-asc','sort-desc');});
+  th.classList.add(asc?'sort-asc':'sort-desc');
+  // Sort all rows except last (total row)
+  const rows=[...tbody.querySelectorAll('tr')];
+  const totalRow=rows[rows.length-1];
+  const dataRows=rows.slice(0,-1);
+  dataRows.sort((a,b)=>{
+    const av=a.cells[col]?.textContent.trim().replace(/[$,%▲▼\s]/g,'')||'';
+    const bv=b.cells[col]?.textContent.trim().replace(/[$,%▲▼\s]/g,'')||'';
+    const an=parseFloat(av.replace(/,/g,''));
+    const bn=parseFloat(bv.replace(/,/g,''));
+    if(!isNaN(an)&&!isNaN(bn))return asc?an-bn:bn-an;
+    return asc?av.localeCompare(bv):bv.localeCompare(av);
+  });
+  dataRows.forEach(r=>tbody.appendChild(r));
+  if(totalRow)tbody.appendChild(totalRow); // keep total at bottom
+});
 
 // ── ACTIVE PAGE TRACKING ───────────────────────────────────────────────
 let _activePage='p1';

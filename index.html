@@ -1531,12 +1531,18 @@ Be direct, specific, and practical. Use bullet points.`;
   try{
     // Route through Cloudflare Worker to avoid CORS
     const resp=await fetch(`${WORKER}?claude=1`,{
-      method:'POST'  ,
+      method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({prompt})
     });
-    const d=await resp.json();
-    const text=d.text||d.content?.[0]?.text||'Unable to generate gameplan'  ;
+    const raw=await resp.text();
+    let d;
+    try{d=JSON.parse(raw);}catch(pe){
+      el.innerHTML=`<span style="color:var(--red);font-size:11px">Worker parse error: ${raw.substring(0,200)}</span>`;
+      return;
+    }
+    if(d.error) throw new Error(d.error);
+    const text=d.text||(d.content&&d.content[0]&&d.content[0].text)||`Raw: ${JSON.stringify(d).substring(0,300)}`;
     el.innerHTML=`<div style="white-space:pre-wrap;line-height:1.6;color:var(--text)">${text}</div>`;
   }catch(e){
     el.innerHTML=`<span style="color:var(--red);font-size:11px">Error: ${e.message}</span>`;

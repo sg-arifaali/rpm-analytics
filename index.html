@@ -1163,44 +1163,47 @@ async function loadSummary(code, name){
   el.innerHTML='<span style="color:var(--accent)">⟳ Loading...</span>';
 
   try{
-    // Single query — Event data including Comments field
-    const evRows=await dax(`EVALUATE FILTER(
-      SUMMARIZECOLUMNS(
-        'Salesforce Event'[ActivityDate],
-        'Salesforce Event'[Time Scheduled Group],
-        'Salesforce Event'[Time Spent],
-        'Salesforce Event'[Internal_Notes__c],
-        'Salesforce Event'[EventStoreNumber__c],
-        'Salesforce Event'[Comments],
-        'Dealers Local'[Dealer SG Code]
-      ),
-      'Dealers Local'[Dealer SG Code]="${code}"
-    ) ORDER BY 'Salesforce Event'[ActivityDate] DESC`);
+    // Fast per-dealer lookup — CALCULATETABLE+SELECTCOLUMNS avoids full-table SUMMARIZECOLUMNS scan
+    const evRows=await dax(`EVALUATE
+      TOPN(10,
+        CALCULATETABLE(
+          SELECTCOLUMNS(
+            'Salesforce Event',
+            "ActivityDate",  'Salesforce Event'[ActivityDate],
+            "Scheduled",     'Salesforce Event'[Time Scheduled Group],
+            "TimeSpent",     'Salesforce Event'[Time Spent],
+            "Notes",         'Salesforce Event'[Internal_Notes__c],
+            "Comments",      'Salesforce Event'[Comments]
+          ),
+          FILTER('Dealers Local','Dealers Local'[Dealer SG Code]="${code}")
+        ),
+        [ActivityDate], DESC
+      )`);
 
     if(!evRows.length){
       el.innerHTML='<span style="color:var(--text2);font-size:10px">No visits</span>';
       return;
     }
 
-    // Build visit context from event rows only (capped at 10 most recent)
-    const visitText=evRows.slice(0,10).map(r=>{
-      const date     = r['Salesforce Event[ActivityDate]']        ||'';
-      const sched    = r['Salesforce Event[Time Scheduled Group]']||'';
-      const spent    = r['Salesforce Event[Time Spent]']          ||'';
-      const notes    = r['Salesforce Event[Internal_Notes__c]']   ||'';
-      const comments = r['Salesforce Event[Comments]']            ||'';
+    // Build visit context from event rows
+    const visitText=evRows.map(r=>{
+      const date     = r['[ActivityDate]']||'';
+      const sched    = r['[Scheduled]']   ||'';
+      const spent    = r['[TimeSpent]']   ||'';
+      const notes    = r['[Notes]']       ||'';
+      const comments = r['[Comments]']    ||'';
       const parts=[`Date: ${date} | Scheduled: ${sched} | Time Spent: ${spent}`];
       if(notes)    parts.push(`Notes: ${notes}`);
       if(comments) parts.push(`Comments: ${comments}`);
       return parts.join('\n');
     }).join('\n\n');
 
-    // Route through Cloudflare Worker (avoids CORS + keeps API key server-side)
+    // Route through Cloudflare Worker — keeps API key server-side, avoids CORS
     const resp=await fetch(`${WORKER}?claude=1`,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        prompt:`Summarize these ${Math.min(evRows.length,10)} RPM visit(s) for dealer "${name}" in 2-3 sentences. Focus on key topics, action items, and relationship status. Be concise and professional.\n\n${visitText}`
+        prompt:`Summarize these ${evRows.length} RPM visit(s) for dealer "${name}" in 2-3 sentences. Focus on key topics, action items, and relationship status. Be concise and professional.\n\n${visitText}`
       })
     });
 

@@ -1068,9 +1068,45 @@ async function loadPage2(){
   document.getElementById('p2-tbl').innerHTML='<div class="loading-inline"><div class="spinner"></div>Loading...</div>';
   try{
     const c=ktf();
+
+    // Build direct row filters for Dealers Local — these restrict which rows appear,
+    // unlike the ALL() filters in ktf() which only affect measure context
+    const rowFilters=[];
+    if(F.rpm.length)       rowFilters.push(F.rpm.length===1
+      ? `'Dealers Local'[RPM]="${F.rpm[0]}"`
+      : F.rpm.map(v=>`'Dealers Local'[RPM]="${v}"`).join('||'));
+    if(F.brandGroup.length) rowFilters.push(F.brandGroup.length===1
+      ? `'Dealers Local'[Brand Group]="${F.brandGroup[0]}"`
+      : F.brandGroup.map(v=>`'Dealers Local'[Brand Group]="${v}"`).join('||'));
+    if(F.brand.length)      rowFilters.push(F.brand.length===1
+      ? `'Dealers Local'[Brand]="${F.brand[0]}"`
+      : F.brand.map(v=>`'Dealers Local'[Brand]="${v}"`).join('||'));
+    if(F.acctMgr.length)    rowFilters.push(F.acctMgr.length===1
+      ? `'Dealers Local'[Account Manager]="${F.acctMgr[0]}"`
+      : F.acctMgr.map(v=>`'Dealers Local'[Account Manager]="${v}"`).join('||'));
+    if(F.dealerCat.length)  rowFilters.push(F.dealerCat.length===1
+      ? `'Dealers Local'[Dealer Category]="${F.dealerCat[0]}"`
+      : F.dealerCat.map(v=>`'Dealers Local'[Dealer Category]="${v}"`).join('||'));
+    if(F.dealerGroup.length) rowFilters.push(F.dealerGroup.length===1
+      ? `'Dealers Local'[Dealer Group]="${F.dealerGroup[0]}"`
+      : F.dealerGroup.map(v=>`'Dealers Local'[Dealer Group]="${v}"`).join('||'));
+    if(F.oemRegion.length)  rowFilters.push(F.oemRegion.length===1
+      ? `'Dealers Local'[OEM Region]="${F.oemRegion[0]}"`
+      : F.oemRegion.map(v=>`'Dealers Local'[OEM Region]="${v}"`).join('||'));
+    if(F.state.length)      rowFilters.push(F.state.length===1
+      ? `'Dealers Local'[State]="${F.state[0]}"`
+      : F.state.map(v=>`'Dealers Local'[State]="${v}"`).join('||'));
+    if(F.dealerName.length) rowFilters.push(F.dealerName.length===1
+      ? `'Dealers Local'[Dealer Name]="${F.dealerName[0]}"`
+      : F.dealerName.map(v=>`'Dealers Local'[Dealer Name]="${v}"`).join('||'));
+
+    const rowFilterClause = rowFilters.length
+      ? `,FILTER('Dealers Local',${rowFilters.map(f=>`(${f})`).join('&&')})`
+      : '';
+
     const rows=await dax(`EVALUATE SUMMARIZECOLUMNS(
       'Dealers Local'[Dealer SG Code],'Dealers Local'[Dealer Name],
-      'Dealers Local'[Brand Group]${c},
+      'Dealers Local'[Brand Group]${rowFilterClause}${c},
       "PCY" ,[Products CY],
       "PLY" ,[Products LY],
       "PEN" ,[Product Pen CY],
@@ -1227,8 +1263,8 @@ async function loadAllSummaries(){
     if(prog) prog.textContent=`${done} / ${total} loaded`;
   }
 
-  if(prog) prog.textContent=`\u2713 ${total} summaries loaded`;
-  if(btn){btn.disabled=false;btn.textContent='\u21BA Reload Summaries';}
+  if(prog) prog.textContent=`✓ ${total} summaries loaded`;
+  if(btn){btn.disabled=false;btn.textContent='↺ Reload Summaries';}
 }
 
 async function loadVI(code,name){
@@ -1539,7 +1575,6 @@ function showPage(id,el){
 function loadActivePage(){
   if(_activePage==='p1') loadPage1().catch(e=>console.error('Page1:',e));
   else if(_activePage==='p2') loadPage2().catch(e=>console.error('Page2:',e));
-
   document.getElementById('last-refresh').textContent='Updated '+new Date().toLocaleTimeString();
 }
 

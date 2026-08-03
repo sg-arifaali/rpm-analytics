@@ -1163,7 +1163,7 @@ async function loadSummary(code, name){
   el.innerHTML='<span style="color:var(--accent)">⟳ Loading...</span>';
 
   try{
-    // Query 1 — Event data only (fast, single table)
+    // Single query — Event data including Comments field
     const evRows=await dax(`EVALUATE FILTER(
       SUMMARIZECOLUMNS(
         'Salesforce Event'[ActivityDate],
@@ -1171,6 +1171,7 @@ async function loadSummary(code, name){
         'Salesforce Event'[Time Spent],
         'Salesforce Event'[Internal_Notes__c],
         'Salesforce Event'[EventStoreNumber__c],
+        'Salesforce Event'[Comments],
         'Dealers Local'[Dealer SG Code]
       ),
       'Dealers Local'[Dealer SG Code]="${code}"
@@ -1181,56 +1182,31 @@ async function loadSummary(code, name){
       return;
     }
 
-    // Query 2 — Checklist recap comments (Meeting_Recap_Comments__c activity only)
-    const clRows=await dax(`EVALUATE FILTER(
-      SUMMARIZECOLUMNS(
-        'Salesforce Checklist'[Checklist_Reference__c],
-        'Salesforce Checklist'[Act Value]
-      ),
-      'Salesforce Checklist'[Activity]="Meeting_Recap_Comments__c"
-        && RELATED('Dealers Local'[Dealer SG Code])="${code}"
-    )`).catch(function(){return[];}); // non-fatal if checklist query fails
-
-    // Map checklist by reference id
-    const clMap={};
-    clRows.forEach(r=>{
-      const ref=r['Salesforce Checklist[Checklist_Reference__c]'];
-      const val=r['Salesforce Checklist[Act Value]'];
-      if(ref&&val&&val!=='null'){
-        if(!clMap[ref])clMap[ref]=[];
-        clMap[ref].push(val);
-      }
-    });
-
-    // Build visit context
-    const visitText=evRows.map(r=>{
-      const date=r['Salesforce Event[ActivityDate]']||'';
-      const sched=r['Salesforce Event[Time Scheduled Group]']||'';
-      const spent=r['Salesforce Event[Time Spent]']||'';
-      const notes=r['Salesforce Event[Internal_Notes__c]']||'';
-      const ref=r['Salesforce Event[EventStoreNumber__c]']||'';
-      const recap=(clMap[ref]||[]).join(' ');
+    // Build visit context from event rows only (capped at 10 most recent)
+    const visitText=evRows.slice(0,10).map(r=>{
+      const date     = r['Salesforce Event[ActivityDate]']        ||'';
+      const sched    = r['Salesforce Event[Time Scheduled Group]']||'';
+      const spent    = r['Salesforce Event[Time Spent]']          ||'';
+      const notes    = r['Salesforce Event[Internal_Notes__c]']   ||'';
+      const comments = r['Salesforce Event[Comments]']            ||'';
       const parts=[`Date: ${date} | Scheduled: ${sched} | Time Spent: ${spent}`];
-      if(notes) parts.push(`Internal Notes: ${notes}`);
-      if(recap) parts.push(`Meeting Recap: ${recap}`);
+      if(notes)    parts.push(`Notes: ${notes}`);
+      if(comments) parts.push(`Comments: ${comments}`);
       return parts.join('\n');
     }).join('\n\n');
 
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+    // Route through Cloudflare Worker (avoids CORS + keeps API key server-side)
+    const resp=await fetch(`${WORKER}?claude=1`,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        model:'claude-sonnet-4-6',
-        max_tokens:1000,
-        messages:[{
-          role:'user',
-          content:`Summarize these ${evRows.length} RPM visit(s) for dealer "${name}" in 2-3 sentences. Focus on key topics, action items, and relationship status. Be concise and professional.\n\n${visitText}`
-        }]
+        prompt:`Summarize these ${Math.min(evRows.length,10)} RPM visit(s) for dealer "${name}" in 2-3 sentences. Focus on key topics, action items, and relationship status. Be concise and professional.\n\n${visitText}`
       })
     });
 
     const d=await resp.json();
-    const summary=d.content?.[0]?.text||'Unable to generate summary';
+    if(d.error) throw new Error(d.error);
+    const summary=d.text||'Unable to generate summary';
     el.innerHTML=`<span style="color:var(--text2);line-height:1.4">${summary}</span>`;
 
   }catch(e){

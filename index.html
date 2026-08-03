@@ -210,7 +210,6 @@ tbody tr:hover td{background:var(--surface2)}
   <div class="nav">
     <div class="nav-tab active" onclick="showPage('p1',this)">&#x1F4CA; RPM Overview</div>
     <div class="nav-tab" onclick="showPage('p2',this)">&#x1F3EA; Dealer Overview</div>
-    <div class="nav-tab" onclick="showPage('p3',this)">&#x1F50D; Activity &amp; ROI</div>
     <div class="nav-tab" onclick="showPage('p4',this)">&#x1F3AF; Gameplan</div>
   </div>
 
@@ -356,26 +355,13 @@ tbody tr:hover td{background:var(--surface2)}
     <div class="tbl-card">
       <div class="tbl-hdr">
         <div class="tbl-title">Dealer Performance (KPI &amp; GA)</div>
-        <div class="tbl-sub" id="p2-sub">&#x2014;</div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="tbl-sub" id="p2-sub">&#x2014;</div>
+          <button id="btn-load-all-summaries" onclick="loadAllSummaries()" style="padding:5px 14px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap">&#x2728; Load All Summaries</button>
+          <div id="summary-progress" style="font-size:11px;color:var(--text2);display:none"></div>
+        </div>
       </div>
       <div class="tbl-wrap" style="max-height:calc(100vh - 200px)"><div id="p2-tbl"><div class="loading-inline"><div class="spinner"></div>Loading...</div></div></div>
-    </div>
-  </div>
-
-  <!-- PAGE 3 -->
-  <div class="page" id="p3">
-    <div class="kpi-section cols-4" id="p3-kpis" style="border-radius:10px;border:1px solid var(--border)">
-      <div class="kpi-card"><div class="kpi-lbl">Total Activities</div><div class="kpi-val" id="p3-total">&#x2014;</div></div>
-      <div class="kpi-card red"><div class="kpi-lbl">&#x1F6A8; High Suspicion</div><div class="kpi-val" id="p3-high">&#x2014;</div><div class="kpi-sub">Gaming flagged</div></div>
-      <div class="kpi-card yellow"><div class="kpi-lbl">&#x26A0;&#xFE0F; Medium Suspicion</div><div class="kpi-val" id="p3-med">&#x2014;</div><div class="kpi-sub">Needs review</div></div>
-      <div class="kpi-card green"><div class="kpi-lbl">&#x2705; Normal</div><div class="kpi-val" id="p3-low">&#x2014;</div></div>
-    </div>
-    <div class="tbl-card">
-      <div class="tbl-hdr">
-        <div class="tbl-title">Activity Log &#x2014; Suspicion Scoring</div>
-        <div class="tbl-sub">Sorted by suspicion &#x2014; review with sales leaders</div>
-      </div>
-      <div class="tbl-wrap"><div id="p3-tbl"><div class="loading-inline"><div class="spinner"></div>Loading...</div></div></div>
     </div>
   </div>
 
@@ -1160,73 +1146,89 @@ async function loadPage2(){
 async function loadSummary(code, name){
   const el=document.getElementById(`summary-${code}`);
   if(!el)return;
+  if(el.dataset.loaded==='1')return;
+  el.dataset.loaded='1';
   el.innerHTML='<span style="color:var(--accent)">⟳ Loading...</span>';
 
   try{
-    // Query 1 — Event data only (fast, single table)
-    const evRows=await dax(`EVALUATE FILTER(
-      SUMMARIZECOLUMNS(
-        'Salesforce Event'[ActivityDate],
-        'Salesforce Event'[Time Scheduled Group],
-        'Salesforce Event'[Time Spent],
-        'Salesforce Event'[Internal_Notes__c],
-        'Salesforce Event'[EventStoreNumber__c],
-        'Salesforce Event'[Comments],
-        'Dealers Local'[Dealer SG Code]
-      ),
-      'Dealers Local'[Dealer SG Code]="${code}"
-    ) ORDER BY 'Salesforce Event'[ActivityDate] DESC`);
+    // Fast per-dealer lookup — CALCULATETABLE avoids full-table scan
+    const evRows=await dax(`EVALUATE
+      TOPN(10,
+        CALCULATETABLE(
+          SELECTCOLUMNS(
+            'Salesforce Event',
+            "ActivityDate", 'Salesforce Event'[ActivityDate],
+            "Scheduled",    'Salesforce Event'[Time Scheduled Group],
+            "TimeSpent",    'Salesforce Event'[Time Spent],
+            "Notes",        'Salesforce Event'[Internal_Notes__c],
+            "Comments",     'Salesforce Event'[Comments]
+          ),
+          FILTER('Dealers Local','Dealers Local'[Dealer SG Code]="${code}")
+        ),
+        [ActivityDate], DESC
+      )`);
 
     if(!evRows.length){
       el.innerHTML='<span style="color:var(--text2);font-size:10px">No visits</span>';
       return;
     }
 
-    // Map checklist by reference id
-    const clMap={};
-    clRows.forEach(r=>{
-      const ref=r['Salesforce Checklist[Checklist_Reference__c]'];
-      const val=r['Salesforce Checklist[Act Value]'];
-      if(ref&&val&&val!=='null'){
-        if(!clMap[ref])clMap[ref]=[];
-        clMap[ref].push(val);
-      }
-    });
-
-    // Build visit context
     const visitText=evRows.map(r=>{
-      const date=r['Salesforce Event[ActivityDate]']||'';
-      const sched=r['Salesforce Event[Time Scheduled Group]']||'';
-      const spent=r['Salesforce Event[Time Spent]']||'';
-      const notes=r['Salesforce Event[Internal_Notes__c]']||'';
-      const ref=r['Salesforce Event[EventStoreNumber__c]']||'';
-      const recap=(clMap[ref]||[]).join(' ');
+      const date     = r['[ActivityDate]']||'';
+      const sched    = r['[Scheduled]']   ||'';
+      const spent    = r['[TimeSpent]']   ||'';
+      const notes    = r['[Notes]']       ||'';
+      const comments = r['[Comments]']    ||'';
       const parts=[`Date: ${date} | Scheduled: ${sched} | Time Spent: ${spent}`];
-      if(notes) parts.push(`Internal Notes: ${notes}`);
-      if(recap) parts.push(`Meeting Recap: ${recap}`);
+      if(notes)    parts.push(`Notes: ${notes}`);
+      if(comments) parts.push(`Comments: ${comments}`);
       return parts.join('\n');
     }).join('\n\n');
 
-    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+    const resp=await fetch(`${WORKER}?claude=1`,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        model:'claude-sonnet-4-6',
-        max_tokens:1000,
-        messages:[{
-          role:'user',
-          content:`Summarize these ${evRows.length} RPM visit(s) for dealer "${name}" in 2-3 sentences. Focus on key topics, action items, and relationship status. Be concise and professional.\n\n${visitText}`
-        }]
+        prompt:`Summarize these ${evRows.length} RPM visit(s) for dealer "${name}" in 2-3 sentences. Focus on key topics, action items, and relationship status. Be concise and professional.\n\n${visitText}`
       })
     });
-
     const d=await resp.json();
-    const summary=d.content?.[0]?.text||'Unable to generate summary';
+    if(d.error) throw new Error(d.error);
+    const summary=d.text||'Unable to generate summary';
     el.innerHTML=`<span style="color:var(--text2);line-height:1.4">${summary}</span>`;
 
   }catch(e){
-    el.innerHTML=`<span style="color:var(--red);font-size:10px">${e.message}</span>`;
+    el.dataset.loaded='0';
+    el.innerHTML=`<span style="color:var(--red);font-size:10px;cursor:pointer" onclick="loadSummary('${code}','${name}')">${e.message} — click to retry</span>`;
   }
+}
+
+async function loadAllSummaries(){
+  const btn=document.getElementById('btn-load-all-summaries');
+  const prog=document.getElementById('summary-progress');
+  if(btn) btn.disabled=true;
+  if(prog){prog.style.display='';prog.textContent='Starting...';}
+
+  const cells=[...document.querySelectorAll('td[id^="summary-"]')]
+    .filter(el=>el.dataset.loaded!=='1');
+  const total=cells.length;
+  let done=0;
+
+  const BATCH=3;
+  for(let i=0;i<cells.length;i+=BATCH){
+    const batch=cells.slice(i,i+BATCH);
+    await Promise.all(batch.map(el=>{
+      const code=el.id.replace('summary-','');
+      const row=el.closest('tr');
+      const name=row?row.cells[1]?.textContent?.trim()||code:code;
+      return loadSummary(code,name);
+    }));
+    done=Math.min(i+BATCH,total);
+    if(prog) prog.textContent=`${done} / ${total} loaded`;
+  }
+
+  if(prog) prog.textContent=`\u2713 ${total} summaries loaded`;
+  if(btn){btn.disabled=false;btn.textContent='\u21BA Reload Summaries';}
 }
 
 async function loadVI(code,name){
@@ -1259,55 +1261,6 @@ async function loadVI(code,name){
       }
     </div>`).join('')}</div>`;
   }catch(e){document.getElementById('p2-vi-content').innerHTML=`<div class="empty" style="color:var(--red)">${e.message}</div>`;}
-}
-
-// ── PAGE 3 ─────────────────────────────────────────────────────────────
-async function loadPage3(){
-  document.getElementById('p3-tbl').innerHTML='<div class="loading-inline"><div class="spinner"></div>Loading...</div>';
-  try{
-    const c=ktf();
-    const rows=await dax(`EVALUATE SUMMARIZECOLUMNS(
-      'Salesforce Event'[EventStoreNumber__c],'Salesforce Event'[ActivityDate],
-      'Salesforce Event'[Time Scheduled Group],'Salesforce Event'[Time Spent],
-      'Dealers Local'[RPM],'Dealers Local'[Dealer Name]${c},
-      "VIS",[SF CL Sum Actual RPM]
-    ) ORDER BY 'Salesforce Event'[ActivityDate] DESC`);
-    let high=0,med=0,low=0;
-    const scored=rows.map(r=>{
-      const ts=Number(r['Salesforce Event[Time Spent]'])||0;
-      const vis=Number(r['[VIS]'])||0;
-      let score=0;const flags=[];
-      if(vis>5&&ts<60){score+=3;flags.push('5+ depts in <1hr');}
-      if(ts<15&&vis>0){score+=2;flags.push('Very short visit');}
-      if(ts<30&&vis>3){score+=1;flags.push('Short time, many depts');}
-      if(vis===0&&ts<10){score+=2;flags.push('No checklist, no activity');}
-      const level=score>=4?'HIGH':score>=2?'MED':'LOW';
-      if(level==='HIGH')high++;else if(level==='MED')med++;else low++;
-      return{...r,score,level,flags};
-    });
-    document.getElementById('p3-total').textContent=fmt(rows.length);
-    document.getElementById('p3-high').textContent=fmt(high);
-    document.getElementById('p3-med').textContent=fmt(med);
-    document.getElementById('p3-low').textContent=fmt(low);
-    const sorted=scored.sort((a,b)=>b.score-a.score);
-    document.getElementById('p3-tbl').innerHTML=`<table><thead><tr>
-      <th>Level</th><th>RPM</th><th>Dealer</th><th>Date</th><th class="td-num">Time Spent</th><th class="td-num">Depts</th><th>Flags</th>
-    </tr></thead><tbody>${sorted.slice(0,200).map(r=>{
-      const lb=r.level==='HIGH'?'bg-red':r.level==='MED'?'bg-yellow':'bg-green';
-      return`<tr>
-        <td><span class="badge ${lb}">${r.level}</span></td>
-        <td class="td-name">${r['Dealers Local[RPM]']||'—'}</td>
-        <td>${r['Dealers Local[Dealer Name]']||'—'}</td>
-        <td>${r['Salesforce Event[ActivityDate]']||'—'}</td>
-        <td class="td-num">${fmt(r['Salesforce Event[Time Spent]'])}</td>
-        <td class="td-num">${fmt(r['[VIS]'])}</td>
-        <td style="font-size:11px;color:var(--yellow)">${r.flags.join(' · ')||'—'}</td>
-      </tr>`;
-    }).join('')}</tbody></table>`;
-  }catch(e){
-    console.error('Page3:',e);
-    document.getElementById('p3-tbl').innerHTML=`<div class="empty" style="color:var(--red)">${e.message}</div>`;
-  }
 }
 
 // ── PAGE 4 ─────────────────────────────────────────────────────────────
@@ -1586,7 +1539,7 @@ function showPage(id,el){
 function loadActivePage(){
   if(_activePage==='p1') loadPage1().catch(e=>console.error('Page1:',e));
   else if(_activePage==='p2') loadPage2().catch(e=>console.error('Page2:',e));
-  else if(_activePage==='p3') loadPage3().catch(e=>console.error('Page3:',e));
+
   document.getElementById('last-refresh').textContent='Updated '+new Date().toLocaleTimeString();
 }
 
